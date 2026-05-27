@@ -1,0 +1,117 @@
+import React from 'react';
+
+interface StatusBadgeProps {
+  status?: string | boolean | null;
+  type?: 'active' | 'published' | 'order_status' | 'payment_status' | 'shipping_status' | 'transaction_status' | 'campaign_status' | 'role';
+}
+
+export function StatusBadge({ status, type }: StatusBadgeProps) {
+  // Convert boolean/null to string for switch case matching
+  const statusStr = status !== null && status !== undefined ? String(status).toLowerCase().trim() : '';
+  
+  let label = status !== null && status !== undefined ? String(status) : 'N/A';
+  let classes = "bg-slate-100 text-slate-700";
+
+  switch (type) {
+    case 'active':
+      if (statusStr === 'true' || statusStr === 'active') {
+        label = 'Active';
+        classes = 'bg-green-100 text-green-700 font-bold uppercase tracking-wider text-[10px]';
+      } else {
+        label = 'Inactive';
+        classes = 'bg-slate-100 text-slate-700 font-bold uppercase tracking-wider text-[10px]';
+      }
+      break;
+    
+    case 'published':
+      if (statusStr === 'true' || statusStr === 'published') {
+        label = 'Published';
+        classes = 'bg-indigo-100 text-indigo-700 font-bold uppercase tracking-wider text-[10px]';
+      } else {
+        label = 'Draft';
+        classes = 'bg-amber-100 text-amber-700 font-bold uppercase tracking-wider text-[10px]';
+      }
+      break;
+
+    case 'order_status':
+      if (statusStr === 'completed') {
+        label = 'Completed';
+        classes = 'bg-green-100 text-green-700 font-medium text-xs';
+      } else {
+        label = status ? String(status) : 'Pending';
+        classes = 'bg-slate-100 text-slate-700 font-medium text-xs';
+      }
+      break;
+
+    case 'payment_status':
+      if (statusStr === 'paid') {
+        label = 'Paid';
+        classes = 'bg-green-100 text-green-700 font-bold uppercase tracking-wider text-xs';
+      } else {
+        label = status ? String(status) : 'Unpaid';
+        classes = 'bg-amber-100 text-amber-700 font-bold uppercase tracking-wider text-xs';
+      }
+      break;
+
+    case 'shipping_status':
+      if (statusStr === 'delivered') {
+        label = 'Delivered';
+        classes = 'bg-green-100 text-green-700 font-bold uppercase tracking-wider text-xs';
+      } else {
+        label = status ? String(status) : 'Pending';
+        classes = 'bg-blue-100 text-blue-700 font-bold uppercase tracking-wider text-xs';
+      }
+      break;
+
+    case 'transaction_status':
+      if (statusStr === 'success') {
+        label = 'Success';
+        classes = 'bg-green-100 text-green-700 font-medium text-xs';
+      } else if (statusStr === 'failed') {
+        label = 'Failed';
+        classes = 'bg-rose-100 text-rose-700 font-medium text-xs';
+      } else {
+        label = status ? String(status) : 'Pending';
+        classes = 'bg-slate-100 text-slate-700 font-medium text-xs';
+      }
+      break;
+
+    case 'campaign_status':
+      if (statusStr === 'active') {
+        label = 'Active';
+        classes = 'bg-indigo-100 text-indigo-700 font-medium text-xs';
+      } else if (statusStr === 'completed') {
+        label = 'Completed';
+        classes = 'bg-green-100 text-green-700 font-medium text-xs';
+      } else {
+        label = status ? String(status) : 'Inactive';
+        classes = 'bg-slate-100 text-slate-700 font-medium text-xs';
+      }
+      break;
+
+    case 'role':
+      if (statusStr === 'admin') {
+        label = 'Admin';
+        classes = 'bg-indigo-100 text-indigo-700 font-medium text-xs';
+      } else {
+        label = 'User';
+        classes = 'bg-slate-100 text-slate-700 font-medium text-xs';
+      }
+      break;
+
+    default:
+      if (statusStr === 'true' || statusStr === 'active' || statusStr === 'success' || statusStr === 'paid' || statusStr === 'completed' || statusStr === 'delivered') {
+        classes = 'bg-green-100 text-green-700 font-medium text-xs';
+      } else if (statusStr === 'false' || statusStr === 'inactive' || statusStr === 'failed' || statusStr === 'unpaid' || statusStr === 'draft') {
+        classes = 'bg-slate-100 text-slate-700 font-medium text-xs';
+      } else {
+        classes = 'bg-indigo-100 text-indigo-700 font-medium text-xs';
+      }
+  }
+
+  return (
+    <span className={`inline-block px-2.5 py-1 rounded-full text-center whitespace-nowrap ${classes}`}>
+      {label}
+    </span>
+  );
+}
