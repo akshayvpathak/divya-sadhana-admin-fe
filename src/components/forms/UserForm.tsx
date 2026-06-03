@@ -73,7 +73,7 @@ export function UserForm({ userId, initialData: propsInitialData, onSubmit, isPe
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
-          <Label htmlFor="name">Full Name</Label>
+          <Label htmlFor="name">Full Name <span className="text-rose-500">*</span></Label>
           <Input 
             id="name" 
             placeholder="John Doe" 
@@ -85,7 +85,7 @@ export function UserForm({ userId, initialData: propsInitialData, onSubmit, isPe
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="email">Email Address</Label>
+          <Label htmlFor="email">Email Address <span className="text-rose-500">*</span></Label>
           <Input 
             id="email" 
             type="email"
@@ -98,14 +98,16 @@ export function UserForm({ userId, initialData: propsInitialData, onSubmit, isPe
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="role">Role</Label>
+          <Label htmlFor="role">Role <span className="text-rose-500">*</span></Label>
           <Select 
             value={roleValue || ""} 
             onValueChange={(val) => setValue('role', val as 'admin' | 'user')}
             disabled={readOnly}
           >
             <SelectTrigger id="role" className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default" : "bg-white"}>
-              <SelectValue placeholder="Select a role" />
+              <SelectValue placeholder="Select a role">
+                {roleValue === 'admin' ? 'Admin' : roleValue === 'user' ? 'User' : 'Select a role'}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="user">User</SelectItem>

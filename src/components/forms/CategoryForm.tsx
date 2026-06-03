@@ -69,7 +69,7 @@ export function CategoryForm({ categoryId, initialData: propsInitialData, onSubm
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="name">Category Name</Label>
+          <Label htmlFor="name">Category Name <span className="text-rose-500">*</span></Label>
           <Input 
             id="name" 
             placeholder="Electronics" 
@@ -81,7 +81,7 @@ export function CategoryForm({ categoryId, initialData: propsInitialData, onSubm
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="slug">Slug</Label>
+          <Label htmlFor="slug">Slug <span className="text-rose-500">*</span></Label>
           <Input 
             id="slug" 
             placeholder="electronics" 
@@ -94,7 +94,7 @@ export function CategoryForm({ categoryId, initialData: propsInitialData, onSubm
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
+        <Label htmlFor="description">Description <span className="text-rose-500">*</span></Label>
         <Textarea 
           id="description" 
           placeholder="All kinds of electronic devices..." 

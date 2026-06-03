@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { useDonationCampaignsListQuery } from '@/hooks/queries/useDonationCampaignsQuery';
-import { Search, ChevronLeft, ChevronRight, Eye, Image as ImageIcon } from 'lucide-react';
+import { useDonationCampaignsListQuery, useDeleteDonationCampaignMutation } from '@/hooks/queries/useDonationCampaignsQuery';
+import { Search, ChevronLeft, ChevronRight, Eye, Edit2, Trash2, Image as ImageIcon, ArrowUp, ArrowDown, ArrowUpDown, Plus } from 'lucide-react';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,8 +29,47 @@ import {
 export default function DonationCampaignsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const [sort, setSort] = useState('');
   
-  const { data, isLoading } = useDonationCampaignsListQuery({ page, search });
+  // Deletion state
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [campaignToDelete, setCampaignToDelete] = useState<string | null>(null);
+
+  const { data, isLoading } = useDonationCampaignsListQuery({ page, search, sort });
+  const { mutate: deleteCampaign, isPending: isDeleting } = useDeleteDonationCampaignMutation();
+
+  const openDeleteModal = (id: string) => {
+    setCampaignToDelete(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (campaignToDelete) {
+      deleteCampaign(campaignToDelete, {
+        onSuccess: () => {
+          setIsDeleteModalOpen(false);
+          setCampaignToDelete(null);
+        }
+      });
+    }
+  };
+
+  const handleSort = (field: string) => {
+    if (sort === field) {
+      setSort(`-${field}`);
+    } else if (sort === `-${field}`) {
+      setSort('');
+    } else {
+      setSort(field);
+    }
+    setPage(1);
+  };
+
+  const getSortIcon = (field: string) => {
+    if (sort === field) return <ArrowUp className="h-4 w-4 text-indigo-600 shrink-0" />;
+    if (sort === `-${field}`) return <ArrowDown className="h-4 w-4 text-indigo-600 shrink-0" />;
+    return <ArrowUpDown className="h-4 w-4 text-slate-400 shrink-0" />;
+  };
 
   const totalPages = data?.data?.count ? Math.ceil(data.data.count / 10) : 1;
 
@@ -40,6 +80,11 @@ export default function DonationCampaignsPage() {
           <h1 className="text-3xl font-bold text-slate-900">Donation Campaigns</h1>
           <p className="text-slate-500 mt-1">Manage platform donation campaigns</p>
         </div>
+        <Link href="/donation-campaigns/create">
+          <Button className="bg-indigo-600 hover:bg-indigo-700">
+            <Plus className="mr-2 h-4 w-4" /> Add Campaign
+          </Button>
+        </Link>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
@@ -63,11 +108,43 @@ export default function DonationCampaignsPage() {
             <TableHeader>
               <TableRow className="bg-slate-50 hover:bg-slate-50">
                 <TableHead className="w-[80px]">Image</TableHead>
-                <TableHead>Title</TableHead>
-                <TableHead>Target</TableHead>
+                <TableHead 
+                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
+                  onClick={() => handleSort('title')}
+                >
+                  <div className="flex items-center gap-1">
+                    Title
+                    {getSortIcon('title')}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
+                  onClick={() => handleSort('target_amount')}
+                >
+                  <div className="flex items-center gap-1">
+                    Target
+                    {getSortIcon('target_amount')}
+                  </div>
+                </TableHead>
                 <TableHead>Progress</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Ends At</TableHead>
+                <TableHead 
+                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
+                  onClick={() => handleSort('status')}
+                >
+                  <div className="flex items-center gap-1">
+                    Status
+                    {getSortIcon('status')}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
+                  onClick={() => handleSort('ends_at')}
+                >
+                  <div className="flex items-center gap-1">
+                    Ends At
+                    {getSortIcon('ends_at')}
+                  </div>
+                </TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -133,11 +210,26 @@ export default function DonationCampaignsPage() {
                       {campaign.ends_at ? dayjs(campaign.ends_at).format('MMM D, YYYY') : '-'}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Link href={`/donation-campaigns/${campaign.id}`}>
-                        <Button variant="ghost" size="icon">
-                          <Eye className="h-4 w-4 text-slate-400 hover:text-indigo-600" />
+                      <div className="flex justify-end gap-1">
+                        <Link href={`/donation-campaigns/${campaign.id}`}>
+                          <Button variant="ghost" size="icon" className="text-slate-400 hover:text-indigo-600">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                        <Link href={`/donation-campaigns/${campaign.id}?mode=edit`}>
+                          <Button variant="ghost" size="icon" className="text-slate-400 hover:text-indigo-600">
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => openDeleteModal(campaign.id)} 
+                          className="text-slate-400 hover:text-rose-600"
+                        >
+                          <Trash2 className="h-4 w-4" />
                         </Button>
-                      </Link>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -174,6 +266,16 @@ export default function DonationCampaignsPage() {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onOpenChange={setIsDeleteModalOpen}
+        title="Delete Donation Campaign"
+        description="Are you sure you want to delete this donation campaign? This action cannot be undone."
+        onConfirm={confirmDelete}
+        confirmText={isDeleting ? "Deleting..." : "Delete"}
+        variant="destructive"
+      />
     </div>
   );
 }

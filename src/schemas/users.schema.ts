@@ -42,4 +42,5 @@ export interface UsersListParams {
   search_fields?: string;
   fields?: string;
   sort?: string;
+  is_active?: boolean;
 }

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { usePaymentsListQuery } from '@/hooks/queries/usePaymentsQuery';
-import { Search, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Eye, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,8 +27,26 @@ import {
 export default function PaymentsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const [sort, setSort] = useState('-created_at');
   
-  const { data, isLoading } = usePaymentsListQuery(page, search);
+  const { data, isLoading } = usePaymentsListQuery(page, search, sort);
+
+  const handleSort = (field: string) => {
+    if (sort === field) {
+      setSort(`-${field}`);
+    } else if (sort === `-${field}`) {
+      setSort('');
+    } else {
+      setSort(field);
+    }
+    setPage(1);
+  };
+
+  const getSortIcon = (field: string) => {
+    if (sort === field) return <ArrowUp className="h-4 w-4 text-indigo-600 shrink-0" />;
+    if (sort === `-${field}`) return <ArrowDown className="h-4 w-4 text-indigo-600 shrink-0" />;
+    return <ArrowUpDown className="h-4 w-4 text-slate-400 shrink-0" />;
+  };
 
   const totalPages = data?.data?.count ? Math.ceil(data.data.count / 10) : 1;
 
@@ -61,12 +79,60 @@ export default function PaymentsPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-slate-50 hover:bg-slate-50">
-                <TableHead>Reference</TableHead>
-                <TableHead>User</TableHead>
-                <TableHead>Provider</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Date</TableHead>
+                <TableHead 
+                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
+                  onClick={() => handleSort('internal_payment_ref')}
+                >
+                  <div className="flex items-center gap-1">
+                    Reference
+                    {getSortIcon('internal_payment_ref')}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
+                  onClick={() => handleSort('user')}
+                >
+                  <div className="flex items-center gap-1">
+                    User
+                    {getSortIcon('user')}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
+                  onClick={() => handleSort('provider')}
+                >
+                  <div className="flex items-center gap-1">
+                    Provider
+                    {getSortIcon('provider')}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
+                  onClick={() => handleSort('amount')}
+                >
+                  <div className="flex items-center gap-1">
+                    Amount
+                    {getSortIcon('amount')}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
+                  onClick={() => handleSort('status')}
+                >
+                  <div className="flex items-center gap-1">
+                    Status
+                    {getSortIcon('status')}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
+                  onClick={() => handleSort('created_at')}
+                >
+                  <div className="flex items-center gap-1">
+                    Date
+                    {getSortIcon('created_at')}
+                  </div>
+                </TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>

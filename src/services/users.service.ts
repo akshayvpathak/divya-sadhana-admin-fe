@@ -38,6 +38,7 @@ export async function getUsersList(
     queryParams.append("search_fields", params.search_fields);
   if (params.fields) queryParams.append("fields", params.fields);
   if (params.sort) queryParams.append("sort", params.sort);
+  if (params.is_active !== undefined) queryParams.append("is_active", String(params.is_active));
 
   const url = `${API_BASE_URL}/users/?${queryParams.toString()}`;
 

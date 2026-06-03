@@ -3,13 +3,24 @@ import { toast } from 'react-toastify';
 import { getUsersList, getUser, createUser, updateUser, deleteUser } from '../services/users.service';
 import { useAuth } from '../context/AuthContext';
 
-export const useUsers = (page = 1, limit = 10, search = '') => {
+export const useUsers = (page = 1, limit = 10, search = '', role = 'all', sort = '') => {
   const { accessToken } = useAuth();
   return useQuery({
-    queryKey: ['users', { page, limit, search }],
+    queryKey: ['users', { page, limit, search, role, sort }],
     queryFn: async () => {
       if (!accessToken) throw new Error('No access token');
-      const response = await getUsersList({ page, paginate: limit, search }, accessToken);
+      
+      const apiParams: any = { page, paginate: limit, search };
+      if (role === 'admin') {
+        apiParams.is_active = true;
+      } else if (role === 'user') {
+        apiParams.is_active = false;
+      }
+      if (sort) {
+        apiParams.sort = sort;
+      }
+
+      const response = await getUsersList(apiParams, accessToken);
       
       return {
         data: response.data.results.map(u => ({

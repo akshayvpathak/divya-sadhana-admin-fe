@@ -64,12 +64,18 @@ export function StatusBadge({ status, type }: StatusBadgeProps) {
       break;
 
     case 'transaction_status':
-      if (statusStr === 'success') {
+      if (['success', 'successful', 'completed', 'captured', 'paid', 'succeeded'].includes(statusStr)) {
         label = 'Success';
         classes = 'bg-green-100 text-green-700 font-medium text-xs';
-      } else if (statusStr === 'failed') {
+      } else if (['failed', 'failure', 'declined', 'error', 'rejected'].includes(statusStr)) {
         label = 'Failed';
         classes = 'bg-rose-100 text-rose-700 font-medium text-xs';
+      } else if (['pending', 'initiated', 'processing', 'authorized', 'unpaid', 'created'].includes(statusStr)) {
+        label = 'Pending';
+        classes = 'bg-amber-100 text-amber-700 font-medium text-xs';
+      } else if (['refunded', 'refund'].includes(statusStr)) {
+        label = 'Refunded';
+        classes = 'bg-blue-100 text-blue-700 font-medium text-xs';
       } else {
         label = status ? String(status) : 'Pending';
         classes = 'bg-slate-100 text-slate-700 font-medium text-xs';

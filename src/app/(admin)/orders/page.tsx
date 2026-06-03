@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useOrdersListQuery } from '@/hooks/queries/useOrdersQuery';
-import { Search, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Eye, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,8 +27,26 @@ import {
 export default function OrdersPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const [sort, setSort] = useState('-created_at');
   
-  const { data, isLoading } = useOrdersListQuery(page, search);
+  const { data, isLoading } = useOrdersListQuery(page, search, sort);
+
+  const handleSort = (field: string) => {
+    if (sort === field) {
+      setSort(`-${field}`);
+    } else if (sort === `-${field}`) {
+      setSort('');
+    } else {
+      setSort(field);
+    }
+    setPage(1);
+  };
+
+  const getSortIcon = (field: string) => {
+    if (sort === field) return <ArrowUp className="h-4 w-4 text-indigo-600 shrink-0" />;
+    if (sort === `-${field}`) return <ArrowDown className="h-4 w-4 text-indigo-600 shrink-0" />;
+    return <ArrowUpDown className="h-4 w-4 text-slate-400 shrink-0" />;
+  };
 
   const totalPages = data?.data?.count ? Math.ceil(data.data.count / 10) : 1;
 
@@ -61,13 +79,69 @@ export default function OrdersPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-slate-50 hover:bg-slate-50">
-                <TableHead>Order Number</TableHead>
-                <TableHead>User</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Payment Status</TableHead>
-                <TableHead>Shipping Status</TableHead>
-                <TableHead>Total Amount</TableHead>
-                <TableHead>Created</TableHead>
+                <TableHead 
+                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
+                  onClick={() => handleSort('order_number')}
+                >
+                  <div className="flex items-center gap-1">
+                    Order Number
+                    {getSortIcon('order_number')}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
+                  onClick={() => handleSort('user')}
+                >
+                  <div className="flex items-center gap-1">
+                    User
+                    {getSortIcon('user')}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
+                  onClick={() => handleSort('status')}
+                >
+                  <div className="flex items-center gap-1">
+                    Status
+                    {getSortIcon('status')}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
+                  onClick={() => handleSort('payment_status')}
+                >
+                  <div className="flex items-center gap-1">
+                    Payment Status
+                    {getSortIcon('payment_status')}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
+                  onClick={() => handleSort('shipping_status')}
+                >
+                  <div className="flex items-center gap-1">
+                    Shipping Status
+                    {getSortIcon('shipping_status')}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
+                  onClick={() => handleSort('total_amount')}
+                >
+                  <div className="flex items-center gap-1">
+                    Total Amount
+                    {getSortIcon('total_amount')}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
+                  onClick={() => handleSort('created_at')}
+                >
+                  <div className="flex items-center gap-1">
+                    Created
+                    {getSortIcon('created_at')}
+                  </div>
+                </TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>

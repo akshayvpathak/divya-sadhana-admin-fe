@@ -26,6 +26,7 @@ interface AuthContextType {
   setAuth: (user: User, accessToken: string, refreshToken: string, accessTokenExpiry: number, refreshTokenExpiry: number) => void;
   logout: () => void;
   refreshAccessToken: () => Promise<void>;
+  updateUser: (updatedUser: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -168,6 +169,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("refreshTokenExpiry");
     router.push("/login");
   }, [router]);
+ 
+  const updateUser = useCallback((updatedUser: Partial<User>) => {
+    setUser((prev) => {
+      if (!prev) return null;
+      const newUser = { ...prev, ...updatedUser };
+      localStorage.setItem("user", JSON.stringify(newUser));
+      return newUser;
+    });
+  }, []);
 
   // Intercept unauthorized requests (401 status) globally
   useEffect(() => {
@@ -236,6 +246,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAuth,
         logout,
         refreshAccessToken,
+        updateUser,
       }}
     >
       {isHydrated ? children : null}

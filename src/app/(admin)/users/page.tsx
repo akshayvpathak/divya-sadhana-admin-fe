@@ -2,12 +2,13 @@
 
 import { useState } from 'react';
 import { useUsers, useDeleteUser } from '@/hooks/useUsers';
-import { Plus, Search, Edit2, Trash2, ChevronLeft, ChevronRight, Eye, User as UserIcon } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, ChevronLeft, ChevronRight, Eye, User as UserIcon, Filter, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -28,13 +29,32 @@ import {
 export default function UsersPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const [selectedRole, setSelectedRole] = useState('all');
+  const [sort, setSort] = useState('');
   
   // Deletion state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
 
-  const { data, isLoading } = useUsers(page, 10, search);
+  const { data, isLoading } = useUsers(page, 10, search, selectedRole, sort);
   const { mutate: deleteUser, isPending: isDeleting } = useDeleteUser();
+
+  const handleSort = (field: string) => {
+    if (sort === field) {
+      setSort(`-${field}`);
+    } else if (sort === `-${field}`) {
+      setSort('');
+    } else {
+      setSort(field);
+    }
+    setPage(1);
+  };
+
+  const getSortIcon = (field: string) => {
+    if (sort === field) return <ArrowUp className="h-4 w-4 text-indigo-600 shrink-0" />;
+    if (sort === `-${field}`) return <ArrowDown className="h-4 w-4 text-indigo-600 shrink-0" />;
+    return <ArrowUpDown className="h-4 w-4 text-slate-400 shrink-0" />;
+  };
 
   const openDeleteModal = (id: string) => {
     setUserToDelete(id);
@@ -68,8 +88,8 @@ export default function UsersPage() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-        <div className="p-4 border-b border-slate-200 bg-slate-50">
-          <div className="relative max-w-sm">
+        <div className="p-4 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row gap-4">
+          <div className="relative max-w-sm flex-1">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <Input
               placeholder="Search users..."
@@ -81,16 +101,69 @@ export default function UsersPage() {
               }}
             />
           </div>
+          <div className="w-full sm:w-64 flex items-center gap-2">
+            <Filter className="h-4 w-4 text-slate-400 shrink-0" />
+            <Select 
+              value={selectedRole} 
+              onValueChange={(val) => {
+                setSelectedRole(val || 'all');
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="bg-white">
+                <SelectValue placeholder="All Roles">
+                  {selectedRole === 'admin' ? 'Admin' : selectedRole === 'user' ? 'User' : 'All Roles'}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Roles</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="user">User</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <div className="overflow-x-auto flex-1">
           <Table>
             <TableHeader>
               <TableRow className="bg-slate-50 hover:bg-slate-50">
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead 
+                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
+                  onClick={() => handleSort('first_name')}
+                >
+                  <div className="flex items-center gap-1">
+                    Name
+                    {getSortIcon('first_name')}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
+                  onClick={() => handleSort('email')}
+                >
+                  <div className="flex items-center gap-1">
+                    Email
+                    {getSortIcon('email')}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
+                  onClick={() => handleSort('is_active')}
+                >
+                  <div className="flex items-center gap-1">
+                    Role
+                    {getSortIcon('is_active')}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
+                  onClick={() => handleSort('is_active')}
+                >
+                  <div className="flex items-center gap-1">
+                    Status
+                    {getSortIcon('is_active')}
+                  </div>
+                </TableHead>
                 <TableHead>Joined</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>

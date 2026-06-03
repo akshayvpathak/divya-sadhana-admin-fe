@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useProducts, useDeleteProduct } from '@/hooks/useProducts';
 import { useAllCategories } from '@/hooks/useCategories';
-import { Plus, Search, Edit2, Trash2, ChevronLeft, ChevronRight, Filter, Package, Eye } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, ChevronLeft, ChevronRight, Filter, Package, Eye, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,12 +32,31 @@ export default function ProductsPage() {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   
+  const [sort, setSort] = useState('');
+  
   // Deletion state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
 
   const { data: categories } = useAllCategories();
-  const { data, isLoading } = useProducts(page, 10, search, selectedCategory);
+  const { data, isLoading } = useProducts(page, 10, search, selectedCategory, sort);
+
+  const handleSort = (field: string) => {
+    if (sort === field) {
+      setSort(`-${field}`);
+    } else if (sort === `-${field}`) {
+      setSort('');
+    } else {
+      setSort(field);
+    }
+    setPage(1);
+  };
+
+  const getSortIcon = (field: string) => {
+    if (sort === field) return <ArrowUp className="h-4 w-4 text-indigo-600 shrink-0" />;
+    if (sort === `-${field}`) return <ArrowDown className="h-4 w-4 text-indigo-600 shrink-0" />;
+    return <ArrowUpDown className="h-4 w-4 text-slate-400 shrink-0" />;
+  };
   const { mutate: deleteProduct, isPending: isDeleting } = useDeleteProduct();
 
   const openDeleteModal = (id: string) => {
@@ -100,7 +119,12 @@ export default function ProductsPage() {
               }}
             >
               <SelectTrigger className="bg-white">
-                <SelectValue placeholder="All Categories" />
+                <SelectValue placeholder="All Categories">
+                  {selectedCategory === 'all' 
+                    ? 'All Categories' 
+                    : (categories?.find(c => c.id === selectedCategory)?.name || selectedCategory)
+                  }
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
@@ -118,12 +142,60 @@ export default function ProductsPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-slate-50 hover:bg-slate-50">
-                <TableHead>Product</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Stock</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Published</TableHead>
+                <TableHead 
+                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
+                  onClick={() => handleSort('name')}
+                >
+                  <div className="flex items-center gap-1">
+                    Product
+                    {getSortIcon('name')}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
+                  onClick={() => handleSort('category')}
+                >
+                  <div className="flex items-center gap-1">
+                    Category
+                    {getSortIcon('category')}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
+                  onClick={() => handleSort('price')}
+                >
+                  <div className="flex items-center gap-1">
+                    Price
+                    {getSortIcon('price')}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
+                  onClick={() => handleSort('stock_quantity')}
+                >
+                  <div className="flex items-center gap-1">
+                    Stock
+                    {getSortIcon('stock_quantity')}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
+                  onClick={() => handleSort('is_active')}
+                >
+                  <div className="flex items-center gap-1">
+                    Status
+                    {getSortIcon('is_active')}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
+                  onClick={() => handleSort('is_published')}
+                >
+                  <div className="flex items-center gap-1">
+                    Published
+                    {getSortIcon('is_published')}
+                  </div>
+                </TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>

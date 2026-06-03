@@ -32,13 +32,13 @@ export const cleanImageUrl = (url: string | null | undefined) => {
   return url;
 };
 
-export const useProducts = (page = 1, limit = 10, search = '', categoryId = '') => {
+export const useProducts = (page = 1, limit = 10, search = '', categoryId = '', sort = '') => {
   const { accessToken } = useAuth();
   return useQuery({
-    queryKey: ['products', { page, limit, search, categoryId }],
+    queryKey: ['products', { page, limit, search, categoryId, sort }],
     queryFn: async () => {
       if (!accessToken) throw new Error('No access token');
-      const response = await getProductsList(accessToken, { page, page_size: limit, search });
+      const response = await getProductsList(accessToken, { page, page_size: limit, search, sort });
       
       // If categoryId is present we would ideally pass it to the API, but `getProductsList` doesn't support it directly in params here yet, or we'd filter locally if needed. Assuming the API handles the basic search/page at least.
       let results = response.data.results;

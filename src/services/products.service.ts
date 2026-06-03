@@ -15,6 +15,7 @@ interface FetchOptions {
   page_size?: number;
   search?: string;
   search_fields?: string;
+  sort?: string;
 }
 
 /**
@@ -39,6 +40,7 @@ export const getProductsList = async (
   if (options.search) params.append("search", options.search);
   if (options.search_fields)
     params.append("search_fields", options.search_fields);
+  if (options.sort) params.append("sort", options.sort);
 
   const response = await fetch(
     `${API_BASE_URL}/products/?${params.toString()}`,

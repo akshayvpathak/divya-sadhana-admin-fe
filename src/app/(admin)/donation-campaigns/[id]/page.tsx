@@ -1,20 +1,35 @@
 'use client';
 
-import { useDonationCampaignQuery } from '@/hooks/queries/useDonationCampaignsQuery';
-import { useParams } from 'next/navigation';
+import { useDonationCampaignQuery, useUpdateDonationCampaignMutation } from '@/hooks/queries/useDonationCampaignsQuery';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, Image as ImageIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 import dayjs from 'dayjs';
+import { DonationCampaignForm } from '@/components/forms/DonationCampaignForm';
 
 export default function ViewDonationCampaignPage() {
   const params = useParams();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const id = params.id as string;
   
+  const mode = searchParams.get('mode') || 'view';
+  const isEdit = mode === 'edit';
+
   const { data, isLoading } = useDonationCampaignQuery(id);
+  const { mutate: updateCampaign, isPending } = useUpdateDonationCampaignMutation();
   const campaign = data;
+
+  const onSubmit = (formData: any) => {
+    updateCampaign({ campaignId: id, payload: formData }, {
+      onSuccess: () => {
+        router.push('/donation-campaigns');
+      }
+    });
+  };
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -26,9 +41,11 @@ export default function ViewDonationCampaignPage() {
         </Link>
         <div>
           <h1 className="text-3xl font-bold text-slate-900">
-            {isLoading ? <Skeleton className="h-9 w-64" /> : 'Campaign Details'}
+            {isLoading ? <Skeleton className="h-9 w-64" /> : isEdit ? 'Edit Campaign' : 'Campaign Details'}
           </h1>
-          <p className="text-slate-500 mt-1">Fundraising progress and campaign information</p>
+          <p className="text-slate-500 mt-1">
+            {isEdit ? 'Update fundraising campaign details' : 'Fundraising progress and campaign information'}
+          </p>
         </div>
       </div>
 
@@ -39,6 +56,14 @@ export default function ViewDonationCampaignPage() {
             <Skeleton className="h-48 w-full rounded-2xl" />
             <Skeleton className="h-48 w-full rounded-2xl" />
           </div>
+        </div>
+      ) : isEdit ? (
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+          <DonationCampaignForm
+            campaignId={id}
+            onSubmit={onSubmit}
+            isPending={isPending}
+          />
         </div>
       ) : campaign && (
         <div className="space-y-8 mt-4">

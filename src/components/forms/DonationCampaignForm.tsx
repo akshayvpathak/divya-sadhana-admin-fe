@@ -2,7 +2,7 @@
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { productSchema, ProductFormData } from '@/schemas/product.schema';
+import { createDonationCampaignSchema, CreateDonationCampaignPayload } from '@/schemas/donation-campaigns.schema';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,55 +10,61 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Link from 'next/link';
 import { useEffect, useMemo } from 'react';
-import { useProduct } from '@/hooks/useProducts';
-import { useAllCategories } from '@/hooks/useCategories';
+import { useDonationCampaignQuery } from '@/hooks/queries/useDonationCampaignsQuery';
 import { cn } from '@/lib/utils';
-
 import { Switch } from '@/components/ui/switch';
 import { useUploadImageMutation } from '@/hooks/queries/useImageUploadQuery';
 import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { useState, useCallback } from 'react';
 import { toast } from 'react-toastify';
+import dayjs from 'dayjs';
 
-interface ProductFormProps {
-  productId?: string;
-  initialData?: ProductFormData;
-  categories?: { id: string; name: string }[];
-  onSubmit?: (data: ProductFormData) => void;
+interface DonationCampaignFormProps {
+  campaignId?: string;
+  initialData?: CreateDonationCampaignPayload;
+  onSubmit?: (data: CreateDonationCampaignPayload) => void;
   isPending?: boolean;
   readOnly?: boolean;
 }
 
-export function ProductForm({ productId, initialData: propsInitialData, categories: propsCategories, onSubmit, isPending, readOnly = false }: ProductFormProps) {
-  const { data: fetchedProduct, isLoading: isFetchingProduct } = useProduct(productId || '');
-  const { data: fetchedCategories, isLoading: isFetchingCategories } = useAllCategories();
+export function DonationCampaignForm({ campaignId, initialData: propsInitialData, onSubmit, isPending, readOnly = false }: DonationCampaignFormProps) {
+  const { data: fetchedCampaign, isLoading: isFetching } = useDonationCampaignQuery(campaignId || null);
   const uploadMutation = useUploadImageMutation();
   const [isDragging, setIsDragging] = useState(false);
 
-  const categories = fetchedCategories || propsCategories;
-  const isFetching = isFetchingProduct || isFetchingCategories;
+  const initialData = useMemo(() => {
+    if (fetchedCampaign) {
+      return {
+        title: fetchedCampaign.title,
+        description: fetchedCampaign.description,
+        target_amount: fetchedCampaign.target_amount,
+        status: fetchedCampaign.status,
+        is_active: fetchedCampaign.is_active ?? true,
+        starts_at: fetchedCampaign.starts_at ? dayjs(fetchedCampaign.starts_at).format('YYYY-MM-DD') : '',
+        ends_at: fetchedCampaign.ends_at ? dayjs(fetchedCampaign.ends_at).format('YYYY-MM-DD') : '',
+        cover_image_key: fetchedCampaign.cover_image_key || '',
+      };
+    }
+    return propsInitialData;
+  }, [fetchedCampaign, propsInitialData]);
 
-  const initialData = useMemo(() => fetchedProduct ? {
-    name: fetchedProduct.name,
-    price: fetchedProduct.price,
-    description: fetchedProduct.description,
-    categoryId: fetchedProduct.categoryId,
-    image: fetchedProduct.image || '',
-    sku: fetchedProduct.sku || '',
-    stock_quantity: fetchedProduct.stock || 0,
-    is_active: fetchedProduct.isActive ?? true,
-    is_published: fetchedProduct.isPublished ?? false,
-  } : propsInitialData, [fetchedProduct, propsInitialData]);
-
-  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<ProductFormData>({
-    resolver: zodResolver(productSchema) as any,
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<CreateDonationCampaignPayload>({
+    resolver: zodResolver(createDonationCampaignSchema) as any,
     defaultValues: initialData,
   });
 
-  const categoryId = watch('categoryId');
-  const imageUrl = watch('image');
+  const statusValue = watch('status');
   const isActive = watch('is_active');
-  const isPublished = watch('is_published');
+  const coverImageKey = watch('cover_image_key');
+
+  const imageUrl = useMemo(() => {
+    if (!coverImageKey) return '';
+    if (coverImageKey.startsWith('http')) return coverImageKey;
+    if (fetchedCampaign && fetchedCampaign.cover_image_url && fetchedCampaign.cover_image_key === coverImageKey) {
+      return fetchedCampaign.cover_image_url;
+    }
+    return `https://api.divyasadhana.org/media/${coverImageKey}`;
+  }, [coverImageKey, fetchedCampaign]);
 
   useEffect(() => {
     if (initialData) {
@@ -66,7 +72,7 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
     }
   }, [initialData, reset]);
 
-  const handleFormSubmit = (data: ProductFormData) => {
+  const handleFormSubmit = (data: CreateDonationCampaignPayload) => {
     if (onSubmit) {
       onSubmit(data);
     }
@@ -109,7 +115,7 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
     try {
       const keys = await uploadMutation.mutateAsync([file]);
       if (keys && keys.length > 0) {
-        setValue('image', keys[0]);
+        setValue('cover_image_key', keys[0]);
         toast.success('Image uploaded successfully');
       }
     } catch (error) {
@@ -117,7 +123,7 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
     }
   };
 
-  if (productId && isFetching) {
+  if (campaignId && isFetching) {
     return (
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -140,80 +146,74 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="name">Product Name <span className="text-rose-500">*</span></Label>
+          <Label htmlFor="title">Title <span className="text-rose-500">*</span></Label>
           <Input 
-            id="name" 
-            placeholder="Wireless Headphones" 
-            {...register('name')} 
+            id="title" 
+            placeholder="Clean Water Project" 
+            {...register('title')} 
             disabled={readOnly}
             className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}
           />
-          {errors.name && <p className="text-sm text-rose-500">{errors.name.message}</p>}
+          {errors.title && <p className="text-sm text-rose-500">{errors.title.message}</p>}
         </div>
-        
+
         <div className="space-y-2">
-          <Label htmlFor="price">Price ($) <span className="text-rose-500">*</span></Label>
+          <Label htmlFor="target_amount">Target Amount ($) <span className="text-rose-500">*</span></Label>
           <Input 
-            id="price" 
+            id="target_amount" 
             type="number" 
-            step="0.01" 
-            placeholder="99.99" 
-            {...register('price')} 
+            placeholder="10000" 
+            {...register('target_amount')} 
             disabled={readOnly}
             className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}
           />
-          {errors.price && <p className="text-sm text-rose-500">{errors.price.message}</p>}
+          {errors.target_amount && <p className="text-sm text-rose-500">{errors.target_amount.message}</p>}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="sku">SKU <span className="text-rose-500">*</span></Label>
+          <Label htmlFor="starts_at">Start Date <span className="text-rose-500">*</span></Label>
           <Input 
-            id="sku" 
-            placeholder="PROD-123" 
-            {...register('sku')} 
+            id="starts_at" 
+            type="date" 
+            {...register('starts_at')} 
             disabled={readOnly}
             className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}
           />
-          {errors.sku && <p className="text-sm text-rose-500">{errors.sku.message}</p>}
+          {errors.starts_at && <p className="text-sm text-rose-500">{errors.starts_at.message}</p>}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="stock_quantity">Stock Quantity <span className="text-rose-500">*</span></Label>
+          <Label htmlFor="ends_at">End Date <span className="text-rose-500">*</span></Label>
           <Input 
-            id="stock_quantity" 
-            type="number" 
-            placeholder="100" 
-            {...register('stock_quantity')} 
+            id="ends_at" 
+            type="date" 
+            {...register('ends_at')} 
             disabled={readOnly}
             className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}
           />
-          {errors.stock_quantity && <p className="text-sm text-rose-500">{errors.stock_quantity.message}</p>}
+          {errors.ends_at && <p className="text-sm text-rose-500">{errors.ends_at.message}</p>}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="categoryId">Category <span className="text-rose-500">*</span></Label>
+          <Label htmlFor="status">Status <span className="text-rose-500">*</span></Label>
           <Select 
-            value={categoryId || ""}
-            onValueChange={(val) => setValue('categoryId', (val as string) || '')} 
+            value={statusValue || ""} 
+            onValueChange={(val) => setValue('status', val as any)}
             disabled={readOnly}
           >
-            <SelectTrigger id="categoryId" className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default" : "bg-white"}>
-              <SelectValue placeholder="Select a category">
-                {categoryId 
-                  ? (categories?.find(c => c.id === categoryId)?.name || categoryId) 
-                  : 'Select a category'
-                }
+            <SelectTrigger id="status" className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default" : "bg-white"}>
+              <SelectValue placeholder="Select status">
+                {statusValue ? statusValue.toUpperCase() : 'Select status'}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              {categories?.map(category => (
-                <SelectItem key={category.id} value={category.id}>
-                  {category.name}
-                </SelectItem>
-              ))}
+              <SelectItem value="draft">DRAFT</SelectItem>
+              <SelectItem value="active">ACTIVE</SelectItem>
+              <SelectItem value="paused">PAUSED</SelectItem>
+              <SelectItem value="closed">CLOSED</SelectItem>
             </SelectContent>
           </Select>
-          {errors.categoryId && <p className="text-sm text-rose-500">{errors.categoryId.message}</p>}
+          {errors.status && <p className="text-sm text-rose-500">{errors.status.message}</p>}
         </div>
 
         <div className="flex gap-8 items-center pt-4">
@@ -226,15 +226,6 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
             />
             <Label htmlFor="is_active" className="cursor-pointer">Active</Label>
           </div>
-          <div className="flex items-center gap-2">
-            <Switch 
-              id="is_published" 
-              checked={isPublished} 
-              onCheckedChange={(val) => setValue('is_published', val)}
-              disabled={readOnly}
-            />
-            <Label htmlFor="is_published" className="cursor-pointer">Published</Label>
-          </div>
         </div>
       </div>
 
@@ -242,7 +233,7 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
         <Label htmlFor="description">Description <span className="text-rose-500">*</span></Label>
         <Textarea 
           id="description" 
-          placeholder="High quality wireless headphones..." 
+          placeholder="Detailed description of the donation campaign..." 
           {...register('description')} 
           disabled={readOnly}
           className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}
@@ -250,9 +241,9 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
         />
         {errors.description && <p className="text-sm text-rose-500">{errors.description.message}</p>}
       </div>
-      
+
       <div className="space-y-2">
-        <Label>Product Image</Label>
+        <Label>Cover Image</Label>
         <div 
           className={cn(
             "border-2 border-dashed rounded-xl p-8 transition-all flex flex-col items-center justify-center gap-4 text-center",
@@ -263,12 +254,12 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          onClick={() => !readOnly && document.getElementById('file-upload')?.click()}
+          onClick={() => !readOnly && document.getElementById('cover-image-upload')?.click()}
         >
           {imageUrl ? (
-            <div className="relative group w-full max-w-[200px] aspect-square rounded-lg overflow-hidden border border-slate-200">
+            <div className="relative group w-full max-w-[200px] aspect-[16/10] rounded-lg overflow-hidden border border-slate-200">
               <img 
-                src={imageUrl.startsWith('http') ? imageUrl : `https://api.divyasadhana.org/media/${imageUrl}`} 
+                src={imageUrl} 
                 alt="Preview" 
                 className="w-full h-full object-cover"
               />
@@ -277,7 +268,7 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setValue('image', '');
+                    setValue('cover_image_key', '');
                   }}
                   className="absolute top-2 right-2 p-1.5 bg-rose-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
                 >
@@ -298,36 +289,30 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
                 <p className="font-medium text-slate-700">
                   {uploadMutation.isPending ? 'Uploading...' : 'Click or drag to upload'}
                 </p>
-                <p className="text-sm">PNG, JPG or WEBP (max. 5MB)</p>
+                <p className="text-xs text-slate-400 mt-1">PNG, JPG or JPEG up to 5MB</p>
               </div>
             </div>
           )}
           <input 
-            id="file-upload" 
+            id="cover-image-upload" 
             type="file" 
+            accept="image/*" 
             className="hidden" 
-            accept="image/*"
             onChange={handleFileSelect}
-            disabled={readOnly || uploadMutation.isPending}
+            disabled={readOnly}
           />
         </div>
-        {errors.image && <p className="text-sm text-rose-500">{errors.image.message}</p>}
       </div>
 
       <div className="pt-4 flex justify-end gap-2">
-        <Link href="/products">
+        <Link href="/donation-campaigns">
           <Button type="button" variant="outline">
             {readOnly ? 'Back' : 'Cancel'}
           </Button>
         </Link>
         {!readOnly && (
-          <Button type="submit" disabled={isPending || uploadMutation.isPending} className="bg-indigo-600 hover:bg-indigo-700 min-w-[120px]">
-            {isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Processing...
-              </>
-            ) : (initialData ? 'Edit Product' : 'Create Product')}
+          <Button type="submit" disabled={isPending} className="bg-indigo-600 hover:bg-indigo-700">
+            {isPending ? 'Processing...' : (campaignId ? 'Edit Campaign' : 'Create Campaign')}
           </Button>
         )}
       </div>
