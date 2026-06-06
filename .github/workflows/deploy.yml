@@ -1,0 +1,112 @@
+name: Deploy to VPS with PM2
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: "20"
+  APP_NAME: "divya-sadhana-admin-frontend"
+  DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Notify Discord - Build Started
+        uses: sarisia/actions-status-discord@v1
+        if: always() && env.DISCORD_WEBHOOK_URL != ''
+        with:
+          webhook: ${{ env.DISCORD_WEBHOOK_URL }}
+          title: "🚀 Admin Panel Deployment Started"
+          description: |
+            **Repository:** ${{ github.repository }}
+            **Branch:** ${{ github.ref_name }}
+            **Commit:** ${{ github.sha }}
+            **Author:** ${{ github.actor }}
+          color: 0x0099ff
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint code
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Build project
+        run: npm run build
+
+      # 🚀 SSH DEPLOY (NO TOKEN)
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          port: ${{ secrets.VPS_PORT }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          script: |
+            echo "🔄 Starting deployment on VPS..."
+
+            cd ${{ secrets.APP_DIRECTORY }} || { echo "❌ Failed to navigate"; exit 1; }
+
+            echo "📥 Pulling latest code..."
+            git fetch origin master
+            git reset --hard origin/master
+
+            echo "📦 Installing dependencies..."
+            rm -rf node_modules .next
+            npm ci || { echo "❌ Install failed"; exit 1; }
+
+            echo "🔨 Building project..."
+            npm run build || { echo "❌ Build failed"; exit 1; }
+
+            echo "🚀 Restarting PM2 (preserves PORT=3001 from ecosystem.config.js)..."
+            pm2 startOrReload ecosystem.config.js --update-env || pm2 start ecosystem.config.js
+
+            pm2 save
+
+            echo "✅ Deployment completed successfully!"
+
+      - name: Notify Discord - Deployment Success
+        if: success() && env.DISCORD_WEBHOOK_URL != ''
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ env.DISCORD_WEBHOOK_URL }}
+          title: "✅ Admin Panel Deployment Successful"
+          description: |
+            **Repository:** ${{ github.repository }}
+            **Branch:** ${{ github.ref_name }}
+            **Commit:** ${{ github.sha }}
+            **Author:** ${{ github.actor }}
+
+            Admin panel is now live on https://admin.divyasadhana.org (PM2 port 3001)!
+          color: 0x00ff00
+
+      - name: Notify Discord - Deployment Failed
+        if: failure() && env.DISCORD_WEBHOOK_URL != ''
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ env.DISCORD_WEBHOOK_URL }}
+          title: "❌ Admin Panel Deployment Failed"
+          description: |
+            **Repository:** ${{ github.repository }}
+            **Branch:** ${{ github.ref_name }}
+            **Commit:** ${{ github.sha }}
+            **Author:** ${{ github.actor }}
+            **Run ID:** ${{ github.run_id }}
+
+            Check the logs for more details.
+          color: 0xff0000
