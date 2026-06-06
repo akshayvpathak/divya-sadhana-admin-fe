@@ -49,26 +49,6 @@ jobs:
       - name: Build project
         run: npm run build
 
-      # 🔎 TEMP DIAGNOSTIC — remove once SSH works
-      - name: Probe VPS connectivity
-        run: |
-          echo "VPS_HOST length: $(printf %s '${{ secrets.VPS_HOST }}' | wc -c)"
-          echo "VPS_PORT length: $(printf %s '${{ secrets.VPS_PORT }}' | wc -c)   (expect 2 for '22')"
-          echo "--- ping ---"
-          ping -c 2 -W 3 '${{ secrets.VPS_HOST }}' || true
-          echo "--- tcp probe (port from secret) ---"
-          if timeout 15 nc -vz '${{ secrets.VPS_HOST }}' '${{ secrets.VPS_PORT }}'; then
-            echo "RESULT=REACHABLE"
-          else
-            echo "RESULT=UNREACHABLE"
-          fi
-          echo "--- tcp probe (hardcoded :22) ---"
-          if timeout 15 nc -vz '${{ secrets.VPS_HOST }}' 22; then
-            echo "RESULT_22=REACHABLE"
-          else
-            echo "RESULT_22=UNREACHABLE"
-          fi
-
       # 🚀 SSH DEPLOY (NO TOKEN)
       - name: Deploy to VPS
         uses: appleboy/ssh-action@master
