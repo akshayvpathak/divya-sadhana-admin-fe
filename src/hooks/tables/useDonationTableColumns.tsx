@@ -6,12 +6,14 @@ import dayjs from 'dayjs';
 export interface DonationRow {
   id: string;
   donation_number?: string | null;
-  donor_name: string;
-  campaign?: string | { title: string } | null;
-  campaign_title?: string;
-  amount: number;
-  status: string;
-  paid_at: string | null;
+  donor_name?: string | null | undefined;
+  campaign?: string | { id?: string; title?: string; [key: string]: any } | null | undefined;
+  title?: string;
+  campaign_title?: string | null;
+  amount?: number;
+  status?: string;
+  paid_at?: string | null;
+  [key: string]: any;
 }
 
 export const useDonationTableColumns = (): ColumnConfig<DonationRow>[] => {
@@ -44,14 +46,14 @@ export const useDonationTableColumns = (): ColumnConfig<DonationRow>[] => {
       header: 'Amount',
       sortable: true,
       cellClassName: 'font-medium',
-      renderCell: (row) => `$${row.amount}`,
+      renderCell: (row) => row.amount !== undefined ? `$${row.amount}` : '-',
     },
     {
       id: 'status',
       accessorKey: 'status',
       header: 'Status',
       sortable: true,
-      renderCell: (row) => <StatusBadge status={row.status} type="transaction_status" />,
+      renderCell: (row) => <StatusBadge status={row.status || ''} type="transaction_status" />,
     },
     {
       id: 'paid_at',

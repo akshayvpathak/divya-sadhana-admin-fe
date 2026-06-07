@@ -8,12 +8,13 @@ import dayjs from 'dayjs';
 
 export interface PaymentRow {
   id: string;
-  internal_payment_ref: string;
-  user?: string | { first_name?: string; last_name?: string } | null;
-  provider: string | null;
-  amount: number;
-  status: string;
-  created_at: string | null;
+  internal_payment_ref?: string;
+  user?: string | { first_name?: string; last_name?: string; [key: string]: any } | null;
+  provider?: string | null;
+  amount?: string | number;
+  status?: string;
+  created_at?: string | null;
+  [key: string]: any;
 }
 
 export const usePaymentTableColumns = (): ColumnConfig<PaymentRow>[] => {
@@ -49,14 +50,14 @@ export const usePaymentTableColumns = (): ColumnConfig<PaymentRow>[] => {
       header: 'Amount',
       sortable: true,
       cellClassName: 'font-medium',
-      renderCell: (row) => `$${row.amount}`,
+      renderCell: (row) => row.amount !== undefined ? `$${row.amount}` : '-',
     },
     {
       id: 'status',
       accessorKey: 'status',
       header: 'Status',
       sortable: true,
-      renderCell: (row) => <StatusBadge status={row.status} type="transaction_status" />,
+      renderCell: (row) => <StatusBadge status={row.status || ''} type="transaction_status" />,
     },
     {
       id: 'created_at',
