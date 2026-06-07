@@ -71,7 +71,7 @@ export default function Navbar() {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem 
-              onSelect={() => setIsLogoutModalOpen(true)} 
+              onClick={() => setIsLogoutModalOpen(true)} 
               className="text-rose-600 cursor-pointer focus:bg-rose-50 focus:text-rose-700"
             >
               Log out

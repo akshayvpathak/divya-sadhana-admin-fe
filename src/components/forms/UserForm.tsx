@@ -24,17 +24,32 @@ export function UserForm({ userId, initialData: propsInitialData, onSubmit, isPe
   const { data: fetchedUser, isLoading: isFetching } = useUser(userId || null);
   
   const initialData = useMemo(() => fetchedUser ? {
-    name: fetchedUser.name,
+    first_name: fetchedUser.first_name || '',
+    last_name: fetchedUser.last_name || '',
     email: fetchedUser.email,
     role: fetchedUser.role as 'admin' | 'user',
+    is_active: fetchedUser.is_active ?? true,
   } : propsInitialData, [fetchedUser, propsInitialData]);
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<UserFormData>({
     resolver: zodResolver(userSchema),
-    defaultValues: initialData,
+    defaultValues: {
+      first_name: '',
+      last_name: '',
+      email: '',
+      role: 'user',
+      is_active: true,
+      ...initialData,
+    },
   });
 
   const roleValue = watch('role');
+  const isActiveValue = watch('is_active');
+
+  useEffect(() => {
+    register('role');
+    register('is_active');
+  }, [register]);
 
   useEffect(() => {
     if (initialData) {
@@ -73,15 +88,27 @@ export function UserForm({ userId, initialData: propsInitialData, onSubmit, isPe
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
-          <Label htmlFor="name">Full Name <span className="text-rose-500">*</span></Label>
+          <Label htmlFor="first_name">First Name <span className="text-rose-500">*</span></Label>
           <Input 
-            id="name" 
-            placeholder="John Doe" 
-            {...register('name')} 
+            id="first_name" 
+            placeholder="John" 
+            {...register('first_name')} 
             disabled={readOnly}
             className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}
           />
-          {errors.name && <p className="text-sm text-rose-500">{errors.name.message}</p>}
+          {errors.first_name && <p className="text-sm text-rose-500">{errors.first_name.message}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="last_name">Last Name <span className="text-rose-500">*</span></Label>
+          <Input 
+            id="last_name" 
+            placeholder="Doe" 
+            {...register('last_name')} 
+            disabled={readOnly}
+            className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}
+          />
+          {errors.last_name && <p className="text-sm text-rose-500">{errors.last_name.message}</p>}
         </div>
         
         <div className="space-y-2">
@@ -115,6 +142,26 @@ export function UserForm({ userId, initialData: propsInitialData, onSubmit, isPe
             </SelectContent>
           </Select>
           {errors.role && <p className="text-sm text-rose-500">{errors.role.message}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="is_active">Status <span className="text-rose-500">*</span></Label>
+          <Select 
+            value={isActiveValue !== undefined ? (isActiveValue ? "active" : "inactive") : ""} 
+            onValueChange={(val) => setValue('is_active', val === 'active')}
+            disabled={readOnly}
+          >
+            <SelectTrigger id="is_active" className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default" : "bg-white"}>
+              <SelectValue placeholder="Select status">
+                {isActiveValue ? 'Active' : 'Inactive'}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="inactive">Inactive</SelectItem>
+            </SelectContent>
+          </Select>
+          {errors.is_active && <p className="text-sm text-rose-500">{errors.is_active.message}</p>}
         </div>
       </div>
 

@@ -2,27 +2,13 @@
 
 import { useState } from 'react';
 import { useCategories, useDeleteCategory } from '@/hooks/useCategories';
-import { Plus, Search, Edit2, Trash2, ChevronLeft, ChevronRight, Eye, ImageIcon, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import Link from 'next/link';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import Image from 'next/image';
+import { DataTable } from '@/components/common/DataTable/DataTable';
+import { useCategoryTableColumns } from '@/hooks/tables/useCategoryTableColumns';
 
 export default function CategoriesPage() {
   const [page, setPage] = useState(1);
@@ -37,20 +23,8 @@ export default function CategoriesPage() {
   const { mutate: deleteCategory, isPending: isDeleting } = useDeleteCategory();
 
   const handleSort = (field: string) => {
-    if (sort === field) {
-      setSort(`-${field}`);
-    } else if (sort === `-${field}`) {
-      setSort('');
-    } else {
-      setSort(field);
-    }
+    setSort(field);
     setPage(1);
-  };
-
-  const getSortIcon = (field: string) => {
-    if (sort === field) return <ArrowUp className="h-4 w-4 text-indigo-600 shrink-0" />;
-    if (sort === `-${field}`) return <ArrowDown className="h-4 w-4 text-indigo-600 shrink-0" />;
-    return <ArrowUpDown className="h-4 w-4 text-slate-400 shrink-0" />;
   };
 
   const openDeleteModal = (id: string) => {
@@ -68,6 +42,10 @@ export default function CategoriesPage() {
       });
     }
   };
+
+  const columns = useCategoryTableColumns({
+    openDeleteModal,
+  });
 
   return (
     <div className="space-y-6">
@@ -100,95 +78,14 @@ export default function CategoriesPage() {
           </div>
         </div>
 
-        <div className="overflow-x-auto flex-1">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-slate-50 hover:bg-slate-50">
-                <TableHead 
-                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-                  onClick={() => handleSort('name')}
-                >
-                  <div className="flex items-center gap-1">
-                    Name
-                    {getSortIcon('name')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-                  onClick={() => handleSort('is_active')}
-                >
-                  <div className="flex items-center gap-1">
-                    Status
-                    {getSortIcon('is_active')}
-                  </div>
-                </TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-                    <TableCell><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-64" /></TableCell>
-                    <TableCell className="text-right"><Skeleton className="h-8 w-24 ml-auto" /></TableCell>
-                  </TableRow>
-                ))
-              ) : data?.data.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-slate-500">
-                    No categories found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                data?.data.map((category) => (
-                  <TableRow key={category.id}>
-                    <TableCell className="font-medium">{category.name}</TableCell>
-                    <TableCell>
-                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                        category.isActive ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-700'
-                      }`}>
-                        {category.isActive ? 'Active' : 'Inactive'}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-slate-500 max-w-xs truncate">
-                      {category.description}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Link href={`/categories/${category.id}?mode=view`}>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="text-slate-400 hover:text-indigo-600"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        <Link href={`/categories/${category.id}?mode=edit`}>
-                          <Button variant="ghost" size="icon" className="text-slate-400 hover:text-indigo-600">
-                            <Edit2 className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={() => openDeleteModal(category.id)} 
-                          className="text-slate-400 hover:text-rose-600"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-
+        <DataTable
+          columns={columns}
+          data={data?.data || []}
+          isLoading={isLoading}
+          sort={sort}
+          onSort={handleSort}
+          emptyMessage="No categories found"
+        />
 
         {/* Pagination */}
         {data && data.meta.totalPages > 1 && (

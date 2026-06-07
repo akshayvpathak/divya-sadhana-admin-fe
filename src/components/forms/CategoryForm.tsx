@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Link from 'next/link';
 import { useEffect, useMemo } from 'react';
 
@@ -27,12 +28,37 @@ export function CategoryForm({ categoryId, initialData: propsInitialData, onSubm
     name: fetchedCategory.name,
     slug: fetchedCategory.slug,
     description: fetchedCategory.description,
+    isActive: fetchedCategory.isActive ?? true,
   } : propsInitialData, [fetchedCategory, propsInitialData]);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<CategoryFormData>({
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<CategoryFormData>({
     resolver: zodResolver(categorySchema),
-    defaultValues: initialData,
+    defaultValues: {
+      name: '',
+      slug: '',
+      description: '',
+      isActive: true,
+      ...initialData,
+    },
   });
+
+  const nameValue = watch('name');
+  const isActiveValue = watch('isActive');
+
+  // Auto-generate slug from name if not edit mode and name changes
+  useEffect(() => {
+    if (!readOnly && !categoryId && nameValue) {
+      const generatedSlug = nameValue
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)+/g, '');
+      setValue('slug', generatedSlug, { shouldValidate: true });
+    }
+  }, [nameValue, setValue, readOnly, categoryId]);
+
+  useEffect(() => {
+    register('isActive');
+  }, [register]);
 
   useEffect(() => {
     if (initialData) {
@@ -104,6 +130,26 @@ export function CategoryForm({ categoryId, initialData: propsInitialData, onSubm
           rows={4}
         />
         {errors.description && <p className="text-sm text-rose-500">{errors.description.message}</p>}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="isActive">Status <span className="text-rose-500">*</span></Label>
+        <Select 
+          value={isActiveValue !== undefined ? (isActiveValue ? "active" : "inactive") : ""} 
+          onValueChange={(val) => setValue('isActive', val === 'active')}
+          disabled={readOnly}
+        >
+          <SelectTrigger id="isActive" className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default" : "bg-white"}>
+            <SelectValue placeholder="Select status">
+              {isActiveValue ? 'Active' : 'Inactive'}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="inactive">Inactive</SelectItem>
+          </SelectContent>
+        </Select>
+        {errors.isActive && <p className="text-sm text-rose-500">{errors.isActive.message}</p>}
       </div>
 
       <div className="pt-4 flex justify-end gap-2">

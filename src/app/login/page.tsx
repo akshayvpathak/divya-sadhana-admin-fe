@@ -64,9 +64,6 @@ export default function LoginPage() {
               Welcome Back
             </h1>
             <p className="text-slate-500">Sign in to your admin dashboard</p>
-            <p className="text-xs text-indigo-500 mt-2">
-              Hint: rixo@yopmail.com / Test@123
-            </p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -108,7 +105,7 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              className="w-full bg-indigo-600 hover:bg-indigo-700"
+              className="w-full h-10 bg-indigo-600 hover:bg-indigo-700"
               disabled={loginMutation.isPending}
             >
               {loginMutation.isPending ? "Signing in..." : "Sign In"}

@@ -2,27 +2,11 @@
 
 import { useState } from 'react';
 import { usePaymentsListQuery } from '@/hooks/queries/usePaymentsQuery';
-import { Search, ChevronLeft, ChevronRight, Eye, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
-import { StatusBadge } from '@/components/ui/status-badge';
+import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
-import Link from 'next/link';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import dayjs from 'dayjs';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { DataTable } from '@/components/common/DataTable/DataTable';
+import { usePaymentTableColumns } from '@/hooks/tables/usePaymentTableColumns';
 
 export default function PaymentsPage() {
   const [page, setPage] = useState(1);
@@ -32,23 +16,12 @@ export default function PaymentsPage() {
   const { data, isLoading } = usePaymentsListQuery(page, search, sort);
 
   const handleSort = (field: string) => {
-    if (sort === field) {
-      setSort(`-${field}`);
-    } else if (sort === `-${field}`) {
-      setSort('');
-    } else {
-      setSort(field);
-    }
+    setSort(field);
     setPage(1);
   };
 
-  const getSortIcon = (field: string) => {
-    if (sort === field) return <ArrowUp className="h-4 w-4 text-indigo-600 shrink-0" />;
-    if (sort === `-${field}`) return <ArrowDown className="h-4 w-4 text-indigo-600 shrink-0" />;
-    return <ArrowUpDown className="h-4 w-4 text-slate-400 shrink-0" />;
-  };
-
   const totalPages = data?.data?.count ? Math.ceil(data.data.count / 10) : 1;
+  const columns = usePaymentTableColumns();
 
   return (
     <div className="space-y-6">
@@ -75,119 +48,14 @@ export default function PaymentsPage() {
           </div>
         </div>
 
-        <div className="overflow-x-auto flex-1">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-slate-50 hover:bg-slate-50">
-                <TableHead 
-                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-                  onClick={() => handleSort('internal_payment_ref')}
-                >
-                  <div className="flex items-center gap-1">
-                    Reference
-                    {getSortIcon('internal_payment_ref')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-                  onClick={() => handleSort('user')}
-                >
-                  <div className="flex items-center gap-1">
-                    User
-                    {getSortIcon('user')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-                  onClick={() => handleSort('provider')}
-                >
-                  <div className="flex items-center gap-1">
-                    Provider
-                    {getSortIcon('provider')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-                  onClick={() => handleSort('amount')}
-                >
-                  <div className="flex items-center gap-1">
-                    Amount
-                    {getSortIcon('amount')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-                  onClick={() => handleSort('status')}
-                >
-                  <div className="flex items-center gap-1">
-                    Status
-                    {getSortIcon('status')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-                  onClick={() => handleSort('created_at')}
-                >
-                  <div className="flex items-center gap-1">
-                    Date
-                    {getSortIcon('created_at')}
-                  </div>
-                </TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell><Skeleton className="h-5 w-48" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-16" /></TableCell>
-                    <TableCell><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                    <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
-                  </TableRow>
-                ))
-              ) : data?.data?.results?.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-slate-500">
-                    No payments found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                data?.data?.results?.map((payment) => (
-                  <TableRow key={payment.id}>
-                    <TableCell className="font-medium text-slate-500 text-xs">{payment.internal_payment_ref}</TableCell>
-                    <TableCell>
-                      {typeof payment.user === 'string' ? payment.user : payment.user?.first_name ? `${payment.user.first_name} ${payment.user.last_name}` : 'Unknown'}
-                    </TableCell>
-                    <TableCell>
-                      <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-bold uppercase">
-                        {payment.provider || 'N/A'}
-                      </span>
-                    </TableCell>
-                    <TableCell className="font-medium">${payment.amount}</TableCell>
-                    <TableCell>
-                      <StatusBadge status={payment.status} type="transaction_status" />
-                    </TableCell>
-                    <TableCell className="text-slate-500">
-                      {payment.created_at ? dayjs(payment.created_at).format('MMM D, YYYY') : '-'}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Link href={`/payments/${payment.id}`}>
-                        <Button variant="ghost" size="icon">
-                          <Eye className="h-4 w-4 text-slate-400 hover:text-indigo-600" />
-                        </Button>
-                      </Link>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-
+        <DataTable
+          columns={columns}
+          data={data?.data?.results || []}
+          isLoading={isLoading}
+          sort={sort}
+          onSort={handleSort}
+          emptyMessage="No payments found"
+        />
 
         {/* Pagination */}
         {totalPages > 1 && (

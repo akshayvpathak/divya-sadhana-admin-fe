@@ -36,6 +36,7 @@ export function DonationCampaignForm({ campaignId, initialData: propsInitialData
     if (fetchedCampaign) {
       return {
         title: fetchedCampaign.title,
+        slug: fetchedCampaign.slug || '',
         description: fetchedCampaign.description,
         target_amount: fetchedCampaign.target_amount,
         status: fetchedCampaign.status,
@@ -50,12 +51,35 @@ export function DonationCampaignForm({ campaignId, initialData: propsInitialData
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<CreateDonationCampaignPayload>({
     resolver: zodResolver(createDonationCampaignSchema) as any,
-    defaultValues: initialData,
+    defaultValues: {
+      title: '',
+      slug: '',
+      description: '',
+      target_amount: 0,
+      status: 'draft',
+      is_active: true,
+      starts_at: '',
+      ends_at: '',
+      cover_image_key: '',
+      ...initialData,
+    },
   });
 
+  const titleValue = watch('title');
   const statusValue = watch('status');
   const isActive = watch('is_active');
   const coverImageKey = watch('cover_image_key');
+
+  // Auto-generate slug from title if not edit mode and title changes
+  useEffect(() => {
+    if (!readOnly && !campaignId && titleValue) {
+      const generatedSlug = titleValue
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)+/g, '');
+      setValue('slug', generatedSlug, { shouldValidate: true });
+    }
+  }, [titleValue, setValue, readOnly, campaignId]);
 
   const imageUrl = useMemo(() => {
     if (!coverImageKey) return '';
@@ -65,6 +89,12 @@ export function DonationCampaignForm({ campaignId, initialData: propsInitialData
     }
     return `https://api.divyasadhana.org/media/${coverImageKey}`;
   }, [coverImageKey, fetchedCampaign]);
+
+  useEffect(() => {
+    register('is_active');
+    register('status');
+    register('cover_image_key');
+  }, [register]);
 
   useEffect(() => {
     if (initialData) {
@@ -207,10 +237,10 @@ export function DonationCampaignForm({ campaignId, initialData: propsInitialData
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="draft">DRAFT</SelectItem>
-              <SelectItem value="active">ACTIVE</SelectItem>
-              <SelectItem value="paused">PAUSED</SelectItem>
-              <SelectItem value="closed">CLOSED</SelectItem>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="paused">Paused</SelectItem>
+              <SelectItem value="closed">Closed</SelectItem>
             </SelectContent>
           </Select>
           {errors.status && <p className="text-sm text-rose-500">{errors.status.message}</p>}
@@ -224,7 +254,7 @@ export function DonationCampaignForm({ campaignId, initialData: propsInitialData
               onCheckedChange={(val) => setValue('is_active', val)}
               disabled={readOnly}
             />
-            <Label htmlFor="is_active" className="cursor-pointer">Active</Label>
+            <Label htmlFor="is_active" className="cursor-pointer">Campaign Visibility</Label>
           </div>
         </div>
       </div>

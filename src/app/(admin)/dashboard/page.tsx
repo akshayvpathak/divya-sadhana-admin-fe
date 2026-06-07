@@ -76,9 +76,9 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mt-8 h-96 flex items-center justify-center">
+      {/* <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mt-8 h-96 flex items-center justify-center">
         <p className="text-slate-400">Charts and more detailed analytics would go here.</p>
-      </div>
+      </div> */}
     </div>
   );
 }

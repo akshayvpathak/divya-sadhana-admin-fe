@@ -80,8 +80,9 @@ export const useCreateCategory = () => {
       if (!accessToken) throw new Error('No access token');
       return createCategory({
         name: data.name,
+        slug: data.slug,
         description: data.description,
-        is_active: true,
+        is_active: data.isActive !== undefined ? data.isActive : true,
       }, accessToken);
     },
     onSuccess: () => {
@@ -102,8 +103,10 @@ export const useUpdateCategory = () => {
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
       if (!accessToken) throw new Error('No access token');
       const updateData: any = {};
-      if (data.name) updateData.name = data.name;
-      if (data.description) updateData.description = data.description;
+      if (data.name !== undefined) updateData.name = data.name;
+      if (data.slug !== undefined) updateData.slug = data.slug;
+      if (data.description !== undefined) updateData.description = data.description;
+      if (data.isActive !== undefined) updateData.is_active = data.isActive;
 
       return updateCategory(id, updateData, accessToken);
     },

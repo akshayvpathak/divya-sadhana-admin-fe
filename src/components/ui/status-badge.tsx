@@ -1,9 +1,19 @@
 import React from 'react';
+import { formatStatusLabel } from '@/lib/utils';
 
 interface StatusBadgeProps {
   status?: string | boolean | null;
   type?: 'active' | 'published' | 'order_status' | 'payment_status' | 'shipping_status' | 'transaction_status' | 'campaign_status' | 'role';
 }
+
+const orderStatusColors: Record<string, string> = {
+  pending: 'bg-amber-100 text-amber-700 font-medium text-xs',
+  processing: 'bg-blue-100 text-blue-700 font-medium text-xs',
+  completed: 'bg-green-100 text-green-700 font-medium text-xs',
+  cancelled: 'bg-rose-100 text-rose-700 font-medium text-xs',
+  refunded: 'bg-orange-100 text-orange-700 font-medium text-xs',
+  failed: 'bg-rose-100 text-rose-700 font-medium text-xs',
+};
 
 export function StatusBadge({ status, type }: StatusBadgeProps) {
   // Convert boolean/null to string for switch case matching
@@ -33,15 +43,12 @@ export function StatusBadge({ status, type }: StatusBadgeProps) {
       }
       break;
 
-    case 'order_status':
-      if (statusStr === 'completed') {
-        label = 'Completed';
-        classes = 'bg-green-100 text-green-700 font-medium text-xs';
-      } else {
-        label = status ? String(status) : 'Pending';
-        classes = 'bg-slate-100 text-slate-700 font-medium text-xs';
-      }
+    case 'order_status': {
+      const matchedColor = orderStatusColors[statusStr];
+      classes = matchedColor || 'bg-slate-100 text-slate-700 font-medium text-xs';
+      label = status ? String(status) : 'Pending';
       break;
+    }
 
     case 'payment_status':
       if (statusStr === 'paid') {
@@ -78,7 +85,7 @@ export function StatusBadge({ status, type }: StatusBadgeProps) {
         classes = 'bg-blue-100 text-blue-700 font-medium text-xs';
       } else {
         label = status ? String(status) : 'Pending';
-        classes = 'bg-slate-100 text-slate-700 font-medium text-xs';
+        classes = 'bg-slate-100 text-slate-700 font-medium text-xs uppercase';
       }
       break;
 
@@ -91,7 +98,7 @@ export function StatusBadge({ status, type }: StatusBadgeProps) {
         classes = 'bg-green-100 text-green-700 font-medium text-xs';
       } else {
         label = status ? String(status) : 'Inactive';
-        classes = 'bg-slate-100 text-slate-700 font-medium text-xs';
+        classes = 'bg-slate-100 text-slate-700 font-medium text-xs uppercase';
       }
       break;
 
@@ -101,7 +108,7 @@ export function StatusBadge({ status, type }: StatusBadgeProps) {
         classes = 'bg-indigo-100 text-indigo-700 font-medium text-xs';
       } else {
         label = 'User';
-        classes = 'bg-slate-100 text-slate-700 font-medium text-xs';
+        classes = 'bg-slate-100 text-slate-700 font-medium text-xs uppercase';
       }
       break;
 
@@ -109,15 +116,18 @@ export function StatusBadge({ status, type }: StatusBadgeProps) {
       if (statusStr === 'true' || statusStr === 'active' || statusStr === 'success' || statusStr === 'paid' || statusStr === 'completed' || statusStr === 'delivered') {
         classes = 'bg-green-100 text-green-700 font-medium text-xs';
       } else if (statusStr === 'false' || statusStr === 'inactive' || statusStr === 'failed' || statusStr === 'unpaid' || statusStr === 'draft') {
-        classes = 'bg-slate-100 text-slate-700 font-medium text-xs';
+        classes = 'bg-slate-100 text-slate-700 font-medium text-xs uppercasex';
       } else {
-        classes = 'bg-indigo-100 text-indigo-700 font-medium text-xs';
+        classes = 'bg-indigo-100 text-indigo-700 font-medium text-xs uppercase';
       }
   }
 
+  // Use the global formatting utility for label text
+  const finalLabel = ['active', 'published', 'role'].includes(type || '') ? label : formatStatusLabel(label);
+
   return (
     <span className={`inline-block px-2.5 py-1 rounded-full text-center whitespace-nowrap ${classes}`}>
-      {label}
+      {finalLabel}
     </span>
   );
 }

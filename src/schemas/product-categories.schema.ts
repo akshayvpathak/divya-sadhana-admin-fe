@@ -23,6 +23,7 @@ export const categoriesListResponseSchema = z.object({
 
 export const createCategorySchema = z.object({
   name: z.string().min(1, "Name is required"),
+  slug: z.string().min(1, "Slug is required").regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens"),
   description: z.string().min(1, "Description is required"),
   is_active: z.boolean().default(true),
 });

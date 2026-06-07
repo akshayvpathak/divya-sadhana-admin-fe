@@ -2,20 +2,11 @@
 
 import { useState } from 'react';
 import { useDonationsListQuery } from '@/hooks/queries/useDonationsQuery';
-import { Search, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
-import { StatusBadge } from '@/components/ui/status-badge';
+import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import dayjs from 'dayjs';
+import { DataTable } from '@/components/common/DataTable/DataTable';
+import { useDonationTableColumns } from '@/hooks/tables/useDonationTableColumns';
 
 export default function DonationsPage() {
   const [page, setPage] = useState(1);
@@ -25,23 +16,12 @@ export default function DonationsPage() {
   const { data, isLoading } = useDonationsListQuery({ page, search, sort });
 
   const handleSort = (field: string) => {
-    if (sort === field) {
-      setSort(`-${field}`);
-    } else if (sort === `-${field}`) {
-      setSort('');
-    } else {
-      setSort(field);
-    }
+    setSort(field);
     setPage(1);
   };
 
-  const getSortIcon = (field: string) => {
-    if (sort === field) return <ArrowUp className="h-4 w-4 text-indigo-600 shrink-0" />;
-    if (sort === `-${field}`) return <ArrowDown className="h-4 w-4 text-indigo-600 shrink-0" />;
-    return <ArrowUpDown className="h-4 w-4 text-slate-400 shrink-0" />;
-  };
-
   const totalPages = data?.data?.count ? Math.ceil(data.data.count / 10) : 1;
+  const columns = useDonationTableColumns();
 
   return (
     <div className="space-y-6">
@@ -68,105 +48,14 @@ export default function DonationsPage() {
           </div>
         </div>
 
-        <div className="overflow-x-auto flex-1">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-slate-50 hover:bg-slate-50">
-                <TableHead 
-                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-                  onClick={() => handleSort('donation_number')}
-                >
-                  <div className="flex items-center gap-1">
-                    Reference
-                    {getSortIcon('donation_number')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-                  onClick={() => handleSort('donor_name')}
-                >
-                  <div className="flex items-center gap-1">
-                    Donor
-                    {getSortIcon('donor_name')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-                  onClick={() => handleSort('campaign')}
-                >
-                  <div className="flex items-center gap-1">
-                    Campaign
-                    {getSortIcon('campaign')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-                  onClick={() => handleSort('amount')}
-                >
-                  <div className="flex items-center gap-1">
-                    Amount
-                    {getSortIcon('amount')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-                  onClick={() => handleSort('status')}
-                >
-                  <div className="flex items-center gap-1">
-                    Status
-                    {getSortIcon('status')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-                  onClick={() => handleSort('paid_at')}
-                >
-                  <div className="flex items-center gap-1">
-                    Date
-                    {getSortIcon('paid_at')}
-                  </div>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-16" /></TableCell>
-                    <TableCell><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                  </TableRow>
-                ))
-              ) : data?.data?.results?.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-slate-500">
-                    No donations found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                data?.data?.results?.map((donation) => (
-                  <TableRow key={donation.id}>
-                    <TableCell className="font-medium text-xs text-slate-500">{donation.donation_number || '-'}</TableCell>
-                    <TableCell>{donation.donor_name}</TableCell>
-                    <TableCell className="text-slate-600">
-                      {typeof donation.campaign === 'string' ? donation.campaign : donation.campaign?.title || donation.campaign_title || 'General'}
-                    </TableCell>
-                    <TableCell className="font-medium">${donation.amount}</TableCell>
-                    <TableCell>
-                      <StatusBadge status={donation.status} type="transaction_status" />
-                    </TableCell>
-                    <TableCell className="text-slate-500">
-                      {donation.paid_at ? dayjs(donation.paid_at).format('MMM D, YYYY') : '-'}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
+        <DataTable
+          columns={columns}
+          data={data?.data?.results || []}
+          isLoading={isLoading}
+          sort={sort}
+          onSort={handleSort}
+          emptyMessage="No donations found"
+        />
 
         {/* Pagination */}
         {totalPages > 1 && (

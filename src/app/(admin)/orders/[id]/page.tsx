@@ -7,8 +7,7 @@ import { ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import dayjs from 'dayjs';
+import { DataTable } from '@/components/common/DataTable/DataTable';
 
 export default function ViewOrderPage() {
   const params = useParams();
@@ -16,6 +15,36 @@ export default function ViewOrderPage() {
   
   const { data, isLoading } = useOrderQuery(id);
   const order = data;
+
+  const itemColumns = [
+    {
+      id: 'product',
+      header: 'Product',
+      headerClassName: 'px-6 py-4 text-xs font-bold uppercase text-slate-500',
+      cellClassName: 'px-6 py-4',
+      renderCell: (row: any) => (
+        <p className="text-sm font-bold text-slate-900">{row.product_name_snapshot}</p>
+      ),
+    },
+    {
+      id: 'quantity',
+      header: 'Quantity',
+      headerAlign: 'center' as const,
+      cellAlign: 'center' as const,
+      headerClassName: 'px-6 py-4 text-xs font-bold uppercase text-slate-500 text-center',
+      cellClassName: 'px-6 py-4 text-sm text-slate-600 text-center font-medium',
+      accessorKey: 'quantity',
+    },
+    {
+      id: 'line_total',
+      header: 'Line Total',
+      headerAlign: 'right' as const,
+      cellAlign: 'right' as const,
+      headerClassName: 'px-6 py-4 text-xs font-bold uppercase text-slate-500 text-right',
+      cellClassName: 'px-6 py-4 text-sm font-black text-slate-900 text-right',
+      renderCell: (row: any) => `$${row.line_total}`,
+    },
+  ];
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -108,26 +137,12 @@ export default function ViewOrderPage() {
             <div className="p-6 border-b border-slate-100">
               <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Order Items ({order.items?.length || 0})</h3>
             </div>
-            <Table>
-              <TableHeader className="bg-slate-50">
-                <TableRow>
-                  <TableHead className="px-6 py-4 text-xs font-bold uppercase text-slate-500">Product</TableHead>
-                  <TableHead className="px-6 py-4 text-xs font-bold uppercase text-slate-500 text-center">Quantity</TableHead>
-                  <TableHead className="px-6 py-4 text-xs font-bold uppercase text-slate-500 text-right">Line Total</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {order.items?.map((item: any) => (
-                   <TableRow key={item.id} className="hover:bg-slate-50/50">
-                    <TableCell className="px-6 py-4">
-                      <p className="text-sm font-bold text-slate-900">{item.product_name_snapshot}</p>
-                    </TableCell>
-                    <TableCell className="px-6 py-4 text-sm text-slate-600 text-center font-medium">{item.quantity}</TableCell>
-                    <TableCell className="px-6 py-4 text-sm font-black text-slate-900 text-right">${item.line_total}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <DataTable
+              columns={itemColumns}
+              data={order.items || []}
+              isLoading={isLoading}
+              emptyMessage="No items found"
+            />
           </div>
         </div>
       )}

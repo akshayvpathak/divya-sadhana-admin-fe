@@ -10,6 +10,7 @@ export const productSchema = z.object({
   stock_quantity: z.coerce.number().min(0, 'Stock must be 0 or more'),
   is_active: z.boolean().default(true),
   is_published: z.boolean().default(false),
+  gallery_image_keys: z.array(z.string()).default([]),
 });
 
 export type ProductFormData = z.infer<typeof productSchema>;

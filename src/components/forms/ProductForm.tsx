@@ -34,6 +34,7 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
   const { data: fetchedCategories, isLoading: isFetchingCategories } = useAllCategories();
   const uploadMutation = useUploadImageMutation();
   const [isDragging, setIsDragging] = useState(false);
+  const [localPreviews, setLocalPreviews] = useState<{ id: string; url: string; isUploading: boolean; key?: string }[]>([]);
 
   const categories = fetchedCategories || propsCategories;
   const isFetching = isFetchingProduct || isFetchingCategories;
@@ -48,17 +49,57 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
     stock_quantity: fetchedProduct.stock || 0,
     is_active: fetchedProduct.isActive ?? true,
     is_published: fetchedProduct.isPublished ?? false,
+    gallery_image_keys: fetchedProduct.gallery_image_keys || [],
   } : propsInitialData, [fetchedProduct, propsInitialData]);
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema) as any,
-    defaultValues: initialData,
+    defaultValues: {
+      name: '',
+      price: 0,
+      description: '',
+      categoryId: '',
+      image: '',
+      sku: '',
+      stock_quantity: 0,
+      is_active: true,
+      is_published: false,
+      gallery_image_keys: [],
+      ...initialData,
+    },
   });
 
   const categoryId = watch('categoryId');
   const imageUrl = watch('image');
   const isActive = watch('is_active');
   const isPublished = watch('is_published');
+  const galleryImageKeys = watch('gallery_image_keys') || [];
+
+  useEffect(() => {
+    register('image');
+    register('is_active');
+    register('is_published');
+    register('gallery_image_keys');
+  }, [register]);
+
+  // Load existing gallery images into local previews on mount/reset
+  useEffect(() => {
+    if (initialData && initialData.gallery_image_keys) {
+      const existingPreviews = initialData.gallery_image_keys.map((key, index) => {
+        let url = `https://api.divyasadhana.org/media/${key}`;
+        if (fetchedProduct && fetchedProduct.gallery_image_urls && fetchedProduct.gallery_image_urls[index]) {
+          url = fetchedProduct.gallery_image_urls[index];
+        }
+        return {
+          id: key,
+          url,
+          isUploading: false,
+          key
+        };
+      });
+      setLocalPreviews(existingPreviews);
+    }
+  }, [initialData, fetchedProduct]);
 
   useEffect(() => {
     if (initialData) {
@@ -114,6 +155,70 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
       }
     } catch (error) {
       toast.error('Failed to upload image');
+    }
+  };
+
+  const handleGalleryFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    const validFiles = files.filter(file => {
+      if (!file.type.startsWith('image/')) {
+        toast.error(`File ${file.name} is not an image`);
+        return false;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(`File ${file.name} exceeds 5MB limit`);
+        return false;
+      }
+      return true;
+    });
+
+    if (validFiles.length === 0) return;
+
+    // Create local preview URLs and add them to local state immediately
+    const newPreviews = validFiles.map(file => ({
+      id: Math.random().toString(36).substring(7),
+      url: URL.createObjectURL(file),
+      isUploading: true,
+      file
+    }));
+
+    setLocalPreviews(prev => [...prev, ...newPreviews]);
+
+    try {
+      const keys = await uploadMutation.mutateAsync(validFiles);
+      if (keys && keys.length > 0) {
+        // Map returned keys back to the previews
+        const currentKeys = watch('gallery_image_keys') || [];
+        setValue('gallery_image_keys', [...currentKeys, ...keys], { shouldDirty: true });
+        
+        setLocalPreviews(prev => {
+          let keyIndex = 0;
+          return prev.map(p => {
+            const isNew = newPreviews.some(np => np.id === p.id);
+            if (isNew && keyIndex < keys.length) {
+              const assignedKey = keys[keyIndex++];
+              return { ...p, isUploading: false, key: assignedKey };
+            }
+            return p;
+          });
+        });
+        toast.success(`${validFiles.length} image(s) uploaded to gallery`);
+      }
+    } catch (error) {
+      toast.error('Failed to upload gallery images');
+      // Remove all newly added previews on failure
+      const newIds = newPreviews.map(np => np.id);
+      setLocalPreviews(prev => prev.filter(p => !newIds.includes(p.id)));
+    }
+  };
+
+  const handleRemoveGalleryImage = (idToRemove: string, keyToRemove?: string) => {
+    setLocalPreviews(prev => prev.filter(p => p.id !== idToRemove));
+    if (keyToRemove) {
+      const currentKeys = watch('gallery_image_keys') || [];
+      setValue('gallery_image_keys', currentKeys.filter(k => k !== keyToRemove), { shouldDirty: true });
     }
   };
 
@@ -312,6 +417,63 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
           />
         </div>
         {errors.image && <p className="text-sm text-rose-500">{errors.image.message}</p>}
+      </div>
+
+      <div className="space-y-2">
+        <Label>Product Gallery</Label>
+        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-4">
+          {localPreviews.map((item) => (
+            <div key={item.id} className="relative group aspect-square rounded-lg overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center">
+              <img 
+                src={item.url} 
+                alt="Gallery Item" 
+                className={cn("w-full h-full object-cover", item.isUploading && "opacity-40")}
+              />
+              {item.isUploading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                  <Loader2 className="h-6 w-6 animate-spin text-indigo-600" />
+                </div>
+              )}
+              {!readOnly && !item.isUploading && (
+                <button 
+                  type="button"
+                  onClick={() => handleRemoveGalleryImage(item.id, item.key)}
+                  className="absolute top-2 right-2 p-1.5 bg-rose-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+          ))}
+          
+          {!readOnly && (
+            <div 
+              className={cn(
+                "border-2 border-dashed rounded-lg aspect-square flex flex-col items-center justify-center gap-2 text-center cursor-pointer transition-all hover:border-indigo-400 hover:bg-slate-50/50",
+                uploadMutation.isPending ? "opacity-50 pointer-events-none" : "border-slate-200"
+              )}
+              onClick={() => document.getElementById('gallery-upload')?.click()}
+            >
+              {uploadMutation.isPending ? (
+                <Loader2 className="h-5 w-5 animate-spin text-indigo-600" />
+              ) : (
+                <>
+                  <Upload className="h-5 w-5 text-slate-400" />
+                  <span className="text-xs text-slate-500 font-medium px-2">Upload Gallery</span>
+                </>
+              )}
+              <input 
+                id="gallery-upload" 
+                type="file" 
+                multiple
+                className="hidden" 
+                accept="image/*"
+                onChange={handleGalleryFileSelect}
+                disabled={uploadMutation.isPending}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="pt-4 flex justify-end gap-2">

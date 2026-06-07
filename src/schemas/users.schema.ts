@@ -6,6 +6,7 @@ const UserSchema = z.object({
   first_name: z.string(),
   last_name: z.string(),
   is_active: z.boolean(),
+  is_superuser: z.boolean().optional(),
 });
 
 export const usersListResponseSchema = z.object({
@@ -23,11 +24,15 @@ export const createUserSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
   last_name: z.string().min(1, "Last name is required"),
   is_active: z.boolean().default(true),
+  is_superuser: z.boolean().optional(),
 });
 
 export const updateUserSchema = z.object({
-  first_name: z.string().min(1, "First name is required"),
-  last_name: z.string().min(1, "Last name is required"),
+  first_name: z.string().min(1, "First name is required").optional(),
+  last_name: z.string().min(1, "Last name is required").optional(),
+  email: z.string().email("Please enter a valid email address").optional(),
+  is_active: z.boolean().optional(),
+  is_superuser: z.boolean().optional(),
 });
 
 export type User = z.infer<typeof UserSchema>;
@@ -43,4 +48,5 @@ export interface UsersListParams {
   fields?: string;
   sort?: string;
   is_active?: boolean;
+  is_superuser?: boolean;
 }

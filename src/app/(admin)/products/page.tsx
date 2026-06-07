@@ -3,35 +3,19 @@
 import { useState } from 'react';
 import { useProducts, useDeleteProduct } from '@/hooks/useProducts';
 import { useAllCategories } from '@/hooks/useCategories';
-import { Plus, Search, Edit2, Trash2, ChevronLeft, ChevronRight, Filter, Package, Eye, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
-import { StatusBadge } from '@/components/ui/status-badge';
+import { Plus, Search, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import Link from 'next/link';
-import Image from 'next/image';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { DataTable } from '@/components/common/DataTable/DataTable';
+import { useProductTableColumns } from '@/hooks/tables/useProductTableColumns';
 
 export default function ProductsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  
   const [sort, setSort] = useState('');
   
   // Deletion state
@@ -40,24 +24,12 @@ export default function ProductsPage() {
 
   const { data: categories } = useAllCategories();
   const { data, isLoading } = useProducts(page, 10, search, selectedCategory, sort);
+  const { mutate: deleteProduct, isPending: isDeleting } = useDeleteProduct();
 
   const handleSort = (field: string) => {
-    if (sort === field) {
-      setSort(`-${field}`);
-    } else if (sort === `-${field}`) {
-      setSort('');
-    } else {
-      setSort(field);
-    }
+    setSort(field);
     setPage(1);
   };
-
-  const getSortIcon = (field: string) => {
-    if (sort === field) return <ArrowUp className="h-4 w-4 text-indigo-600 shrink-0" />;
-    if (sort === `-${field}`) return <ArrowDown className="h-4 w-4 text-indigo-600 shrink-0" />;
-    return <ArrowUpDown className="h-4 w-4 text-slate-400 shrink-0" />;
-  };
-  const { mutate: deleteProduct, isPending: isDeleting } = useDeleteProduct();
 
   const openDeleteModal = (id: string) => {
     setProductToDelete(id);
@@ -79,6 +51,11 @@ export default function ProductsPage() {
     const category = categories?.find(c => c.id === categoryId);
     return category ? category.name : 'Unknown';
   };
+
+  const columns = useProductTableColumns({
+    getCategoryName,
+    openDeleteModal,
+  });
 
   return (
     <div className="space-y-6">
@@ -138,174 +115,14 @@ export default function ProductsPage() {
           </div>
         </div>
 
-        <div className="overflow-x-auto flex-1">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-slate-50 hover:bg-slate-50">
-                <TableHead 
-                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-                  onClick={() => handleSort('name')}
-                >
-                  <div className="flex items-center gap-1">
-                    Product
-                    {getSortIcon('name')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-                  onClick={() => handleSort('category')}
-                >
-                  <div className="flex items-center gap-1">
-                    Category
-                    {getSortIcon('category')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-                  onClick={() => handleSort('price')}
-                >
-                  <div className="flex items-center gap-1">
-                    Price
-                    {getSortIcon('price')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-                  onClick={() => handleSort('stock_quantity')}
-                >
-                  <div className="flex items-center gap-1">
-                    Stock
-                    {getSortIcon('stock_quantity')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-                  onClick={() => handleSort('is_active')}
-                >
-                  <div className="flex items-center gap-1">
-                    Status
-                    {getSortIcon('is_active')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-                  onClick={() => handleSort('is_published')}
-                >
-                  <div className="flex items-center gap-1">
-                    Published
-                    {getSortIcon('is_published')}
-                  </div>
-                </TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Skeleton className="h-10 w-10 rounded-md" />
-                        <div className="space-y-1">
-                          <Skeleton className="h-4 w-32" />
-                          <Skeleton className="h-3 w-48" />
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-16" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-12" /></TableCell>
-                    <TableCell><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
-                    <TableCell><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
-                    <TableCell className="text-right"><Skeleton className="h-8 w-24 ml-auto" /></TableCell>
-                  </TableRow>
-                ))
-              ) : data?.data.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-slate-500">
-                    No products found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                data?.data.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="relative h-10 w-10 rounded-md overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
-                          {product.image ? (
-                            <Image 
-                              src={product.image} 
-                              alt={product.name}
-                              fill
-                              className="object-cover"
-                              unoptimized
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-slate-400">
-                              <Package className="h-5 w-5" />
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="font-medium">{product.name}</span>
-                          <span className="text-xs text-slate-500 max-w-[150px] truncate">
-                            {product.description}
-                          </span>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-xs">
-                        {getCategoryName(product.categoryId)}
-                      </span>
-                    </TableCell>
-                    <TableCell className="font-medium text-slate-900">
-                      ${product.price.toFixed(2)}
-                    </TableCell>
-                    <TableCell>
-                      <span className={`text-xs font-bold ${product.stock <= 10 ? 'text-rose-600' : 'text-slate-600'}`}>
-                        {product.stock}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge status={product.isActive} type="active" />
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge status={product.isPublished} type="published" />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Link href={`/products/${product.id}?mode=view`}>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="text-slate-400 hover:text-indigo-600"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        <Link href={`/products/${product.id}?mode=edit`}>
-                          <Button variant="ghost" size="icon" className="text-slate-400 hover:text-indigo-600">
-                            <Edit2 className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={() => openDeleteModal(product.id)} 
-                          className="text-slate-400 hover:text-rose-600"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-
+        <DataTable
+          columns={columns}
+          data={data?.data || []}
+          isLoading={isLoading}
+          sort={sort}
+          onSort={handleSort}
+          emptyMessage="No products found"
+        />
 
         {/* Pagination */}
         {data && data.meta.totalPages > 1 && (

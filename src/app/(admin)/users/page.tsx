@@ -1,59 +1,33 @@
 'use client';
 
-import { useState } from 'react';
-import { useUsers, useDeleteUser } from '@/hooks/useUsers';
-import { Plus, Search, Edit2, Trash2, ChevronLeft, ChevronRight, Eye, User as UserIcon, Filter, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
-import { StatusBadge } from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import dayjs from 'dayjs';
+import { useDeleteUser, useUsers } from '@/hooks/useUsers';
+import { ChevronLeft, ChevronRight, Filter, Plus, Search } from 'lucide-react';
 import Link from 'next/link';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { useState } from 'react';
+import { DataTable } from '@/components/common/DataTable/DataTable';
+import { useUserTableColumns } from '@/hooks/tables/useUserTableColumns';
 
 export default function UsersPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [selectedRole, setSelectedRole] = useState('all');
+  const [selectedStatus, setSelectedStatus] = useState('all');
   const [sort, setSort] = useState('');
   
   // Deletion state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
 
-  const { data, isLoading } = useUsers(page, 10, search, selectedRole, sort);
+  const { data, isLoading } = useUsers(page, 10, search, selectedRole, selectedStatus, sort);
   const { mutate: deleteUser, isPending: isDeleting } = useDeleteUser();
 
   const handleSort = (field: string) => {
-    if (sort === field) {
-      setSort(`-${field}`);
-    } else if (sort === `-${field}`) {
-      setSort('');
-    } else {
-      setSort(field);
-    }
+    setSort(field);
     setPage(1);
-  };
-
-  const getSortIcon = (field: string) => {
-    if (sort === field) return <ArrowUp className="h-4 w-4 text-indigo-600 shrink-0" />;
-    if (sort === `-${field}`) return <ArrowDown className="h-4 w-4 text-indigo-600 shrink-0" />;
-    return <ArrowUpDown className="h-4 w-4 text-slate-400 shrink-0" />;
   };
 
   const openDeleteModal = (id: string) => {
@@ -71,6 +45,10 @@ export default function UsersPage() {
       });
     }
   };
+
+  const columns = useUserTableColumns({
+    openDeleteModal,
+  });
 
   return (
     <div className="space-y-6">
@@ -101,7 +79,7 @@ export default function UsersPage() {
               }}
             />
           </div>
-          <div className="w-full sm:w-64 flex items-center gap-2">
+          <div className="flex flex-wrap sm:flex-nowrap gap-2 items-center">
             <Filter className="h-4 w-4 text-slate-400 shrink-0" />
             <Select 
               value={selectedRole} 
@@ -110,7 +88,7 @@ export default function UsersPage() {
                 setPage(1);
               }}
             >
-              <SelectTrigger className="bg-white">
+              <SelectTrigger className="bg-white w-[140px]">
                 <SelectValue placeholder="All Roles">
                   {selectedRole === 'admin' ? 'Admin' : selectedRole === 'user' ? 'User' : 'All Roles'}
                 </SelectValue>
@@ -121,118 +99,36 @@ export default function UsersPage() {
                 <SelectItem value="user">User</SelectItem>
               </SelectContent>
             </Select>
+
+            <Select 
+              value={selectedStatus} 
+              onValueChange={(val) => {
+                setSelectedStatus(val || 'all');
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="bg-white w-[140px]">
+                <SelectValue placeholder="All Statuses">
+                  {selectedStatus === 'active' ? 'Active' : selectedStatus === 'inactive' ? 'Inactive' : 'All Statuses'}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
-        <div className="overflow-x-auto flex-1">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-slate-50 hover:bg-slate-50">
-                <TableHead 
-                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-                  onClick={() => handleSort('first_name')}
-                >
-                  <div className="flex items-center gap-1">
-                    Name
-                    {getSortIcon('first_name')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-                  onClick={() => handleSort('email')}
-                >
-                  <div className="flex items-center gap-1">
-                    Email
-                    {getSortIcon('email')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-                  onClick={() => handleSort('is_active')}
-                >
-                  <div className="flex items-center gap-1">
-                    Role
-                    {getSortIcon('is_active')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer select-none hover:bg-slate-100/50 transition-colors"
-                  onClick={() => handleSort('is_active')}
-                >
-                  <div className="flex items-center gap-1">
-                    Status
-                    {getSortIcon('is_active')}
-                  </div>
-                </TableHead>
-                <TableHead>Joined</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-48" /></TableCell>
-                    <TableCell><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
-                    <TableCell><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                    <TableCell className="text-right"><Skeleton className="h-8 w-24 ml-auto" /></TableCell>
-                  </TableRow>
-                ))
-              ) : data?.data.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-slate-500">
-                    No users found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                data?.data.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.name}</TableCell>
-                    <TableCell className="text-slate-500">{user.email}</TableCell>
-                    <TableCell>
-                      <StatusBadge status={user.role} type="role" />
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge status={user.is_active} type="active" />
-                    </TableCell>
-                    <TableCell className="text-slate-500">
-                      {dayjs(user.createdAt).format('MMM D, YYYY')}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Link href={`/users/${user.id}?mode=view`}>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="text-slate-400 hover:text-indigo-600"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        <Link href={`/users/${user.id}?mode=edit`}>
-                          <Button variant="ghost" size="icon" className="text-slate-400 hover:text-indigo-600">
-                            <Edit2 className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={() => openDeleteModal(user.id)} 
-                          className="text-slate-400 hover:text-rose-600"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-
+        <DataTable
+          columns={columns}
+          data={data?.data || []}
+          isLoading={isLoading}
+          sort={sort}
+          onSort={handleSort}
+          emptyMessage="No users found"
+        />
 
         {/* Pagination */}
         {data && data.meta.totalPages > 1 && (

@@ -86,6 +86,8 @@ export const useProduct = (id: string) => {
         isActive: p.is_active,
         isPublished: p.is_published,
         image: cleanImageUrl(p.primary_image_url) || `https://picsum.photos/seed/${p.id}/400/400`,
+        gallery_image_keys: p.gallery_image_keys || [],
+        gallery_image_urls: (p.gallery_image_urls || []).map(url => cleanImageUrl(url)).filter(Boolean) as string[],
       };
     },
     enabled: !!id && !!accessToken,
@@ -109,7 +111,7 @@ export const useCreateProduct = () => {
         is_published: data.is_published,
         primary_image_key: data.image || '',
         category: data.categoryId,
-        gallery_image_keys: []
+        gallery_image_keys: data.gallery_image_keys || []
       }, accessToken);
     },
     onSuccess: () => {
@@ -139,6 +141,7 @@ export const useUpdateProduct = () => {
       if (data.stock_quantity !== undefined) updateData.stock_quantity = data.stock_quantity;
       if (data.is_active !== undefined) updateData.is_active = data.is_active;
       if (data.is_published !== undefined) updateData.is_published = data.is_published;
+      if (data.gallery_image_keys !== undefined) updateData.gallery_image_keys = data.gallery_image_keys;
 
       return updateProduct(id, updateData, accessToken);
     },

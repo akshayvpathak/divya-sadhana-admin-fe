@@ -9,6 +9,7 @@ const moneyNumberSchema = z.union([z.number(), z.string()]).transform((value) =>
 
 export const createDonationCampaignSchema = z.object({
   title: z.string().min(1, "Title is required"),
+  slug: z.string().min(1, "Slug is required").regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens"),
   description: z.string().min(1, "Description is required"),
   target_amount: moneyNumberSchema,
   status: statusSchema,
