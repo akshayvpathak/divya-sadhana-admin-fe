@@ -11,10 +11,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import Link from 'next/link';
 import { DataTable } from '@/components/common/DataTable/DataTable';
 import { useProductTableColumns } from '@/hooks/tables/useProductTableColumns';
+import { useDebounce } from '@/hooks/useDebounce';
 
 export default function ProductsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [sort, setSort] = useState('');
   
@@ -23,7 +25,7 @@ export default function ProductsPage() {
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
 
   const { data: categories } = useAllCategories();
-  const { data, isLoading } = useProducts(page, 10, search, selectedCategory, sort);
+  const { data, isLoading } = useProducts(page, 10, debouncedSearch, selectedCategory, sort);
   const { mutate: deleteProduct, isPending: isDeleting } = useDeleteProduct();
 
   const handleSort = (field: string) => {
@@ -47,9 +49,10 @@ export default function ProductsPage() {
     }
   };
 
-  const getCategoryName = (categoryId: string) => {
+  const getCategoryName = (categoryId: string | null) => {
+    if (!categoryId) return 'NA';
     const category = categories?.find(c => c.id === categoryId);
-    return category ? category.name : 'Unknown';
+    return category ? category.name : 'NA';
   };
 
   const columns = useProductTableColumns({
@@ -105,11 +108,13 @@ export default function ProductsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                {categories?.map(category => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.name}
-                  </SelectItem>
-                ))}
+                {categories
+                  ?.filter(category => category.isActive !== false || category.id === selectedCategory)
+                  ?.map(category => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>

@@ -9,17 +9,19 @@ import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import { DataTable } from '@/components/common/DataTable/DataTable';
 import { useDonationCampaignTableColumns } from '@/hooks/tables/useDonationCampaignTableColumns';
+import { useDebounce } from '@/hooks/useDebounce';
 
 export default function DonationCampaignsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [sort, setSort] = useState('');
   
   // Deletion state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [campaignToDelete, setCampaignToDelete] = useState<string | null>(null);
 
-  const { data, isLoading } = useDonationCampaignsListQuery({ page, search, sort });
+  const { data, isLoading } = useDonationCampaignsListQuery({ page, search: debouncedSearch, sort });
   const { mutate: deleteCampaign, isPending: isDeleting } = useDeleteDonationCampaignMutation();
 
   const openDeleteModal = (id: string) => {

@@ -10,10 +10,12 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { DataTable } from '@/components/common/DataTable/DataTable';
 import { useUserTableColumns } from '@/hooks/tables/useUserTableColumns';
+import { useDebounce } from '@/hooks/useDebounce';
 
 export default function UsersPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [selectedRole, setSelectedRole] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [sort, setSort] = useState('');
@@ -22,7 +24,7 @@ export default function UsersPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
 
-  const { data, isLoading } = useUsers(page, 10, search, selectedRole, selectedStatus, sort);
+  const { data, isLoading } = useUsers(page, 10, debouncedSearch, selectedRole, selectedStatus, sort);
   const { mutate: deleteUser, isPending: isDeleting } = useDeleteUser();
 
   const handleSort = (field: string) => {

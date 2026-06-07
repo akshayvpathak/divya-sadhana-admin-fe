@@ -8,7 +8,7 @@ import {
   createUserSchema,
   updateUserSchema,
 } from "@/schemas/users.schema";
-import { ApiError } from "@/services/auth.service";
+import { ApiError, formatApiError } from "@/services/auth.service";
 import { z } from "zod";
 
 const API_BASE_URL =
@@ -110,7 +110,7 @@ export async function createUser(
 
   if (!response.ok) {
     throw new ApiError(
-      json?.message || "Failed to create user",
+      formatApiError(json, "Failed to create user"),
       response.status
     );
   }
@@ -139,7 +139,7 @@ export async function updateUser(
 
   if (!response.ok) {
     throw new ApiError(
-      json?.message || "Failed to update user",
+      formatApiError(json, "Failed to update user"),
       response.status
     );
   }

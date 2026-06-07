@@ -6,6 +6,7 @@ import {
   productsListSchema,
   productSchema,
 } from "@/schemas/products.schema";
+import { ApiError, formatApiError } from "@/services/auth.service";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://api.divyasadhana.org/api";
@@ -77,8 +78,8 @@ export const createProduct = async (
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || "Failed to create product");
+    const json = await response.json();
+    throw new ApiError(formatApiError(json, "Failed to create product"), response.status);
   }
 
   const json = await response.json();
@@ -122,8 +123,8 @@ export const updateProduct = async (
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || "Failed to update product");
+    const json = await response.json();
+    throw new ApiError(formatApiError(json, "Failed to update product"), response.status);
   }
 
   const json = await response.json();

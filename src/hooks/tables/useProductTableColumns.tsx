@@ -8,18 +8,18 @@ import { ColumnConfig } from '@/components/common/DataTable/types';
 
 export interface ProductRow {
   id: string;
-  name: string;
-  description: string;
+  name: string | null;
+  description: string | null;
   image?: string | null;
-  categoryId: string;
+  categoryId: string | null;
   price: number;
   stock: number;
-  isActive: boolean;
-  isPublished: boolean;
+  is_active: boolean;
+  is_published: boolean;
 }
 
 interface UseProductTableColumnsProps {
-  getCategoryName: (categoryId: string) => string;
+  getCategoryName: (categoryId: string | null) => string;
   openDeleteModal: (id: string) => void;
 }
 
@@ -39,7 +39,7 @@ export const useProductTableColumns = ({
             {row.image ? (
               <Image 
                 src={row.image} 
-                alt={row.name}
+                alt={row.name || ''}
                 fill
                 className="object-cover"
                 unoptimized
@@ -92,20 +92,20 @@ export const useProductTableColumns = ({
       ),
     },
     {
-      id: 'isActive',
-      accessorKey: 'isActive',
+      id: 'is_active',
+      accessorKey: 'is_active',
       header: 'Status',
       sortable: true,
       sortKey: 'is_active',
-      renderCell: (row) => <StatusBadge status={row.isActive} type="active" />,
+      renderCell: (row) => <StatusBadge status={row.is_active} type="active" />,
     },
     {
-      id: 'isPublished',
-      accessorKey: 'isPublished',
+      id: 'is_published',
+      accessorKey: 'is_published',
       header: 'Published',
       sortable: true,
       sortKey: 'is_published',
-      renderCell: (row) => <StatusBadge status={row.isPublished} type="published" />,
+      renderCell: (row) => <StatusBadge status={row.is_published} type="published" />,
     },
     {
       id: 'actions',

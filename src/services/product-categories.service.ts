@@ -7,25 +7,25 @@ import {
   UpdateCategoryPayload,
   createCategorySchema,
   updateCategorySchema,
+  ProductCategorySchema,
 } from "@/schemas/product-categories.schema";
-import { ApiError } from "@/services/auth.service";
+import { ApiError, formatApiError } from "@/services/auth.service";
 import { z } from "zod";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://api.divyasadhana.org/api";
 
-const CategoryResponseSchema = z.object({
-  message: z.string(),
-  data: z.object({
-    id: z.string(),
-    name: z.string(),
-    slug: z.string(),
-    description: z.string(),
-    is_active: z.boolean(),
-    is_deleted: z.boolean(),
-    created_at: z.string(),
-    updated_at: z.string(),
+const CategoryResponseSchema = z.union([
+  z.object({
+    message: z.string().optional(),
+    data: ProductCategorySchema,
   }),
+  ProductCategorySchema,
+]).transform((val) => {
+  if ('data' in val) {
+    return val.data;
+  }
+  return val;
 });
 
 /**
@@ -97,12 +97,12 @@ export async function createCategory(
 
   if (!response.ok) {
     throw new ApiError(
-      json?.message || "Failed to create category",
+      formatApiError(json, "Failed to create category"),
       response.status
     );
   }
 
-  return CategoryResponseSchema.parse(json).data;
+  return CategoryResponseSchema.parse(json);
 }
 
 export async function updateCategory(
@@ -127,12 +127,12 @@ export async function updateCategory(
 
   if (!response.ok) {
     throw new ApiError(
-      json?.message || "Failed to update category",
+      formatApiError(json, "Failed to update category"),
       response.status
     );
   }
 
-  return CategoryResponseSchema.parse(json).data;
+  return CategoryResponseSchema.parse(json);
 }
 
 export async function deleteCategory(
@@ -178,5 +178,5 @@ export async function getCategory(
     );
   }
 
-  return CategoryResponseSchema.parse(json).data;
+  return CategoryResponseSchema.parse(json);
 }

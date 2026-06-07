@@ -9,17 +9,19 @@ import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import Link from 'next/link';
 import { DataTable } from '@/components/common/DataTable/DataTable';
 import { useCategoryTableColumns } from '@/hooks/tables/useCategoryTableColumns';
+import { useDebounce } from '@/hooks/useDebounce';
 
 export default function CategoriesPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   
   // Deletion state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [sort, setSort] = useState('');
 
-  const { data, isLoading } = useCategories(page, 10, search, sort);
+  const { data, isLoading } = useCategories(page, 10, debouncedSearch, sort);
   const { mutate: deleteCategory, isPending: isDeleting } = useDeleteCategory();
 
   const handleSort = (field: string) => {

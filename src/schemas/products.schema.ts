@@ -21,21 +21,21 @@ export const createProductSchema = z.object({
 export const updateProductSchema = createProductSchema.partial();
 
 export const productSchema = z.object({
-  id: z.string().uuid(),
-  name: z.string(),
-  description: z.string(),
-  sku: z.string(),
-  price: z.union([z.number(), z.string()]).transform((val) => parseFloat(String(val))),
-  stock_quantity: z.number(),
-  is_active: z.boolean(),
-  is_published: z.boolean(),
-  primary_image_key: z.string(),
+  id: z.string(),
+  name: z.string().nullable().optional().default(""),
+  description: z.string().nullable().optional().default(""),
+  sku: z.string().nullable().optional().default(""),
+  price: z.union([z.number(), z.string()]).nullable().optional().transform((val) => val ? parseFloat(String(val)) : 0),
+  stock_quantity: z.number().nullable().optional().transform((val) => val ?? 0),
+  is_active: z.boolean().nullable().optional().transform((val) => val ?? true),
+  is_published: z.boolean().nullable().optional().transform((val) => val ?? false),
+  primary_image_key: z.string().nullable().optional().default(""),
   primary_image_url: z.string().nullable().optional(),
-  gallery_image_keys: z.array(z.string()),
-  gallery_image_urls: z.array(z.string()).optional(),
-  category: z.string().uuid(),
-  created_at: z.string(),
-  updated_at: z.string(),
+  gallery_image_keys: z.array(z.string()).nullable().optional().default([]),
+  gallery_image_urls: z.array(z.string()).nullable().optional().default([]),
+  category: z.string().nullable().optional().default(""),
+  created_at: z.string().nullable().optional(),
+  updated_at: z.string().nullable().optional(),
 });
 
 export const productsListSchema = z.object({

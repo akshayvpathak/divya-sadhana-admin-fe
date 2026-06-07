@@ -6,7 +6,7 @@ import { userSchema, UserFormData } from '@/schemas/user.schema';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import Link from 'next/link';
 import { useEffect, useMemo } from 'react';
 
@@ -114,29 +114,20 @@ export function UserForm({ userId, initialData: propsInitialData, onSubmit, isPe
             type="email"
             placeholder="john@example.com" 
             {...register('email')} 
-            disabled={readOnly}
-            className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}
+            readOnly={readOnly || !!userId}
+            className={readOnly || !!userId ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0 select-none" : ""}
           />
           {errors.email && <p className="text-sm text-rose-500">{errors.email.message}</p>}
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="is_active">Status <span className="text-rose-500">*</span></Label>
-          <Select 
-            value={isActiveValue !== undefined ? (isActiveValue ? "active" : "inactive") : ""} 
-            onValueChange={(val) => setValue('is_active', val === 'active')}
+        <div className="flex items-center gap-2 pt-8">
+          <Switch 
+            id="is_active" 
+            checked={!!isActiveValue} 
+            onCheckedChange={(val) => setValue('is_active', val)}
             disabled={readOnly}
-          >
-            <SelectTrigger id="is_active" className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default" : "bg-white"}>
-              <SelectValue placeholder="Select status">
-                {isActiveValue ? 'Active' : 'Inactive'}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-            </SelectContent>
-          </Select>
+          />
+          <Label htmlFor="is_active" className="cursor-pointer">Active</Label>
           {errors.is_active && <p className="text-sm text-rose-500">{errors.is_active.message}</p>}
         </div>
       </div>

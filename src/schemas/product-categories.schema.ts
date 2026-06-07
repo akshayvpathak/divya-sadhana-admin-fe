@@ -1,9 +1,8 @@
 import { z } from "zod";
 
-const ProductCategorySchema = z.object({
+export const ProductCategorySchema = z.object({
   id: z.string(),
   name: z.string(),
-  slug: z.string(),
   description: z.string(),
   is_active: z.boolean(),
   is_deleted: z.boolean(),
@@ -23,7 +22,6 @@ export const categoriesListResponseSchema = z.object({
 
 export const createCategorySchema = z.object({
   name: z.string().min(1, "Name is required"),
-  slug: z.string().min(1, "Slug is required").regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens"),
   description: z.string().min(1, "Description is required"),
   is_active: z.boolean().default(true),
 });

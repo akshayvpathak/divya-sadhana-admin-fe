@@ -7,13 +7,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DataTable } from '@/components/common/DataTable/DataTable';
 import { usePaymentTableColumns } from '@/hooks/tables/usePaymentTableColumns';
+import { useDebounce } from '@/hooks/useDebounce';
 
 export default function PaymentsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [sort, setSort] = useState('-created_at');
   
-  const { data, isLoading } = usePaymentsListQuery(page, search, sort);
+  const { data, isLoading } = usePaymentsListQuery(page, debouncedSearch, sort);
 
   const handleSort = (field: string) => {
     setSort(field);

@@ -23,6 +23,15 @@ export class ApiError extends Error {
   }
 }
 
+export function formatApiError(json: any, defaultMessage: string): string {
+  if (json?.data?.errors && Array.isArray(json.data.errors) && json.data.errors.length > 0) {
+    return json.data.errors
+      .map((e: any) => e.message || `${e.label}: ${e.code}`)
+      .join(', ');
+  }
+  return json?.message || defaultMessage;
+}
+
 export async function login(payload: LoginPayload): Promise<LoginResponse> {
   const parsedPayload = loginPayloadSchema.parse(payload);
 

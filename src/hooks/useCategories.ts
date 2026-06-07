@@ -15,7 +15,6 @@ export const useCategories = (page = 1, limit = 10, search = '', sort = '') => {
         data: response.data.results.map(c => ({
           id: c.id,
           name: c.name,
-          slug: c.slug,
           description: c.description,
           isActive: c.is_active,
           image: `https://picsum.photos/seed/${c.id}/400/400`,
@@ -41,13 +40,13 @@ export const useAllCategories = () => {
       return response.data.results.map(c => ({
         id: c.id,
         name: c.name,
-        slug: c.slug,
         description: c.description,
         isActive: c.is_active,
         image: `https://picsum.photos/seed/${c.id}/400/400`,
       }));
     },
     enabled: !!accessToken,
+    staleTime: 30000,
   });
 };
 
@@ -61,7 +60,6 @@ export const useCategory = (id: string) => {
       return {
         id: c.id,
         name: c.name,
-        slug: c.slug,
         description: c.description,
         isActive: c.is_active,
         image: `https://picsum.photos/seed/${c.id}/400/400`,
@@ -80,7 +78,6 @@ export const useCreateCategory = () => {
       if (!accessToken) throw new Error('No access token');
       return createCategory({
         name: data.name,
-        slug: data.slug,
         description: data.description,
         is_active: data.isActive !== undefined ? data.isActive : true,
       }, accessToken);
@@ -103,8 +100,9 @@ export const useUpdateCategory = () => {
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
       if (!accessToken) throw new Error('No access token');
       const updateData: any = {};
-      if (data.name !== undefined) updateData.name = data.name;
-      if (data.slug !== undefined) updateData.slug = data.slug;
+      if (data.name !== undefined) {
+        updateData.name = data.name;
+      }
       if (data.description !== undefined) updateData.description = data.description;
       if (data.isActive !== undefined) updateData.is_active = data.isActive;
 
