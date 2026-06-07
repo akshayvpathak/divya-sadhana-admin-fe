@@ -82,7 +82,6 @@ export const useCreateUser = () => {
         last_name: data.last_name || '',
         email: data.email,
         is_active: data.is_active !== undefined ? data.is_active : true,
-        is_superuser: data.role === 'admin',
       }, accessToken);
     },
     onSuccess: () => {

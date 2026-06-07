@@ -27,7 +27,6 @@ export function UserForm({ userId, initialData: propsInitialData, onSubmit, isPe
     first_name: fetchedUser.first_name || '',
     last_name: fetchedUser.last_name || '',
     email: fetchedUser.email,
-    role: fetchedUser.role as 'admin' | 'user',
     is_active: fetchedUser.is_active ?? true,
   } : propsInitialData, [fetchedUser, propsInitialData]);
 
@@ -37,17 +36,14 @@ export function UserForm({ userId, initialData: propsInitialData, onSubmit, isPe
       first_name: '',
       last_name: '',
       email: '',
-      role: 'user',
       is_active: true,
       ...initialData,
     },
   });
 
-  const roleValue = watch('role');
   const isActiveValue = watch('is_active');
 
   useEffect(() => {
-    register('role');
     register('is_active');
   }, [register]);
 
@@ -122,26 +118,6 @@ export function UserForm({ userId, initialData: propsInitialData, onSubmit, isPe
             className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}
           />
           {errors.email && <p className="text-sm text-rose-500">{errors.email.message}</p>}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="role">Role <span className="text-rose-500">*</span></Label>
-          <Select 
-            value={roleValue || ""} 
-            onValueChange={(val) => setValue('role', val as 'admin' | 'user')}
-            disabled={readOnly}
-          >
-            <SelectTrigger id="role" className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default" : "bg-white"}>
-              <SelectValue placeholder="Select a role">
-                {roleValue === 'admin' ? 'Admin' : roleValue === 'user' ? 'User' : 'Select a role'}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="user">User</SelectItem>
-              <SelectItem value="admin">Admin</SelectItem>
-            </SelectContent>
-          </Select>
-          {errors.role && <p className="text-sm text-rose-500">{errors.role.message}</p>}
         </div>
 
         <div className="space-y-2">

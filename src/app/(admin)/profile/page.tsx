@@ -72,7 +72,7 @@ export default function ProfilePage() {
             <p className="text-slate-500">{user?.email}</p>
             <div className="mt-2 flex gap-2">
               <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
-                {user?.is_superuser ? 'Super Admin' : 'Admin'}
+                {user?.is_superuser ? 'Admin' : 'User'}
               </span>
               <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
                 user?.is_active ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-700'

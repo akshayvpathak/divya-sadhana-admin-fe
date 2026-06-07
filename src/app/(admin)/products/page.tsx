@@ -67,7 +67,7 @@ export default function ProductsPage() {
         
         <Link href="/products/create">
           <Button className="bg-indigo-600 hover:bg-indigo-700">
-            <Plus className="mr-2 h-4 w-4" /> Add Product
+            <Plus className="h-4 w-4" /> Add Product
           </Button>
         </Link>
       </div>

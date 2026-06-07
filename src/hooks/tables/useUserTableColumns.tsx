@@ -54,14 +54,14 @@ export const useUserTableColumns = ({
       sortKey: 'is_active',
       renderCell: (row) => <StatusBadge status={row.is_active} type="active" />,
     },
-    {
-      id: 'createdAt',
-      accessorKey: 'createdAt',
-      header: 'Joined',
-      sortable: false,
-      cellClassName: 'text-slate-500',
-      renderCell: (row) => dayjs(row.createdAt).format('MMM D, YYYY'),
-    },
+    // {
+    //   id: 'createdAt',
+    //   accessorKey: 'createdAt',
+    //   header: 'Joined',
+    //   sortable: false,
+    //   cellClassName: 'text-slate-500',
+    //   renderCell: (row) => dayjs(row.createdAt).format('MMM D, YYYY'),
+    // },
     {
       id: 'actions',
       header: 'Actions',

@@ -57,7 +57,7 @@ export default function CategoriesPage() {
         
         <Link href="/categories/create">
           <Button className="bg-indigo-600 hover:bg-indigo-700">
-            <Plus className="mr-2 h-4 w-4" /> Add Category
+            <Plus className="h-4 w-4" /> Add Category
           </Button>
         </Link>
       </div>

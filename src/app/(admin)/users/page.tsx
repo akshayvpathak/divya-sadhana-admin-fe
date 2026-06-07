@@ -60,7 +60,7 @@ export default function UsersPage() {
         
         <Link href="/users/create">
           <Button className="bg-indigo-600 hover:bg-indigo-700">
-            <Plus className="mr-2 h-4 w-4" /> Add User
+            <Plus className="h-4 w-4" /> Add User
           </Button>
         </Link>
       </div>
@@ -166,6 +166,7 @@ export default function UsersPage() {
         onConfirm={confirmDelete}
         confirmText={isDeleting ? "Deleting..." : "Delete"}
         variant="destructive"
+        disabled={isDeleting}
       />
     </div>
   );
