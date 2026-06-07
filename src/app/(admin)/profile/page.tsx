@@ -4,7 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { UserCircle, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { useUpdateUser } from '@/hooks/useUsers';
+import { useUpdateProfile } from '@/hooks/useProfile';
 import { useForm } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,7 +18,7 @@ export default function ProfilePage() {
   const { user, updateUser: updateAuthUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   
-  const { mutate: updateUserMutation, isPending } = useUpdateUser();
+  const { mutate: updateProfileMutation, isPending } = useUpdateProfile();
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ProfileFormData>({
     defaultValues: {
@@ -39,9 +39,12 @@ export default function ProfilePage() {
   const onSubmit = (data: ProfileFormData) => {
     if (!user) return;
     
-    updateUserMutation({
+    updateProfileMutation({
       id: user.id,
-      data: { name: `${data.firstName} ${data.lastName}` }
+      data: {
+        first_name: data.firstName,
+        last_name: data.lastName,
+      }
     }, {
       onSuccess: (updatedUser) => {
         updateAuthUser({

@@ -107,7 +107,6 @@ export const useUpdateUser = () => {
         last_name: data.last_name,
         email: data.email,
         is_active: data.is_active,
-        is_superuser: data.role === 'admin',
       };
 
       return updateUser(id, payload, accessToken);

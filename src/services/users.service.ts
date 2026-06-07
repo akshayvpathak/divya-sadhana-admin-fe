@@ -22,6 +22,7 @@ const UserResponseSchema = z.object({
     first_name: z.string(),
     last_name: z.string(),
     is_active: z.boolean(),
+    is_superuser: z.boolean().optional(),
   }),
 });
 
