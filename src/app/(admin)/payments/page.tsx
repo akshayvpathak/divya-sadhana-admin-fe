@@ -2,12 +2,13 @@
 
 import { useState } from 'react';
 import { usePaymentsListQuery } from '@/hooks/queries/usePaymentsQuery';
-import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DataTable } from '@/components/common/DataTable/DataTable';
 import { usePaymentTableColumns } from '@/hooks/tables/usePaymentTableColumns';
 import { useDebounce } from '@/hooks/useDebounce';
+import { DataTablePagination } from '@/components/common/DataTablePagination';
 
 export default function PaymentsPage() {
   const [page, setPage] = useState(1);
@@ -59,31 +60,13 @@ export default function PaymentsPage() {
           emptyMessage="No payments found"
         />
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
-            <p className="text-sm text-slate-500">
-              Showing <span className="font-medium">{(page - 1) * 10 + 1}</span> to <span className="font-medium">{Math.min(page * 10, data?.data?.count || 0)}</span> of <span className="font-medium">{data?.data?.count || 0}</span> results
-            </p>
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                disabled={page === 1}
-              >
-                <ChevronLeft className="h-4 w-4 mr-1" /> Previous
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-              >
-                Next <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
-            </div>
-          </div>
+        {data?.data && (
+          <DataTablePagination
+            currentPage={page}
+            totalPages={totalPages}
+            totalItems={data.data.count}
+            onPageChange={setPage}
+          />
         )}
       </div>
     </div>

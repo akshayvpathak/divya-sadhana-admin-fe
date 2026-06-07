@@ -11,12 +11,12 @@ export const createDonationCampaignSchema = z.object({
   title: z.string().min(1, "Title is required"),
   slug: z.string().min(1, "Slug is required").regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens"),
   description: z.string().min(1, "Description is required"),
-  target_amount: moneyNumberSchema,
-  status: statusSchema,
-  is_active: z.boolean().default(true),
-  starts_at: z.string().min(1, "Start date is required"),
-  ends_at: z.string().min(1, "End date is required"),
-  cover_image_key: z.string().optional().default(""),
+  target_amount: moneyNumberSchema.optional().optional(),
+  status: statusSchema.optional(),
+  is_active: z.boolean().default(true).optional(),
+  starts_at: z.string().min(1, "Start date is required").optional(),
+  ends_at: z.string().min(1, "End date is required").optional(),
+  cover_image_key: z.string().min(1, "Cover image is required"),
 });
 
 export const updateDonationCampaignSchema = createDonationCampaignSchema.partial();

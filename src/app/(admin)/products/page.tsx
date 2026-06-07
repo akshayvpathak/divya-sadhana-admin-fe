@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useProducts, useDeleteProduct } from '@/hooks/useProducts';
 import { useAllCategories } from '@/hooks/useCategories';
-import { Plus, Search, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
+import { Plus, Search, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { DataTable } from '@/components/common/DataTable/DataTable';
 import { useProductTableColumns } from '@/hooks/tables/useProductTableColumns';
 import { useDebounce } from '@/hooks/useDebounce';
+import { DataTablePagination } from '@/components/common/DataTablePagination';
 
 export default function ProductsPage() {
   const [page, setPage] = useState(1);
@@ -129,31 +130,13 @@ export default function ProductsPage() {
           emptyMessage="No products found"
         />
 
-        {/* Pagination */}
-        {data && data.meta.totalPages > 1 && (
-          <div className="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
-            <p className="text-sm text-slate-500">
-              Showing <span className="font-medium">{(page - 1) * 10 + 1}</span> to <span className="font-medium">{Math.min(page * 10, data.meta.total)}</span> of <span className="font-medium">{data.meta.total}</span> results
-            </p>
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                disabled={page === 1}
-              >
-                <ChevronLeft className="h-4 w-4 mr-1" /> Previous
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setPage(p => Math.min(data.meta.totalPages, p + 1))}
-                disabled={page === data.meta.totalPages}
-              >
-                Next <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
-            </div>
-          </div>
+        {data && (
+          <DataTablePagination
+            currentPage={page}
+            totalPages={data.meta.totalPages}
+            totalItems={data.meta.total}
+            onPageChange={setPage}
+          />
         )}
       </div>
 

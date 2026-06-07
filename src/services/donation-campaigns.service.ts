@@ -6,6 +6,7 @@ import {
   donationCampaignSchema,
   donationCampaignsListSchema,
 } from "@/schemas/donation-campaigns.schema";
+import { ApiError, formatApiError } from "@/services/auth.service";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://api.divyasadhana.org/api";
@@ -99,8 +100,11 @@ export const createDonationCampaign = async (
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: "" }));
-    throw new Error(error.message || "Failed to create donation campaign");
+    const json = await response.json().catch(() => ({}));
+    throw new ApiError(
+      formatApiError(json, "Failed to create donation campaign"),
+      response.status
+    );
   }
 
   const json = await response.json();
@@ -123,8 +127,11 @@ export const updateDonationCampaign = async (
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: "" }));
-    throw new Error(error.message || "Failed to update donation campaign");
+    const json = await response.json().catch(() => ({}));
+    throw new ApiError(
+      formatApiError(json, "Failed to update donation campaign"),
+      response.status
+    );
   }
 
   const json = await response.json();

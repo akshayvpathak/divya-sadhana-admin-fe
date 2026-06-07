@@ -18,6 +18,7 @@ import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { useState, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
+import { resolveProductImageUrl, extractImageKey } from '@/hooks/useProducts';
 
 interface DonationCampaignFormProps {
   campaignId?: string;
@@ -31,9 +32,11 @@ export function DonationCampaignForm({ campaignId, initialData: propsInitialData
   const { data: fetchedCampaign, isLoading: isFetching } = useDonationCampaignQuery(campaignId || null);
   const uploadMutation = useUploadImageMutation();
   const [isDragging, setIsDragging] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
 
   const initialData = useMemo(() => {
     if (fetchedCampaign) {
+      const imgKey = fetchedCampaign.cover_image_key || (fetchedCampaign.cover_image_url ? extractImageKey(fetchedCampaign.cover_image_url) : '');
       return {
         title: fetchedCampaign.title,
         slug: fetchedCampaign.slug || '',
@@ -43,11 +46,23 @@ export function DonationCampaignForm({ campaignId, initialData: propsInitialData
         is_active: fetchedCampaign.is_active ?? true,
         starts_at: fetchedCampaign.starts_at ? dayjs(fetchedCampaign.starts_at).format('YYYY-MM-DD') : '',
         ends_at: fetchedCampaign.ends_at ? dayjs(fetchedCampaign.ends_at).format('YYYY-MM-DD') : '',
-        cover_image_key: fetchedCampaign.cover_image_key || '',
+        cover_image_key: imgKey,
+        cover_image_url: fetchedCampaign.cover_image_url || '',
       };
     }
     return propsInitialData;
   }, [fetchedCampaign, propsInitialData]);
+
+  useEffect(() => {
+    const data = initialData as any;
+    if (data && data.cover_image_url) {
+      setPreviewUrl(data.cover_image_url);
+    } else if (data && data.cover_image_key) {
+      setPreviewUrl(resolveProductImageUrl(data.cover_image_key));
+    } else {
+      setPreviewUrl('');
+    }
+  }, [initialData]);
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<CreateDonationCampaignPayload>({
     resolver: zodResolver(createDonationCampaignSchema) as any,
@@ -81,14 +96,7 @@ export function DonationCampaignForm({ campaignId, initialData: propsInitialData
     }
   }, [titleValue, setValue, readOnly, campaignId]);
 
-  const imageUrl = useMemo(() => {
-    if (!coverImageKey) return '';
-    if (coverImageKey.startsWith('http')) return coverImageKey;
-    if (fetchedCampaign && fetchedCampaign.cover_image_url && fetchedCampaign.cover_image_key === coverImageKey) {
-      return fetchedCampaign.cover_image_url;
-    }
-    return `https://api.divyasadhana.org/media/${coverImageKey}`;
-  }, [coverImageKey, fetchedCampaign]);
+  // Use previewUrl state for displaying the image preview
 
   useEffect(() => {
     register('is_active');
@@ -142,10 +150,13 @@ export function DonationCampaignForm({ campaignId, initialData: propsInitialData
       return;
     }
 
+    const localUrl = URL.createObjectURL(file);
+    setPreviewUrl(localUrl);
+
     try {
       const keys = await uploadMutation.mutateAsync([file]);
       if (keys && keys.length > 0) {
-        setValue('cover_image_key', keys[0]);
+        setValue('cover_image_key', keys[0], { shouldValidate: true });
         toast.success('Image uploaded successfully');
       }
     } catch (error) {
@@ -200,7 +211,7 @@ export function DonationCampaignForm({ campaignId, initialData: propsInitialData
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="target_amount">Target Amount ($) <span className="text-rose-500">*</span></Label>
+          <Label htmlFor="target_amount">Target Amount ($)</Label>
           <Input 
             id="target_amount" 
             type="number" 
@@ -213,7 +224,7 @@ export function DonationCampaignForm({ campaignId, initialData: propsInitialData
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="starts_at">Start Date <span className="text-rose-500">*</span></Label>
+          <Label htmlFor="starts_at">Start Date</Label>
           <Input 
             id="starts_at" 
             type="date" 
@@ -225,7 +236,7 @@ export function DonationCampaignForm({ campaignId, initialData: propsInitialData
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="ends_at">End Date <span className="text-rose-500">*</span></Label>
+          <Label htmlFor="ends_at">End Date</Label>
           <Input 
             id="ends_at" 
             type="date" 
@@ -237,7 +248,7 @@ export function DonationCampaignForm({ campaignId, initialData: propsInitialData
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="status">Status <span className="text-rose-500">*</span></Label>
+          <Label htmlFor="status">Status</Label>
           <Select 
             value={statusValue || ""} 
             onValueChange={(val) => setValue('status', val as any)}
@@ -285,7 +296,7 @@ export function DonationCampaignForm({ campaignId, initialData: propsInitialData
       </div>
 
       <div className="space-y-2">
-        <Label>Cover Image</Label>
+        <Label>Cover Image <span className="text-rose-500">*</span></Label>
         <div 
           className={cn(
             "border-2 border-dashed rounded-xl p-8 transition-all flex flex-col items-center justify-center gap-4 text-center",
@@ -298,19 +309,20 @@ export function DonationCampaignForm({ campaignId, initialData: propsInitialData
           onDrop={handleDrop}
           onClick={() => !readOnly && document.getElementById('cover-image-upload')?.click()}
         >
-          {imageUrl ? (
+          {previewUrl ? (
             <div className="relative group w-full max-w-[200px] aspect-[16/10] rounded-lg overflow-hidden border border-slate-200">
               <img 
-                src={imageUrl} 
+                src={previewUrl} 
                 alt="Preview" 
                 className="w-full h-full object-cover"
               />
               {!readOnly && (
                 <button 
-                  type="button"
+                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setValue('cover_image_key', '');
+                    setValue('cover_image_key', '', { shouldValidate: true });
+                    setPreviewUrl('');
                   }}
                   className="absolute top-2 right-2 p-1.5 bg-rose-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
                 >
@@ -344,6 +356,7 @@ export function DonationCampaignForm({ campaignId, initialData: propsInitialData
             disabled={readOnly}
           />
         </div>
+        {errors.cover_image_key && <p className="text-sm text-rose-500">{errors.cover_image_key.message}</p>}
       </div>
 
       <div className="pt-4 flex justify-end gap-2">
