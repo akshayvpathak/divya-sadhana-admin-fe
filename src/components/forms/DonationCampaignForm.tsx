@@ -188,6 +188,18 @@ export function DonationCampaignForm({ campaignId, initialData: propsInitialData
         </div>
 
         <div className="space-y-2">
+          <Label htmlFor="slug">Slug <span className="text-rose-500">*</span></Label>
+          <Input 
+            id="slug" 
+            placeholder="clean-water-project" 
+            {...register('slug')} 
+            disabled={readOnly}
+            className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}
+          />
+          {errors.slug && <p className="text-sm text-rose-500">{errors.slug.message}</p>}
+        </div>
+
+        <div className="space-y-2">
           <Label htmlFor="target_amount">Target Amount ($) <span className="text-rose-500">*</span></Label>
           <Input 
             id="target_amount" 
