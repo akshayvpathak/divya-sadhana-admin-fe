@@ -1,6 +1,7 @@
-import { login } from "@/services/auth.service";
-import { LoginPayload } from "@/schemas/auth.schema";
+import { login, forgotPassword } from "@/services/auth.service";
+import { LoginPayload, ForgotPasswordPayload } from "@/schemas/auth.schema";
 import { useMutation } from "@tanstack/react-query";
+import { toast } from "react-toastify";
 import { createUser, updateUser, deleteUser } from "@/services/users.service";
 import { CreateUserPayload, UpdateUserPayload } from "@/schemas/users.schema";
 import { useAuth } from "@/context/AuthContext";
@@ -8,6 +9,18 @@ import { useAuth } from "@/context/AuthContext";
 export function useLoginMutation() {
   return useMutation({
     mutationFn: (payload: LoginPayload) => login(payload),
+  });
+}
+
+export function useForgotPasswordMutation() {
+  return useMutation({
+    mutationFn: (payload: ForgotPasswordPayload) => forgotPassword(payload),
+    onSuccess: (data) => {
+      toast.success(data.message || "Reset password instructions sent to your email!");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Something went wrong.");
+    },
   });
 }
 

@@ -5,17 +5,22 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 export const useOrdersListQuery = (
   page: number = 1,
   search: string = "",
-  sort: string = ""
+  sort: string = "",
+  filters?: {
+    payment_status?: string;
+    status?: string;
+    shipping_status?: string;
+  }
 ) => {
   const { accessToken } = useAuth();
 
   return useQuery({
-    queryKey: ["orders", page, search, sort],
+    queryKey: ["orders", page, search, sort, filters],
     queryFn: async () => {
       if (process.env.NEXT_PUBLIC_DEBUG_API === "true") {
         // eslint-disable-next-line no-console
         console.log("[API DEBUG] useOrdersListQuery", {
-          queryKey: ["orders", page, search, sort],
+          queryKey: ["orders", page, search, sort, filters],
           hasAccessToken: !!accessToken,
         });
       }
@@ -27,6 +32,9 @@ export const useOrdersListQuery = (
         search,
         search_fields: "order_number,user,items__product_name_snapshot",
         sort,
+        payment_status: filters?.payment_status,
+        status: filters?.status,
+        shipping_status: filters?.shipping_status,
       });
     },
     enabled: !!accessToken,

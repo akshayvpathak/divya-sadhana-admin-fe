@@ -2,21 +2,35 @@
 
 import { useState } from 'react';
 import { useOrdersListQuery } from '@/hooks/queries/useOrdersQuery';
-import { Search } from 'lucide-react';
+import { Search, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DataTable } from '@/components/common/DataTable/DataTable';
 import { useOrderTableColumns } from '@/hooks/tables/useOrderTableColumns';
 import { useDebounce } from '@/hooks/useDebounce';
 import { DataTablePagination } from '@/components/common/DataTablePagination';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function OrdersPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
   const [sort, setSort] = useState('-created_at');
-  
-  const { data, isLoading } = useOrdersListQuery(page, debouncedSearch, sort);
+
+  const [status, setStatus] = useState('all');
+  const [paymentStatus, setPaymentStatus] = useState('all');
+  const [shippingStatus, setShippingStatus] = useState('all');
+
+  const { data, isLoading } = useOrdersListQuery(
+    page,
+    debouncedSearch,
+    sort,
+    {
+      status: status === 'all' ? undefined : status,
+      payment_status: paymentStatus === 'all' ? undefined : paymentStatus,
+      shipping_status: shippingStatus === 'all' ? undefined : shippingStatus,
+    }
+  );
 
   const handleSort = (field: string) => {
     setSort(field);
@@ -27,7 +41,7 @@ export default function OrdersPage() {
   const columns = useOrderTableColumns();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Orders</h1>
@@ -36,8 +50,8 @@ export default function OrdersPage() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-        <div className="p-4 border-b border-slate-200 bg-slate-50">
-          <div className="relative max-w-sm">
+        <div className="p-4 border-b border-slate-200 bg-slate-50 flex flex-col lg:flex-row gap-4 items-start">
+          <div className="relative max-w-sm flex-1 w-full">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <Input
               placeholder="Search orders..."
@@ -48,6 +62,90 @@ export default function OrdersPage() {
                 setPage(1);
               }}
             />
+          </div>
+
+          <div className="flex flex-wrap gap-2 items-center w-full lg:w-auto">
+            <Filter className="h-4 w-4 text-slate-400 shrink-0" />
+
+            {/* Order Status */}
+            <Select
+              value={status}
+              onValueChange={(val) => {
+                setStatus(val || 'all');
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="bg-white w-[150px]">
+                <SelectValue placeholder="All Statuses">
+                  {status === 'pending' ? 'Pending'
+                    : status === 'processing' ? 'Processing'
+                      : status === 'completed' ? 'Completed'
+                        : status === 'cancelled' ? 'Cancelled'
+                          : status === 'refunded' ? 'Refunded'
+                            : status === 'failed' ? 'Failed'
+                              : 'All Statuses'}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="processing">Processing</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
+                <SelectItem value="refunded">Refunded</SelectItem>
+                <SelectItem value="failed">Failed</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Payment Status */}
+            <Select
+              value={paymentStatus}
+              onValueChange={(val) => {
+                setPaymentStatus(val || 'all');
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="bg-white w-[155px]">
+                <SelectValue placeholder="All Payment">
+                  {paymentStatus === 'paid' ? 'Paid'
+                    : paymentStatus === 'unpaid' ? 'Unpaid'
+                      : paymentStatus === 'pending' ? 'Pending'
+                        : 'All Payment'}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Payment</SelectItem>
+                <SelectItem value="paid">Paid</SelectItem>
+                <SelectItem value="unpaid">Unpaid</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Shipping Status */}
+            <Select
+              value={shippingStatus}
+              onValueChange={(val) => {
+                setShippingStatus(val || 'all');
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="bg-white w-[200px]">
+                <SelectValue placeholder="All Shipping">
+                  {shippingStatus === 'pending' ? 'Pending'
+                    : shippingStatus === 'order_generated' ? 'Order Generated'
+                      : shippingStatus === 'shipped' ? 'Shipped'
+                        : shippingStatus === 'delivered' ? 'Delivered'
+                          : 'All Shipping'}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Shipping</SelectItem>
+                <SelectItem value="order_generated">Order Generated</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="shipped">Shipped</SelectItem>
+                <SelectItem value="delivered">Delivered</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 

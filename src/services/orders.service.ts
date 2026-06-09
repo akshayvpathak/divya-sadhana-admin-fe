@@ -9,6 +9,9 @@ interface FetchOptions {
   search?: string;
   search_fields?: string;
   sort?: string;
+  payment_status?: string;
+  status?: string;
+  shipping_status?: string;
 }
 
 function getCsrfToken(): string {
@@ -30,6 +33,9 @@ export const getOrdersList = async (
   if (options.search) params.append("search", options.search);
   if (options.search_fields) params.append("search_fields", options.search_fields);
   if (options.sort) params.append("sort", options.sort);
+  if (options.payment_status) params.append("payment_status", options.payment_status);
+  if (options.status) params.append("status", options.status);
+  if (options.shipping_status) params.append("shipping_status", options.shipping_status);
 
   const response = await fetch(`${API_BASE_URL}/orders/?${params.toString()}`, {
     method: "GET",

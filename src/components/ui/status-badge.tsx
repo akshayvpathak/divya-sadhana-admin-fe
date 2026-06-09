@@ -72,7 +72,7 @@ export function StatusBadge({ status, type }: StatusBadgeProps) {
 
     case 'transaction_status':
       if (['success', 'successful', 'completed', 'captured', 'paid', 'succeeded'].includes(statusStr)) {
-        label = 'Success';
+        label = 'Paid';
         classes = 'bg-green-100 text-green-700 font-medium text-xs';
       } else if (['failed', 'failure', 'declined', 'error', 'rejected'].includes(statusStr)) {
         label = 'Failed';

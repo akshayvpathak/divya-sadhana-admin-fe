@@ -38,7 +38,19 @@ export const useDonationTableColumns = (): ColumnConfig<DonationRow>[] => {
       header: 'Campaign',
       sortable: true,
       cellClassName: 'text-slate-600',
-      renderCell: (row) => typeof row.campaign === 'string' ? row.campaign : row.campaign?.title || row.campaign_title || 'General',
+      renderCell: (row) => {
+        if (row.campaign_title) {
+          return row.campaign_title;
+        }
+        if (row.campaign && typeof row.campaign === 'object') {
+          return row.campaign.title || 'General';
+        }
+        if (typeof row.campaign === 'string') {
+          const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(row.campaign);
+          return isUuid ? 'General' : row.campaign;
+        }
+        return 'General';
+      },
     },
     {
       id: 'amount',
