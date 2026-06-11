@@ -5,6 +5,7 @@ export const productSchema = z.object({
   price: z.coerce.number().nonnegative('Price cannot be negative').optional(),
   description: z.string().min(1, 'Product description is required'),
   categoryId: z.string().optional(),
+  // S3/R2 object key (maps to API primary_image_key); not a display URL
   image: z.string().min(1, 'Product image is required'),
   sku: z.string().min(1, 'SKU is required'),
   stock_quantity: z.coerce.number().nonnegative('Stock quantity cannot be negative').optional(),

@@ -30,8 +30,10 @@ export const productSchema = z.object({
   is_active: z.boolean().nullable().optional().transform((val) => val ?? true),
   is_published: z.boolean().nullable().optional().transform((val) => val ?? false),
   primary_image_key: z.string().nullable().optional().default(""),
+  /** Read-only: signed URL from API; never send on create/PATCH */
   primary_image_url: z.string().nullable().optional(),
   gallery_image_keys: z.array(z.string()).nullable().optional().default([]),
+  /** Read-only: signed URLs from API; never send on create/PATCH */
   gallery_image_urls: z.array(z.string()).nullable().optional().default([]),
   category: z.string().nullable().optional().default(""),
   created_at: z.string().nullable().optional(),

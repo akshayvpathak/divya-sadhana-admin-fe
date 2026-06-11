@@ -58,6 +58,17 @@ export const resolveProductImageUrl = (urlOrKey: string | null | undefined): str
   return `${base}/media/${path}`;
 };
 
+const R2_BUCKET_PREFIXES = ['divyasadhana-dev/', 'divyasadhana-prod/'];
+
+const stripR2BucketPrefix = (key: string): string => {
+  for (const prefix of R2_BUCKET_PREFIXES) {
+    if (key.startsWith(prefix)) {
+      return key.substring(prefix.length);
+    }
+  }
+  return key;
+};
+
 export const extractImageKey = (urlOrKey: string | null | undefined): string => {
   if (!urlOrKey) return '';
   if (!urlOrKey.startsWith('http://') && !urlOrKey.startsWith('https://')) {
@@ -71,7 +82,7 @@ export const extractImageKey = (urlOrKey: string | null | undefined): string => 
     } else if (key.startsWith('/')) {
       key = key.substring(1);
     }
-    return decodeURIComponent(key);
+    return stripR2BucketPrefix(decodeURIComponent(key));
   } catch (e) {
     return urlOrKey;
   }
@@ -122,6 +133,11 @@ export const useProduct = (id: string) => {
     queryFn: async () => {
       if (!accessToken) throw new Error('No access token');
       const p = await getProduct(id, accessToken);
+      const primaryImageKey = p.primary_image_key || '';
+      const primaryImageUrl = p.primary_image_url
+        ? (cleanImageUrl(p.primary_image_url) || p.primary_image_url)
+        : '';
+
       return {
         id: p.id,
         name: p.name,
@@ -132,9 +148,13 @@ export const useProduct = (id: string) => {
         sku: p.sku,
         is_active: p.is_active,
         is_published: p.is_published,
-        image: resolveProductImageUrl(p.primary_image_url || p.primary_image_key) || `https://picsum.photos/seed/${p.id}/400/400`,
+        primary_image_key: primaryImageKey,
+        primary_image_url: primaryImageUrl,
+        image: primaryImageKey,
         gallery_image_keys: p.gallery_image_keys || [],
-        gallery_image_urls: (p.gallery_image_urls || []).map(url => resolveProductImageUrl(url)).filter(Boolean) as string[],
+        gallery_image_urls: (p.gallery_image_urls || [])
+          .map((url) => (url ? cleanImageUrl(url) || url : ''))
+          .filter(Boolean) as string[],
       };
     },
     enabled: !!id && !!accessToken,
@@ -201,8 +221,9 @@ export const useUpdateProduct = () => {
 
       return updateProduct(id, updateData, accessToken);
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['product', variables.id] });
       toast.success('Product updated successfully');
     },
     onError: (error: Error) => {

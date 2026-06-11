@@ -1,8 +1,6 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { productSchema, ProductFormData } from '@/schemas/product.schema';
+import { ProductFormData } from '@/schemas/product.schema';
 import { useCreateProduct } from '@/hooks/useProducts';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';

@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils';
 
 import { Switch } from '@/components/ui/switch';
 import { useUploadImageMutation } from '@/hooks/queries/useImageUploadQuery';
-import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { Upload, X, Loader2 } from 'lucide-react';
 import { useState, useCallback } from 'react';
 import { toast } from 'react-toastify';
 
@@ -46,7 +46,7 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
     price: fetchedProduct.price,
     description: fetchedProduct.description || '',
     categoryId: fetchedProduct.categoryId || '',
-    image: fetchedProduct.image || '',
+    image: fetchedProduct.primary_image_key || fetchedProduct.image || '',
     sku: fetchedProduct.sku || '',
     stock_quantity: fetchedProduct.stock || 0,
     is_active: fetchedProduct.is_active ?? true,
@@ -72,7 +72,7 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
   });
 
   const categoryId = watch('categoryId');
-  const imageUrl = watch('image');
+  const imageKey = watch('image');
   const is_active = watch('is_active');
   const isPublished = watch('is_published');
   const galleryImageKeys = watch('gallery_image_keys') || [];
@@ -85,19 +85,21 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
   }, [register]);
 
   useEffect(() => {
-    if (initialData && initialData.image) {
+    if (fetchedProduct?.primary_image_url) {
+      setPrimaryPreviewUrl(fetchedProduct.primary_image_url);
+    } else if (initialData?.image) {
       setPrimaryPreviewUrl(resolveProductImageUrl(initialData.image));
     } else {
       setPrimaryPreviewUrl('');
     }
-  }, [initialData]);
+  }, [initialData, fetchedProduct]);
 
   // Load existing gallery images into local previews on mount/reset
   useEffect(() => {
-    if (initialData && initialData.gallery_image_keys) {
+    if (initialData?.gallery_image_keys?.length) {
       const existingPreviews = initialData.gallery_image_keys.map((key, index) => {
         let url = resolveProductImageUrl(key);
-        if (fetchedProduct && fetchedProduct.gallery_image_urls && fetchedProduct.gallery_image_urls[index]) {
+        if (fetchedProduct?.gallery_image_urls?.[index]) {
           url = fetchedProduct.gallery_image_urls[index];
         }
         return {
@@ -108,6 +110,8 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
         };
       });
       setLocalPreviews(existingPreviews);
+    } else {
+      setLocalPreviews([]);
     }
   }, [initialData, fetchedProduct]);
 
@@ -154,6 +158,10 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
   const handleFileUpload = async (file: File) => {
     if (!file.type.startsWith('image/')) {
       toast.error('Please upload an image file');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File exceeds 5MB limit');
       return;
     }
 
@@ -389,10 +397,10 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
           onDrop={handleDrop}
           onClick={() => !readOnly && document.getElementById('file-upload')?.click()}
         >
-          {imageUrl ? (
+          {imageKey ? (
             <div className="relative group w-full max-w-[200px] aspect-square rounded-lg overflow-hidden border border-slate-200">
               <img 
-                src={primaryPreviewUrl || resolveProductImageUrl(imageUrl)} 
+                src={primaryPreviewUrl || resolveProductImageUrl(imageKey)} 
                 alt="Preview" 
                 className="w-full h-full object-cover"
               />
