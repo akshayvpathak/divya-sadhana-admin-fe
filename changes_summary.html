@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Reading Reports Admin Panel - Changes Summary</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.6;
+      color: #1e293b;
+      background-color: #f8fafc;
+      margin: 0;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 40px;
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    }
+    h1 {
+      font-size: 2.25rem;
+      color: #0f172a;
+      margin-top: 0;
+      margin-bottom: 8px;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+    }
+    .subtitle {
+      color: #64748b;
+      font-size: 1.125rem;
+      margin-bottom: 24px;
+    }
+    hr {
+      border: 0;
+      border-top: 1px solid #e2e8f0;
+      margin: 32px 0;
+    }
+    h2 {
+      font-size: 1.5rem;
+      color: #0f172a;
+      margin-top: 32px;
+      margin-bottom: 16px;
+      font-weight: 700;
+      border-bottom: 2px solid #f1f5f9;
+      padding-bottom: 8px;
+    }
+    h3 {
+      font-size: 1.125rem;
+      color: #0f172a;
+      margin-top: 24px;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+    p {
+      margin-top: 0;
+      margin-bottom: 16px;
+    }
+    ul {
+      margin-top: 0;
+      margin-bottom: 16px;
+      padding-left: 24px;
+    }
+    li {
+      margin-bottom: 8px;
+    }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.875em;
+      background-color: #f1f5f9;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #0f172a;
+    }
+    .actions-bar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 24px;
+    }
+    .btn-print {
+      background-color: #4f46e5;
+      color: #ffffff;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.875rem;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+      transition: background-color 0.2s, box-shadow 0.2s;
+    }
+    .btn-print:hover {
+      background-color: #4338ca;
+      box-shadow: 0 4px 12px -1px rgba(79, 70, 229, 0.3);
+    }
+    .card {
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #334155;
+      margin-bottom: 8px;
+    }
+    ol {
+      margin-top: 0;
+      margin-bottom: 16px;
+      padding-left: 24px;
+    }
+    ol li {
+      margin-bottom: 12px;
+    }
+    
+    @media print {
+      body {
+        background-color: #ffffff;
+        padding: 0;
+        color: #000000;
+      }
+      .container {
+        border: none;
+        box-shadow: none;
+        padding: 0;
+        max-width: 100%;
+      }
+      .no-print {
+        display: none !important;
+      }
+      h1, h2, h3 {
+        page-break-after: avoid;
+      }
+      .card {
+        page-break-inside: avoid;
+        background-color: #ffffff;
+        border: 1px solid #cbd5e1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="actions-bar no-print">
+      <button class="btn-print" onclick="window.print()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"></path><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+        Print / Save to PDF
+      </button>
+    </div>
+
+    <h1>AI Reading Reports Admin Panel</h1>
+    <p class="subtitle">Changes Summary & Flow Documentation</p>
+    
+    <p>This document outlines the modifications implemented to add the read-only <strong>AI Reading Reports</strong> monitoring surface to the Divya Sadhana Admin Panel.</p>
+    
+    <hr>
+
+    <h2>1. Flow Overview</h2>
+    <ol>
+      <li><strong>User Request Submission:</strong> End users upload a photo (Face or Palm image) and answer custom focus questions (e.g. Focus area: Career). This request is logged in the backend.</li>
+      <li><strong>AI Report Generation:</strong> The Django backend sends the input and template context to the Generative AI vision models, saving both a short <strong>teaser report</strong> and a <strong>full report</strong>.</li>
+      <li><strong>Payment:</strong> Users pay via Razorpay. Once payment is captured and verified, the report becomes "unlocked" for the user.</li>
+      <li><strong>Admin Inspection:</strong> Superusers login to the admin panel and navigate to the "AI Readings" menu to view the request list.</li>
+      <li><strong>Ungated Override:</strong> In the detailed view, admins can see both the teaser and the full HTML reports regardless of whether the user has completed their payment. This allows transaction monitoring and troubleshooting.</li>
+    </ol>
+
+    <h2>2. Admin Panel Interface</h2>
+    
+    <h3>A. Readings List Page (<code>/ai-readings</code>)</h3>
+    <ul>
+      <li><strong>Interactive Filters:</strong> Allows filtering requests by Service Kind (Face Reading vs. Palm Reading) and Lifecycle Status (Pending, Processing, Succeeded, Failed, Cancelled).</li>
+      <li><strong>Search:</strong> Text search querying request numbers and nested user email addresses.</li>
+      <li><strong>Cache Hits:</strong> Clearly distinguishes if a request was served fresh or pulled from an image cache (marked with cache hit status).</li>
+    </ul>
+
+    <h3>B. Details Page (<code>/ai-readings/[id]</code>)</h3>
+    <ul>
+      <li><strong>Client Information:</strong> Shows full name, email, phone number, and active state of the submitting user.</li>
+      <li><strong>Context Card:</strong> Displays chosen answers and price details.</li>
+      <li><strong>Attachment Image Preview:</strong> Direct thumbnail displaying the uploaded photo.</li>
+      <li><strong>Isolated Preview Frames:</strong> Embedded preview sandboxes (iframes) to view HTML reports without CSS leakage affecting the dashboard layout.</li>
+      <li><strong>Observability Dashboard:</strong> Displays model IDs, processing duration (in seconds), input/output token metrics, and API request IDs.</li>
+      <li><strong>Payment Ledger:</strong> Lists all payment attempts with internal references, Razorpay order/payment IDs, capture times, and status markers.</li>
+    </ul>
+
+    <h2>3. Summary of File Edits</h2>
+    
+    <div class="card">
+      <div class="card-title">1. Schema Definition</div>
+      <p>Created <code>src/schemas/ai-readings.schema.ts</code> defining types and Zod parser constraints for <code>AiReading</code>, <code>AiReadingReport</code>, and list arrays.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">2. API Service Layer</div>
+      <p>Created <code>src/services/ai-readings.service.ts</code> to handle the HTTP network calls to <code>GET /api/admin/ai-readings/</code> and <code>GET /api/admin/ai-readings/{id}/</code>.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">3. React Query Hooks</div>
+      <p>Created <code>src/hooks/queries/useAiReadingsQuery.ts</code> wrapping the services inside <code>useAiReadingsListQuery</code> and <code>useAiReadingQuery</code> hooks.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">4. Columns Config</div>
+      <p>Created <code>src/hooks/tables/useAiReadingsTableColumns.tsx</code> configuring list headers, user metadata sub-labels, prices, and status indicators.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">5. Routing Pages</div>
+      <ul>
+        <li><code>src/app/(admin)/ai-readings/page.tsx</code>: Renders filters, search, and paginated datatable.</li>
+        <li><code>src/app/(admin)/ai-readings/[id]/page.tsx</code>: Renders core metrics, previews, tokens, and payment ledger tables.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title">6. Navigation Layout</div>
+      <p>Modified <code>src/components/layout/Sidebar.tsx</code> to add the navigation item linking to the new page.</p>
+    </div>
+
+  </div>
+</body>
+</html>

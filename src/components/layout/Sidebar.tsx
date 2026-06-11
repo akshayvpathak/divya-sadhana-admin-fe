@@ -16,7 +16,8 @@ import {
   HeartHandshake,
   Megaphone,
   CreditCard,
-  UserCircle
+  UserCircle,
+  Sparkles
 } from 'lucide-react';
 import { Button } from '../ui/button';
 
@@ -29,6 +30,7 @@ const navItems = [
   { name: 'Donations', href: '/donations', icon: HeartHandshake },
   { name: 'Campaigns', href: '/donation-campaigns', icon: Megaphone },
   { name: 'Payments', href: '/payments', icon: CreditCard },
+  { name: 'AI Readings', href: '/ai-readings', icon: Sparkles },
   { name: 'Profile', href: '/profile', icon: UserCircle },
 ];
 
