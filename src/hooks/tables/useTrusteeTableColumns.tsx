@@ -8,10 +8,11 @@ import { Trustee } from '@/schemas/trustees.schema';
 import { formatPercent } from '@/lib/currency';
 
 export function trusteeDisplayName(row: Trustee): string {
+  if (row.user_full_name) return row.user_full_name;
   if (row.name) return row.name;
   const full = [row.first_name, row.last_name].filter(Boolean).join(' ').trim();
   if (full) return full;
-  return row.email || '—';
+  return row.user_email || row.email || '—';
 }
 
 interface UseTrusteeTableColumnsProps {
@@ -36,7 +37,7 @@ export const useTrusteeTableColumns = ({
       accessorKey: 'email',
       header: 'Email',
       cellClassName: 'text-slate-500 max-w-[220px] truncate',
-      renderCell: (row) => row.email || '—',
+      renderCell: (row) => row.user_email || row.email || '—',
     },
     {
       id: 'referral_code',

@@ -9,6 +9,10 @@ export const trusteeSchema = z
   .object({
     id: z.string(),
     user: z.union([z.string(), z.record(z.string(), z.any())]).nullish(),
+    // Backend list payload uses `user_email` / `user_full_name`; older shapes
+    // used `email` / `name`. Accept both so display logic can fall back.
+    user_email: z.string().nullish(),
+    user_full_name: z.string().nullish(),
     email: z.string().nullish(),
     name: z.string().nullish(),
     first_name: z.string().nullish(),

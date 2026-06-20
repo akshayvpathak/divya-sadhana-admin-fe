@@ -137,7 +137,7 @@ export default function TrusteesPage() {
             </Select>
 
             <Select value={stateFilter} onValueChange={(val) => setStateFilter(val || 'all')}>
-              <SelectTrigger className="bg-white w-[140px]">
+              <SelectTrigger className="bg-white w-[200px]">
                 <SelectValue placeholder="All States">
                   {stateFilter === 'all' ? 'All States' : stateFilter}
                 </SelectValue>

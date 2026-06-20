@@ -43,15 +43,14 @@ export const getStatesList = async (
   if (options.is_active) params.append("is_active", options.is_active);
   if (options.sort) params.append("sort", options.sort);
 
+  const headers = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${accessToken}`,
+  };
+
   const response = await fetch(
     `${API_BASE_URL}/territory/states/?${params.toString()}`,
-    {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-    }
+    { method: "GET", headers }
   );
 
   if (!response.ok) {
@@ -60,7 +59,28 @@ export const getStatesList = async (
   }
 
   const json = await response.json();
-  return statesListSchema.parse(json);
+  const parsed = statesListSchema.parse(json);
+
+  // The backend caps the page size at 10 and ignores `page_size`, so a single
+  // request never returns every state (e.g. 36 states arrive 10 at a time).
+  // When the caller wants the full list (no explicit page requested) — as the
+  // state dropdowns do — follow `next` and aggregate so all states show.
+  if (!options.page && parsed.data.next) {
+    const all = [...parsed.data.results];
+    let nextUrl: string | null | undefined = parsed.data.next;
+    let guard = 0;
+    while (nextUrl && guard < 50) {
+      guard += 1;
+      const res = await fetch(nextUrl, { method: "GET", headers });
+      if (!res.ok) break;
+      const pageParsed = statesListSchema.parse(await res.json());
+      all.push(...pageParsed.data.results);
+      nextUrl = pageParsed.data.next;
+    }
+    return { ...parsed, data: { ...parsed.data, results: all, next: null } };
+  }
+
+  return parsed;
 };
 
 /* -------------------------- Assignments --------------------------- */
