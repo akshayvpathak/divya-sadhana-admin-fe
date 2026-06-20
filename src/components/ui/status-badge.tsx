@@ -3,7 +3,7 @@ import { formatStatusLabel } from '@/lib/utils';
 
 interface StatusBadgeProps {
   status?: string | boolean | null;
-  type?: 'active' | 'published' | 'order_status' | 'payment_status' | 'shipping_status' | 'transaction_status' | 'campaign_status' | 'role';
+  type?: 'active' | 'published' | 'order_status' | 'payment_status' | 'shipping_status' | 'transaction_status' | 'campaign_status' | 'commission_status' | 'role';
 }
 
 const orderStatusColors: Record<string, string> = {
@@ -13,6 +13,14 @@ const orderStatusColors: Record<string, string> = {
   cancelled: 'bg-rose-100 text-rose-700 font-medium text-xs',
   refunded: 'bg-orange-100 text-orange-700 font-medium text-xs',
   failed: 'bg-rose-100 text-rose-700 font-medium text-xs',
+};
+
+const commissionStatusColors: Record<string, string> = {
+  pending: 'bg-amber-100 text-amber-700 font-bold uppercase tracking-wider text-[10px]',
+  available: 'bg-green-100 text-green-700 font-bold uppercase tracking-wider text-[10px]',
+  paid: 'bg-indigo-100 text-indigo-700 font-bold uppercase tracking-wider text-[10px]',
+  reversed: 'bg-rose-100 text-rose-700 font-bold uppercase tracking-wider text-[10px]',
+  cancelled: 'bg-slate-100 text-slate-700 font-bold uppercase tracking-wider text-[10px]',
 };
 
 export function StatusBadge({ status, type }: StatusBadgeProps) {
@@ -88,6 +96,13 @@ export function StatusBadge({ status, type }: StatusBadgeProps) {
         classes = 'bg-slate-100 text-slate-700 font-medium text-xs uppercase';
       }
       break;
+
+    case 'commission_status': {
+      const matchedColor = commissionStatusColors[statusStr];
+      classes = matchedColor || 'bg-slate-100 text-slate-700 font-bold uppercase tracking-wider text-[10px]';
+      label = status ? String(status) : 'Pending';
+      break;
+    }
 
     case 'campaign_status':
       if (statusStr === 'active') {
