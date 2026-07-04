@@ -19,14 +19,12 @@ export default function UserDetailPage() {
   const isEdit = mode === 'edit';
 
   const { data: user, isLoading } = useUser(id);
-  const { mutate: updateUser, isPending } = useUpdateUser();
+  const { mutateAsync: updateUser, isPending } = useUpdateUser();
 
-  const onSubmit = (formData: UserFormData) => {
-    updateUser({ id, data: formData }, { 
-      onSuccess: () => {
-        router.push('/users');
-      } 
-    });
+  const onSubmit = async (formData: UserFormData) => {
+    // Await so UserForm can catch a 400/422 and map field errors.
+    await updateUser({ id, data: formData });
+    router.push('/users');
   };
 
   return (

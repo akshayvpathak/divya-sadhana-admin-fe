@@ -9,7 +9,7 @@ import {
   updateCategorySchema,
   ProductCategorySchema,
 } from "@/schemas/product-categories.schema";
-import { ApiError, formatApiError } from "@/services/auth.service";
+import { ApiError, apiErrorFrom } from "@/services/auth.service";
 import { z } from "zod";
 
 const API_BASE_URL =
@@ -96,10 +96,7 @@ export async function createCategory(
   const json = await response.json();
 
   if (!response.ok) {
-    throw new ApiError(
-      formatApiError(json, "Failed to create category"),
-      response.status
-    );
+    throw apiErrorFrom(json, "Failed to create category", response.status);
   }
 
   return CategoryResponseSchema.parse(json);
@@ -126,10 +123,7 @@ export async function updateCategory(
   const json = await response.json();
 
   if (!response.ok) {
-    throw new ApiError(
-      formatApiError(json, "Failed to update category"),
-      response.status
-    );
+    throw apiErrorFrom(json, "Failed to update category", response.status);
   }
 
   return CategoryResponseSchema.parse(json);

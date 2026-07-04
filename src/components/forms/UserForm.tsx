@@ -11,11 +11,12 @@ import Link from 'next/link';
 import { useEffect, useMemo } from 'react';
 
 import { useUser } from '@/hooks/useUsers';
+import { applyServerFieldErrors } from '@/lib/form-errors';
 
 interface UserFormProps {
   userId?: string;
   initialData?: UserFormData;
-  onSubmit?: (data: UserFormData) => void;
+  onSubmit?: (data: UserFormData) => void | Promise<void>;
   isPending?: boolean;
   readOnly?: boolean;
 }
@@ -30,7 +31,7 @@ export function UserForm({ userId, initialData: propsInitialData, onSubmit, isPe
     is_active: fetchedUser.is_active ?? true,
   } : propsInitialData, [fetchedUser, propsInitialData]);
 
-  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<UserFormData>({
+  const { register, handleSubmit, reset, setValue, watch, setError, formState: { errors } } = useForm<UserFormData>({
     resolver: zodResolver(userSchema),
     defaultValues: {
       first_name: '',
@@ -53,9 +54,13 @@ export function UserForm({ userId, initialData: propsInitialData, onSubmit, isPe
     }
   }, [initialData, reset]);
 
-  const handleFormSubmit = (data: UserFormData) => {
-    if (onSubmit) {
-      onSubmit(data);
+  const handleFormSubmit = async (data: UserFormData) => {
+    if (!onSubmit) return;
+    try {
+      await onSubmit(data);
+    } catch (err) {
+      // Map backend 400/422 field errors (e.g. duplicate email) onto the fields.
+      applyServerFieldErrors(err, setError, ['first_name', 'last_name', 'email', 'is_active']);
     }
   };
 

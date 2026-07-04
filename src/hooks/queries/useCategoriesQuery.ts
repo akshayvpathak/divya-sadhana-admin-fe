@@ -38,6 +38,8 @@ export function useCreateCategoryMutation() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["product-categories"] });
+      // Keep the legacy hook layer's namespace in sync (see hooks/useCategories.ts).
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
     },
   });
 }
@@ -59,6 +61,8 @@ export function useUpdateCategoryMutation() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["product-categories"] });
+      // Keep the legacy hook layer's namespace in sync (see hooks/useCategories.ts).
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
     },
   });
 }
@@ -74,6 +78,8 @@ export function useDeleteCategoryMutation() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["product-categories"] });
+      // Keep the legacy hook layer's namespace in sync (see hooks/useCategories.ts).
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
     },
   });
 }

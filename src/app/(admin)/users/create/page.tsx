@@ -16,14 +16,13 @@ import { UserForm } from '@/components/forms/UserForm';
 
 export default function CreateUserPage() {
   const router = useRouter();
-  const { mutate: createUser, isPending } = useCreateUser();
+  const { mutateAsync: createUser, isPending } = useCreateUser();
 
-  const onSubmit = (formData: UserFormData) => {
-    createUser(formData, { 
-      onSuccess: () => {
-        router.push('/users');
-      } 
-    });
+  const onSubmit = async (formData: UserFormData) => {
+    // Await so the form can catch a 400/422 and map field errors; the hook's
+    // onError toast still fires for the general message.
+    await createUser(formData);
+    router.push('/users');
   };
 
   return (

@@ -84,6 +84,9 @@ export const useCreateCategory = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
+      // Also refresh the queries-layer namespace so lists rendered by either
+      // hook layer stay in sync (see useCategoriesQuery.ts).
+      queryClient.invalidateQueries({ queryKey: ['product-categories'] });
       toast.success('Category created successfully');
     },
     onError: (error: Error) => {
@@ -110,6 +113,9 @@ export const useUpdateCategory = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
+      // Also refresh the queries-layer namespace so lists rendered by either
+      // hook layer stay in sync (see useCategoriesQuery.ts).
+      queryClient.invalidateQueries({ queryKey: ['product-categories'] });
       toast.success('Category updated successfully');
     },
     onError: (error: Error) => {
@@ -129,6 +135,9 @@ export const useDeleteCategory = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
+      // Also refresh the queries-layer namespace so lists rendered by either
+      // hook layer stay in sync (see useCategoriesQuery.ts).
+      queryClient.invalidateQueries({ queryKey: ['product-categories'] });
       toast.success('Category deleted successfully');
     },
     onError: (error: Error) => {

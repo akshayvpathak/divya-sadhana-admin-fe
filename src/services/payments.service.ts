@@ -56,8 +56,15 @@ export const getPaymentsList = async (
     }
     return parsed;
   } catch (parseError) {
-    // eslint-disable-next-line no-console
-    console.error("[API] Payments schema parsing error:", parseError, "Raw response:", json);
+    // Log the parse error, but only dump the raw response (which may contain
+    // payment PII) when debug logging is explicitly enabled.
+    if (process.env.NEXT_PUBLIC_DEBUG_API === "true") {
+      // eslint-disable-next-line no-console
+      console.error("[API] Payments schema parsing error:", parseError, "Raw response:", json);
+    } else {
+      // eslint-disable-next-line no-console
+      console.error("[API] Payments schema parsing error:", parseError);
+    }
     throw new Error(
       `Failed to parse payments response: ${parseError instanceof Error ? parseError.message : String(parseError)}`
     );

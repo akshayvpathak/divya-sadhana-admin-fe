@@ -18,13 +18,21 @@ const API_BASE_URL =
 // here. The previous hardcoded X-CSRFTOKEN fallback was a committed secret and a
 // no-op for security; it has been removed.
 
+export interface ApiFieldError {
+  field: string;
+  message: string;
+}
+
 export class ApiError extends Error {
   status: number;
+  /** Per-field validation errors parsed from `data.errors` (400/422), for form mapping. */
+  fieldErrors: ApiFieldError[];
 
-  constructor(message: string, status: number) {
+  constructor(message: string, status: number, fieldErrors: ApiFieldError[] = []) {
     super(message);
     this.name = "ApiError";
     this.status = status;
+    this.fieldErrors = fieldErrors;
   }
 }
 
@@ -35,6 +43,29 @@ export function formatApiError(json: any, defaultMessage: string): string {
       .join(', ');
   }
   return json?.message || defaultMessage;
+}
+
+/**
+ * Extract per-field validation errors from a `{ data: { errors: [...] } }` body.
+ * Each backend error carries a `label`/`field` (the offending field) and a
+ * `message`/`code`. Returns `[]` when there are no structured field errors.
+ */
+export function parseApiFieldErrors(json: any): ApiFieldError[] {
+  const errors = json?.data?.errors;
+  if (!Array.isArray(errors)) return [];
+  return errors
+    .map((e: any): ApiFieldError | null => {
+      const field = e?.field ?? e?.label ?? e?.name;
+      if (!field || typeof field !== "string") return null;
+      const message = e?.message || (e?.code ? String(e.code) : "Invalid value");
+      return { field, message };
+    })
+    .filter((e): e is ApiFieldError => e !== null);
+}
+
+/** Build an ApiError from a JSON error body, capturing both message and field errors. */
+export function apiErrorFrom(json: any, defaultMessage: string, status: number): ApiError {
+  return new ApiError(formatApiError(json, defaultMessage), status, parseApiFieldErrors(json));
 }
 
 export async function login(payload: LoginPayload): Promise<LoginResponse> {
