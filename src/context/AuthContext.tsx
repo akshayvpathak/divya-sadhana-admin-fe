@@ -13,6 +13,7 @@ interface User {
   phone_number: string | null;
   is_active: boolean;
   is_superuser?: boolean;
+  is_trustee?: boolean;
 }
 
 interface AuthContextType {
@@ -40,6 +41,18 @@ const STORAGE_KEYS = [
   "accessTokenExpiry",
   "refreshTokenExpiry",
 ] as const;
+
+/**
+ * The backend returns token `expires` as a Unix timestamp in SECONDS, but all
+ * expiry math here compares against Date.now() (MILLISECONDS). Normalize to ms.
+ * Idempotent: a value already in ms (~1.7e12) is left untouched, while a seconds
+ * value (~1.7e9) is scaled up — so both fresh logins and any already-stored
+ * seconds values hydrate correctly.
+ */
+function toEpochMs(expires: number): number {
+  if (!Number.isFinite(expires)) return expires;
+  return expires < 1e12 ? expires * 1000 : expires;
+}
 
 /** URLs that must never trigger a refresh-and-retry (avoids recursion). */
 function isAuthEndpoint(url: string): boolean {
@@ -81,8 +94,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(JSON.parse(storedUser));
         setAccessToken(storedAccessToken);
         setRefreshToken(storedRefreshToken);
-        setAccessTokenExpiry(storedAccessTokenExpiry ? parseInt(storedAccessTokenExpiry, 10) : null);
-        setRefreshTokenExpiry(storedRefreshTokenExpiry ? parseInt(storedRefreshTokenExpiry, 10) : null);
+        setAccessTokenExpiry(storedAccessTokenExpiry ? toEpochMs(parseInt(storedAccessTokenExpiry, 10)) : null);
+        setRefreshTokenExpiry(storedRefreshTokenExpiry ? toEpochMs(parseInt(storedRefreshTokenExpiry, 10)) : null);
       } catch (error) {
         console.error("Failed to parse stored auth data", error);
         STORAGE_KEYS.forEach((k) => localStorage.removeItem(k));
@@ -124,7 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!storedRefresh) {
       return Promise.reject(new Error("No refresh token"));
     }
-    if (storedRefreshExpiry && parseInt(storedRefreshExpiry, 10) <= Date.now()) {
+    if (storedRefreshExpiry && toEpochMs(parseInt(storedRefreshExpiry, 10)) <= Date.now()) {
       clearAuthState();
       router.push("/login");
       return Promise.reject(new Error("Refresh token expired"));
@@ -134,14 +147,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const response = await refreshTokenAPI(storedRefresh);
         const tokens = response.data.tokens;
+        const accessExpiryMs = toEpochMs(tokens.access.expires);
+        const refreshExpiryMs = toEpochMs(tokens.refresh.expires);
         setAccessToken(tokens.access.token);
         setRefreshToken(tokens.refresh.token);
-        setAccessTokenExpiry(tokens.access.expires);
-        setRefreshTokenExpiry(tokens.refresh.expires);
+        setAccessTokenExpiry(accessExpiryMs);
+        setRefreshTokenExpiry(refreshExpiryMs);
         localStorage.setItem("accessToken", tokens.access.token);
         localStorage.setItem("refreshToken", tokens.refresh.token);
-        localStorage.setItem("accessTokenExpiry", String(tokens.access.expires));
-        localStorage.setItem("refreshTokenExpiry", String(tokens.refresh.expires));
+        localStorage.setItem("accessTokenExpiry", String(accessExpiryMs));
+        localStorage.setItem("refreshTokenExpiry", String(refreshExpiryMs));
         return tokens.access.token;
       } catch (error) {
         console.error("Token refresh failed");
@@ -186,16 +201,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     newAccessTokenExpiry: number,
     newRefreshTokenExpiry: number
   ) => {
+    const accessExpiryMs = toEpochMs(newAccessTokenExpiry);
+    const refreshExpiryMs = toEpochMs(newRefreshTokenExpiry);
     setUser(newUser);
     setAccessToken(newAccessToken);
     setRefreshToken(newRefreshToken);
-    setAccessTokenExpiry(newAccessTokenExpiry);
-    setRefreshTokenExpiry(newRefreshTokenExpiry);
+    setAccessTokenExpiry(accessExpiryMs);
+    setRefreshTokenExpiry(refreshExpiryMs);
     localStorage.setItem("user", JSON.stringify(newUser));
     localStorage.setItem("accessToken", newAccessToken);
     localStorage.setItem("refreshToken", newRefreshToken);
-    localStorage.setItem("accessTokenExpiry", String(newAccessTokenExpiry));
-    localStorage.setItem("refreshTokenExpiry", String(newRefreshTokenExpiry));
+    localStorage.setItem("accessTokenExpiry", String(accessExpiryMs));
+    localStorage.setItem("refreshTokenExpiry", String(refreshExpiryMs));
   };
 
   const logout = useCallback(() => {

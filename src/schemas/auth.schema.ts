@@ -16,6 +16,8 @@ export const loginResponseSchema = z.object({
       phone_number: z.string().nullable(),
       is_active: z.boolean(),
       is_superuser: z.boolean().optional(),
+      // The API returns is_trustee on the login user (not is_superuser).
+      is_trustee: z.boolean().optional(),
     }),
     tokens: z.object({
       access: z.object({
