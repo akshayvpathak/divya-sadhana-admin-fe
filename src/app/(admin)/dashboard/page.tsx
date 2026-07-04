@@ -6,6 +6,7 @@ import { useProducts } from '@/hooks/useProducts';
 import { useDonationCampaignsListQuery } from '@/hooks/queries/useDonationCampaignsQuery';
 import { Users, Tags, Package, Heart } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { formatINR } from '@/lib/currency';
 
 export default function DashboardPage() {
   const { data: usersData, isLoading: loadingUsers } = useUsers(1, 1);
@@ -41,7 +42,7 @@ export default function DashboardPage() {
     },
     {
       name: 'Total Raised',
-      value: `$${totalRaised.toLocaleString()}`,
+      value: formatINR(totalRaised),
       icon: Heart,
       loading: loadingCampaigns,
       color: 'bg-rose-500',

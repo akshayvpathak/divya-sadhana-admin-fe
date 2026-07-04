@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 import dayjs from 'dayjs';
 import { DonationCampaignForm } from '@/components/forms/DonationCampaignForm';
+import { formatINR } from '@/lib/currency';
 
 export default function ViewDonationCampaignPage() {
   const params = useParams();
@@ -98,8 +99,8 @@ export default function ViewDonationCampaignPage() {
                 
                 <div className="space-y-4">
                   <div className="flex justify-between items-end">
-                    <span className="text-4xl font-black tracking-tighter">${campaign.raised_amount}</span>
-                    <span className="text-sm font-bold text-indigo-200 mb-1">of ${campaign.target_amount}</span>
+                    <span className="text-4xl font-black tracking-tighter">{formatINR(campaign.raised_amount)}</span>
+                    <span className="text-sm font-bold text-indigo-200 mb-1">of {formatINR(campaign.target_amount)}</span>
                   </div>
                   <div className="h-3 w-full bg-white/20 rounded-full overflow-hidden">
                     <div 

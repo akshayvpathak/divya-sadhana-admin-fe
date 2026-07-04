@@ -5,6 +5,7 @@ import { Eye, Edit2, Trash2, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { ColumnConfig } from '@/components/common/DataTable/types';
+import { formatINR } from '@/lib/currency';
 
 export interface ProductRow {
   id: string;
@@ -77,7 +78,7 @@ export const useProductTableColumns = ({
       header: 'Price',
       sortable: true,
       cellClassName: 'font-medium text-slate-900',
-      renderCell: (row) => `$${row.price.toFixed(2)}`,
+      renderCell: (row) => formatINR(row.price),
     },
     {
       id: 'stock',

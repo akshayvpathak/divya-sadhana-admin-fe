@@ -1,8 +1,8 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { refreshToken as refreshTokenAPI } from "@/services/auth.service";
+import { refreshToken as refreshTokenAPI, logout as logoutAPI } from "@/services/auth.service";
 import { toast } from "react-toastify";
 
 interface User {
@@ -33,6 +33,30 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const TOKEN_REFRESH_THRESHOLD = 5 * 60 * 1000; // Refresh 5 minutes before expiry
 
+const STORAGE_KEYS = [
+  "user",
+  "accessToken",
+  "refreshToken",
+  "accessTokenExpiry",
+  "refreshTokenExpiry",
+] as const;
+
+/** URLs that must never trigger a refresh-and-retry (avoids recursion). */
+function isAuthEndpoint(url: string): boolean {
+  return (
+    url.includes("/auth/login") ||
+    url.includes("/auth/refresh") ||
+    url.includes("/auth/logout")
+  );
+}
+
+/** Rebuild a fetch call's init with a fresh bearer token for the retry. */
+function withAuthHeader(init: RequestInit | undefined, token: string): RequestInit {
+  const headers = new Headers(init?.headers || {});
+  headers.set("Authorization", `Bearer ${token}`);
+  return { ...init, headers };
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
@@ -40,12 +64,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [accessTokenExpiry, setAccessTokenExpiry] = useState<number | null>(null);
   const [refreshTokenExpiry, setRefreshTokenExpiry] = useState<number | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  // Single-flight refresh: all concurrent 401s share this one promise.
+  const refreshPromiseRef = useRef<Promise<string> | null>(null);
   const router = useRouter();
   const pathname = usePathname();
 
-  // Hydrate from localStorage on mount
-  useEffect(() => {
+  const hydrateFromStorage = useCallback(() => {
     const storedUser = localStorage.getItem("user");
     const storedAccessToken = localStorage.getItem("accessToken");
     const storedRefreshToken = localStorage.getItem("refreshToken");
@@ -61,81 +85,99 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setRefreshTokenExpiry(storedRefreshTokenExpiry ? parseInt(storedRefreshTokenExpiry, 10) : null);
       } catch (error) {
         console.error("Failed to parse stored auth data", error);
-        localStorage.removeItem("user");
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("accessTokenExpiry");
-        localStorage.removeItem("refreshTokenExpiry");
+        STORAGE_KEYS.forEach((k) => localStorage.removeItem(k));
       }
-    }
-
-    setIsHydrated(true);
-  }, []);
-
-  const refreshAccessToken = useCallback(async () => {
-    if (isRefreshing || !refreshToken) {
-      return;
-    }
-
-    try {
-      setIsRefreshing(true);
-      const response = await refreshTokenAPI(refreshToken);
-      const newAccessToken = response.data.tokens.access.token;
-      const newAccessTokenExpiry = response.data.tokens.access.expires;
-      const newRefreshToken = response.data.tokens.refresh.token;
-      const newRefreshTokenExpiry = response.data.tokens.refresh.expires;
-
-      setAccessToken(newAccessToken);
-      setRefreshToken(newRefreshToken);
-      setAccessTokenExpiry(newAccessTokenExpiry);
-      setRefreshTokenExpiry(newRefreshTokenExpiry);
-
-      localStorage.setItem("accessToken", newAccessToken);
-      localStorage.setItem("refreshToken", newRefreshToken);
-      localStorage.setItem("accessTokenExpiry", String(newAccessTokenExpiry));
-      localStorage.setItem("refreshTokenExpiry", String(newRefreshTokenExpiry));
-    } catch (error) {
-      console.error("Token refresh failed", error);
-      // Clear auth and redirect to login on refresh failure
+    } else {
       setUser(null);
       setAccessToken(null);
       setRefreshToken(null);
       setAccessTokenExpiry(null);
       setRefreshTokenExpiry(null);
-      localStorage.removeItem("user");
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("accessTokenExpiry");
-      localStorage.removeItem("refreshTokenExpiry");
-      router.push("/login");
-    } finally {
-      setIsRefreshing(false);
     }
-  }, [refreshToken, isRefreshing, router]);
+  }, []);
 
-  // Auto-refresh token before expiry
+  // Hydrate from localStorage on mount
   useEffect(() => {
-    if (!accessTokenExpiry || !isHydrated) return;
+    hydrateFromStorage();
+    setIsHydrated(true);
+  }, [hydrateFromStorage]);
 
-    const now = Date.now();
-    const timeUntilExpiry = accessTokenExpiry - now;
+  const clearAuthState = useCallback(() => {
+    setUser(null);
+    setAccessToken(null);
+    setRefreshToken(null);
+    setAccessTokenExpiry(null);
+    setRefreshTokenExpiry(null);
+    STORAGE_KEYS.forEach((k) => localStorage.removeItem(k));
+  }, []);
 
-    if (timeUntilExpiry <= TOKEN_REFRESH_THRESHOLD && timeUntilExpiry > 0) {
-      refreshAccessToken();
+  /**
+   * Single-flight token refresh. Reads the refresh token from localStorage
+   * (source of truth, avoids stale closures) and resolves to the new access
+   * token so callers can retry. On failure it clears auth and redirects.
+   */
+  const performRefresh = useCallback((): Promise<string> => {
+    if (refreshPromiseRef.current) return refreshPromiseRef.current;
+
+    const storedRefresh = localStorage.getItem("refreshToken");
+    const storedRefreshExpiry = localStorage.getItem("refreshTokenExpiry");
+    if (!storedRefresh) {
+      return Promise.reject(new Error("No refresh token"));
+    }
+    if (storedRefreshExpiry && parseInt(storedRefreshExpiry, 10) <= Date.now()) {
+      clearAuthState();
+      router.push("/login");
+      return Promise.reject(new Error("Refresh token expired"));
     }
 
-    // Set up interval to check token expiry every minute
-    const interval = setInterval(() => {
-      const currentNow = Date.now();
-      const currentTimeUntilExpiry = accessTokenExpiry - currentNow;
-
-      if (currentTimeUntilExpiry <= TOKEN_REFRESH_THRESHOLD && currentTimeUntilExpiry > 0) {
-        refreshAccessToken();
+    const promise = (async () => {
+      try {
+        const response = await refreshTokenAPI(storedRefresh);
+        const tokens = response.data.tokens;
+        setAccessToken(tokens.access.token);
+        setRefreshToken(tokens.refresh.token);
+        setAccessTokenExpiry(tokens.access.expires);
+        setRefreshTokenExpiry(tokens.refresh.expires);
+        localStorage.setItem("accessToken", tokens.access.token);
+        localStorage.setItem("refreshToken", tokens.refresh.token);
+        localStorage.setItem("accessTokenExpiry", String(tokens.access.expires));
+        localStorage.setItem("refreshTokenExpiry", String(tokens.refresh.expires));
+        return tokens.access.token;
+      } catch (error) {
+        console.error("Token refresh failed");
+        clearAuthState();
+        router.push("/login");
+        throw error;
+      } finally {
+        refreshPromiseRef.current = null;
       }
-    }, 60000); // Check every minute
+    })();
 
+    refreshPromiseRef.current = promise;
+    return promise;
+  }, [clearAuthState, router]);
+
+  const refreshAccessToken = useCallback(async () => {
+    await performRefresh().catch(() => {});
+  }, [performRefresh]);
+
+  // Auto-refresh: fire when within the threshold OR already expired (but the
+  // refresh token is still valid). The old `timeUntilExpiry > 0` guard skipped
+  // already-expired-but-refreshable tokens, forcing an unnecessary logout.
+  useEffect(() => {
+    if (!isHydrated || !accessTokenExpiry) return;
+
+    const check = () => {
+      const timeUntilExpiry = accessTokenExpiry - Date.now();
+      if (timeUntilExpiry <= TOKEN_REFRESH_THRESHOLD) {
+        performRefresh().catch(() => {});
+      }
+    };
+
+    check();
+    const interval = setInterval(check, 60000);
     return () => clearInterval(interval);
-  }, [accessTokenExpiry, isHydrated, refreshAccessToken]);
+  }, [accessTokenExpiry, isHydrated, performRefresh]);
 
   const setAuth = (
     newUser: User,
@@ -157,19 +199,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = useCallback(() => {
-    setUser(null);
-    setAccessToken(null);
-    setRefreshToken(null);
-    setAccessTokenExpiry(null);
-    setRefreshTokenExpiry(null);
-    localStorage.removeItem("user");
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("accessTokenExpiry");
-    localStorage.removeItem("refreshTokenExpiry");
+    // Best-effort server-side logout so the refresh token is revoked; never
+    // block the client-side cleanup on its result.
+    const storedRefresh = localStorage.getItem("refreshToken");
+    const storedAccess = localStorage.getItem("accessToken");
+    if (storedRefresh && storedAccess) {
+      logoutAPI(storedRefresh, storedAccess).catch(() => {});
+    }
+    clearAuthState();
     router.push("/login");
-  }, [router]);
- 
+  }, [clearAuthState, router]);
+
   const updateUser = useCallback((updatedUser: Partial<User>) => {
     setUser((prev) => {
       if (!prev) return null;
@@ -179,43 +219,69 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  // Intercept unauthorized requests (401 status) globally
+  // Keep the latest callbacks in refs so the fetch interceptor can be installed
+  // exactly once (installing/uninstalling on every render corrupts window.fetch).
+  const performRefreshRef = useRef(performRefresh);
+  const logoutRef = useRef(logout);
+  useEffect(() => {
+    performRefreshRef.current = performRefresh;
+    logoutRef.current = logout;
+  });
+
+  // Global 401 handling: refresh-then-retry once, and only log out if the
+  // refresh itself fails. Replaces the old "force logout on first 401".
   useEffect(() => {
     if (typeof window === "undefined") return;
 
     const originalFetch = window.fetch;
-    
-    window.fetch = async (...args) => {
-      const response = await originalFetch(...args);
-      
-      if (response.status === 401) {
-        let url = "";
-        if (typeof args[0] === "string") {
-          url = args[0];
-        } else if (args[0] instanceof URL) {
-          url = args[0].toString();
-        } else if (args[0] && typeof args[0] === "object" && "url" in args[0]) {
-          url = (args[0] as any).url;
-        }
 
-        // Do not trigger logout for login endpoint itself
-        if (url && !url.includes("/auth/login")) {
-          // Only trigger logout if there is an active session in local storage
-          if (localStorage.getItem("accessToken") || localStorage.getItem("user")) {
-            console.warn("Unauthorized API access detected, logging out...");
-            toast.error("Session expired. Please log in again.");
-            logout();
-          }
-        }
+    window.fetch = async (...args: Parameters<typeof fetch>) => {
+      const response = await originalFetch(...args);
+      if (response.status !== 401) return response;
+
+      const input = args[0];
+      let url = "";
+      if (typeof input === "string") url = input;
+      else if (input instanceof URL) url = input.toString();
+      else if (input && typeof input === "object" && "url" in input) url = (input as Request).url;
+
+      // Never refresh-retry auth endpoints, and only when a session exists.
+      if (!url || isAuthEndpoint(url)) return response;
+      if (!localStorage.getItem("accessToken") && !localStorage.getItem("user")) return response;
+
+      try {
+        const newToken = await performRefreshRef.current();
+        // Retry the original request once with the refreshed token.
+        return await originalFetch(args[0], withAuthHeader(args[1], newToken));
+      } catch {
+        toast.error("Session expired. Please log in again.");
+        logoutRef.current();
+        return response;
       }
-      
-      return response;
     };
 
     return () => {
       window.fetch = originalFetch;
     };
-  }, [logout]);
+  }, []);
+
+  // Cross-tab sync: react to auth changes made in other tabs.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === null || (STORAGE_KEYS as readonly string[]).includes(e.key)) {
+        const stillLoggedIn = localStorage.getItem("accessToken") && localStorage.getItem("user");
+        if (!stillLoggedIn) {
+          clearAuthState();
+          if (pathname && !pathname.startsWith("/login")) router.push("/login");
+        } else {
+          hydrateFromStorage();
+        }
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [clearAuthState, hydrateFromStorage, pathname, router]);
 
   // Protect routes
   useEffect(() => {

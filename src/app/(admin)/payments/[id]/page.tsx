@@ -87,7 +87,7 @@ export default function ViewPaymentPage() {
                   <div className="flex justify-between items-end">
                     <div>
                       <p className="text-xs text-indigo-200 font-bold uppercase mb-1">Total Amount</p>
-                      <span className="text-4xl font-black tracking-tighter">${payment.amount}</span>
+                      <span className="text-4xl font-black tracking-tighter">{payment.amount}</span>
                       <span className="ml-2 text-sm font-bold text-indigo-200 uppercase">{payment.currency}</span>
                     </div>
                     <span className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg ${

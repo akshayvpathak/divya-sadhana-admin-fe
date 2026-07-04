@@ -1,6 +1,7 @@
 import React from 'react';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { ColumnConfig } from '@/components/common/DataTable/types';
+import { formatINR } from '@/lib/currency';
 import dayjs from 'dayjs';
 
 export interface DonationRow {
@@ -58,7 +59,7 @@ export const useDonationTableColumns = (): ColumnConfig<DonationRow>[] => {
       header: 'Amount',
       sortable: true,
       cellClassName: 'font-medium',
-      renderCell: (row) => row.amount !== undefined ? `$${row.amount}` : '-',
+      renderCell: (row) => row.amount !== undefined ? formatINR(row.amount) : '-',
     },
     {
       id: 'status',

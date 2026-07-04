@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DataTable } from '@/components/common/DataTable/DataTable';
+import { formatINR } from '@/lib/currency';
 
 export default function ViewOrderPage() {
   const params = useParams();
@@ -42,7 +43,7 @@ export default function ViewOrderPage() {
       cellAlign: 'right' as const,
       headerClassName: 'px-6 py-4 text-xs font-bold uppercase text-slate-500 text-right',
       cellClassName: 'px-6 py-4 text-sm font-black text-slate-900 text-right',
-      renderCell: (row: any) => `$${row.line_total}`,
+      renderCell: (row: any) => formatINR(row.line_total),
     },
   ];
 
@@ -114,19 +115,19 @@ export default function ViewOrderPage() {
               <div className="space-y-4">
                 <div className="flex justify-between text-sm">
                   <span className="text-indigo-200">Subtotal</span>
-                  <span className="font-bold">${order.subtotal_amount}</span>
+                  <span className="font-bold">{formatINR(order.subtotal_amount)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-indigo-200">Shipping</span>
-                  <span className="font-bold">${order.shipping_amount}</span>
+                  <span className="font-bold">{formatINR(order.shipping_amount)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-indigo-200">Tax</span>
-                  <span className="font-bold">${order.tax_amount}</span>
+                  <span className="font-bold">{formatINR(order.tax_amount)}</span>
                 </div>
                 <div className="pt-6 mt-6 border-t border-indigo-500/50 flex justify-between items-center">
                   <span className="font-black text-indigo-100 uppercase tracking-tighter text-lg">Total Amount</span>
-                  <span className="font-black text-white text-4xl tracking-tighter">${order.total_amount}</span>
+                  <span className="font-black text-white text-4xl tracking-tighter">{formatINR(order.total_amount)}</span>
                 </div>
               </div>
             </div>

@@ -4,6 +4,7 @@ import { Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { ColumnConfig } from '@/components/common/DataTable/types';
+import { formatINR } from '@/lib/currency';
 import dayjs from 'dayjs';
 
 export interface OrderRow {
@@ -60,7 +61,7 @@ export const useOrderTableColumns = (): ColumnConfig<OrderRow>[] => {
       header: 'Total Amount',
       sortable: true,
       cellClassName: 'font-medium',
-      renderCell: (row) => row.total_amount !== undefined ? `$${row.total_amount}` : '-',
+      renderCell: (row) => row.total_amount !== undefined ? formatINR(row.total_amount) : '-',
     },
     {
       id: 'created_at',

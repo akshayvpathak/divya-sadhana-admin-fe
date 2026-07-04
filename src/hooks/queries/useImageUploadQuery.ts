@@ -6,7 +6,13 @@ import {
 } from "@/services/image-upload.service";
 import { useMutation } from "@tanstack/react-query";
 
-export const useUploadImageMutation = () => {
+/**
+ * @param uploadType Categorizes the asset server-side (free-form string, maxLength 100
+ * per the spec's UploadFileItem). Pass a context-appropriate value, e.g.
+ * "product_gallery" for product images or "campaign_cover" for donation-campaign covers,
+ * instead of mislabeling everything as "product_gallery".
+ */
+export const useUploadImageMutation = (uploadType: string = "product_gallery") => {
   const { accessToken, user } = useAuth();
 
   return useMutation({
@@ -17,7 +23,7 @@ export const useUploadImageMutation = () => {
 
       const uploadPayload: GenerateUploadUrlPayload = {
         files: files.map((file) => ({
-          upload_type: "product_gallery",
+          upload_type: uploadType,
           file_name: file.name,
           file_size_bytes: file.size,
         })),

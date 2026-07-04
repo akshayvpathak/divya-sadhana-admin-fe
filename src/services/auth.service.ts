@@ -13,9 +13,10 @@ import {
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://api.divyasadhana.org/api";
-const CSRF_TOKEN =
-  process.env.NEXT_PUBLIC_CSRF_TOKEN ??
-  "l59ukUNwIUBIGGsWkMgPIHsDUdkWbEPMYrCb9sWvlUOaq1eH5lBRq8kXkwizAmuP";
+// NOTE: These are bearer-authenticated JSON endpoints (securitySchemes.jwtAuth).
+// DRF only enforces CSRF for SessionAuthentication, so no CSRF token is required
+// here. The previous hardcoded X-CSRFTOKEN fallback was a committed secret and a
+// no-op for security; it has been removed.
 
 export class ApiError extends Error {
   status: number;
@@ -44,7 +45,6 @@ export async function login(payload: LoginPayload): Promise<LoginResponse> {
     headers: {
       accept: "application/json",
       "Content-Type": "application/json",
-      "X-CSRFTOKEN": CSRF_TOKEN,
     },
     body: JSON.stringify(parsedPayload),
   });
@@ -62,12 +62,12 @@ export async function login(payload: LoginPayload): Promise<LoginResponse> {
 }
 
 export async function refreshToken(refreshTokenValue: string): Promise<RefreshTokenResponse> {
-  const response = await fetch(`${API_BASE_URL}/auth/refresh/`, {
+  // Spec path is POST /api/auth/refresh-token (was incorrectly /auth/refresh/).
+  const response = await fetch(`${API_BASE_URL}/auth/refresh-token`, {
     method: "POST",
     headers: {
       accept: "application/json",
       "Content-Type": "application/json",
-      "X-CSRFTOKEN": CSRF_TOKEN,
     },
     body: JSON.stringify({ refresh: refreshTokenValue }),
   });
@@ -92,7 +92,6 @@ export async function forgotPassword(payload: ForgotPasswordPayload): Promise<{ 
     headers: {
       accept: "application/json",
       "Content-Type": "application/json",
-      "X-CSRFTOKEN": CSRF_TOKEN,
     },
     body: JSON.stringify(parsedPayload),
   });
@@ -129,7 +128,6 @@ export async function changePassword(
     headers: {
       accept: "application/json",
       "Content-Type": "application/json",
-      "X-CSRFTOKEN": CSRF_TOKEN,
       Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify({
@@ -156,4 +154,28 @@ export async function changePassword(
   }
 
   return json || { message: "Success" };
+}
+
+/**
+ * Server-side logout. Per the spec's `Logout` schema, `token` is the REFRESH
+ * token and `logout_all_devices` is an integer (0 = this device). Best-effort:
+ * callers should always clear local state regardless of the result.
+ */
+export async function logout(
+  refreshTokenValue: string,
+  accessToken: string,
+  logoutAllDevices = false
+): Promise<void> {
+  await fetch(`${API_BASE_URL}/auth/logout`, {
+    method: "POST",
+    headers: {
+      accept: "application/json",
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      token: refreshTokenValue,
+      logout_all_devices: logoutAllDevices ? 1 : 0,
+    }),
+  });
 }

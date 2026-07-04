@@ -94,9 +94,18 @@ export const useProducts = (page = 1, limit = 10, search = '', categoryId = '', 
     queryKey: ['products', { page, limit, search, categoryId, sort }],
     queryFn: async () => {
       if (!accessToken) throw new Error('No access token');
-      const response = await getProductsList(accessToken, { page, page_size: limit, search, sort });
-      
-      // If categoryId is present we would ideally pass it to the API, but `getProductsList` doesn't support it directly in params here yet, or we'd filter locally if needed. Assuming the API handles the basic search/page at least.
+      const response = await getProductsList(accessToken, {
+        page,
+        page_size: limit,
+        search,
+        sort,
+        category: categoryId,
+      });
+
+      // Server-side `category` is the primary filter (see products.service.ts).
+      // Keep this client-side filter only as a fallback for the current page in
+      // case the backend ignores the param — it must never be the sole filter,
+      // since it would otherwise miss matches beyond page 1.
       let results = response.data.results;
       if (categoryId && categoryId !== 'all') {
         results = results.filter(p => p.category === categoryId);

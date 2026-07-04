@@ -11,6 +11,11 @@ import {
   updateDonationCampaign,
 } from "@/services/donation-campaigns.service";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-toastify";
+
+const notifyError = (fallback: string) => (error: unknown) => {
+  toast.error(error instanceof Error ? error.message : fallback);
+};
 
 export const useDonationCampaignsListQuery = (filters: {
   page?: number;
@@ -69,6 +74,7 @@ export const useCreateDonationCampaignMutation = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["donation-campaigns"] });
     },
+    onError: notifyError("Failed to create campaign. Please try again."),
   });
 };
 
@@ -85,6 +91,7 @@ export const useUpdateDonationCampaignMutation = () => {
       queryClient.invalidateQueries({ queryKey: ["donation-campaigns"] });
       queryClient.invalidateQueries({ queryKey: ["donation-campaign", variables.campaignId] });
     },
+    onError: notifyError("Failed to update campaign. Please try again."),
   });
 };
 
@@ -100,5 +107,6 @@ export const useDeleteDonationCampaignMutation = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["donation-campaigns"] });
     },
+    onError: notifyError("Failed to delete campaign. Please try again."),
   });
 };

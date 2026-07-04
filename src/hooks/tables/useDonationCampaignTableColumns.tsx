@@ -5,6 +5,7 @@ import { Eye, Edit2, Trash2, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { ColumnConfig } from '@/components/common/DataTable/types';
+import { formatINR } from '@/lib/currency';
 import dayjs from 'dayjs';
 
 export interface DonationCampaignRow {
@@ -61,7 +62,7 @@ export const useDonationCampaignTableColumns = ({
       header: 'Target',
       sortable: true,
       cellClassName: 'font-medium text-slate-900',
-      renderCell: (row) => `$${row.target_amount}`,
+      renderCell: (row) => formatINR(row.target_amount),
     },
     {
       id: 'progress',
@@ -69,7 +70,7 @@ export const useDonationCampaignTableColumns = ({
       renderCell: (row) => (
         <div className="space-y-1.5 w-full max-w-[120px]">
           <div className="flex justify-between text-[10px] font-medium">
-            <span>${row.raised_amount}</span>
+            <span>{formatINR(row.raised_amount)}</span>
             <span>{row.progress_percent}%</span>
           </div>
           <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">

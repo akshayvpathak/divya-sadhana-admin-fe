@@ -17,6 +17,7 @@ interface FetchOptions {
   search?: string;
   search_fields?: string;
   sort?: string;
+  category?: string;
 }
 
 /**
@@ -42,6 +43,10 @@ export const getProductsList = async (
   if (options.search_fields)
     params.append("search_fields", options.search_fields);
   if (options.sort) params.append("sort", options.sort);
+  // Server-side category filter (matches the Product.category field). Not in the
+  // generated schema's param list, but the storefront relies on the same filter;
+  // callers keep a client-side fallback in case the backend ignores it.
+  if (options.category && options.category !== "all") params.append("category", options.category);
 
   const response = await fetch(
     `${API_BASE_URL}/products/?${params.toString()}`,
