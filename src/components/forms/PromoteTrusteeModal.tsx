@@ -24,7 +24,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Search, X, Check, Info } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useUsersListQuery } from '@/hooks/queries/useUsersListQuery';
-import { useStatesListQuery } from '@/hooks/queries/useTerritoryQuery';
+import { useStatesListQuery, useCreateAssignmentMutation } from '@/hooks/queries/useTerritoryQuery';
 import { usePromoteTrusteeMutation } from '@/hooks/queries/useTrusteesQuery';
 
 interface PromoteTrusteeModalProps {
@@ -58,6 +58,7 @@ export function PromoteTrusteeModal({ open, onOpenChange }: PromoteTrusteeModalP
   });
   const { data: statesData } = useStatesListQuery({ is_active: 'true' });
   const { mutate: promoteTrustee, isPending } = usePromoteTrusteeMutation();
+  const { mutateAsync: createAssignment } = useCreateAssignmentMutation();
 
   const users = useMemo(() => usersData?.data?.results ?? [], [usersData]);
   const states = useMemo(() => statesData?.data?.results ?? [], [statesData]);
@@ -107,7 +108,24 @@ export function PromoteTrusteeModal({ open, onOpenChange }: PromoteTrusteeModalP
         notes: notes || undefined,
       },
       {
-        onSuccess: (trustee) => {
+        onSuccess: async (trustee) => {
+          // Also create the Territory Assignment so the trustee actually earns
+          // AREA commission for the chosen state. Promotion only sets the
+          // descriptive trustee.state; the commission engine keys off assignments.
+          // Best-effort — the promotion itself already succeeded.
+          const stateId = states.find((s) => s.name === state)?.id;
+          if (trustee?.id && stateId) {
+            try {
+              await createAssignment({
+                trustee: trustee.id,
+                state: stateId,
+                area_commission_percent: commissionPercent || undefined,
+                is_active: true,
+              });
+            } catch {
+              /* e.g. state already assigned to another trustee — hook toasts it */
+            }
+          }
           onOpenChange(false);
           if (trustee?.id) {
             router.push(`/trustees/${trustee.id}`);
@@ -123,7 +141,8 @@ export function PromoteTrusteeModal({ open, onOpenChange }: PromoteTrusteeModalP
         <DialogHeader>
           <DialogTitle>Promote User to Trustee</DialogTitle>
           <DialogDescription>
-            A referral code + wallet are auto-created. Assign territory states in the next step.
+            A referral code + wallet are auto-created. Choosing a state also assigns it for
+            area commission; you can add more states later from the trustee page.
           </DialogDescription>
         </DialogHeader>
 

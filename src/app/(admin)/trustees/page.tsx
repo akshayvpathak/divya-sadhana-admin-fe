@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Search, Plus, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,9 @@ import { useAssignmentsListQuery, useStatesListQuery } from '@/hooks/queries/use
 import { useTrusteeTableColumns } from '@/hooks/tables/useTrusteeTableColumns';
 import { Trustee } from '@/schemas/trustees.schema';
 import { PromoteTrusteeModal } from '@/components/forms/PromoteTrusteeModal';
+import { CoverageAssignments } from '@/components/trustees/CoverageAssignments';
+
+type TrusteesTab = 'trustees' | 'coverage';
 
 export default function TrusteesPage() {
   const [page, setPage] = useState(1);
@@ -28,6 +31,23 @@ export default function TrusteesPage() {
   const [stateFilter, setStateFilter] = useState('all');
   const [sort, setSort] = useState('-created_at');
   const [isPromoteOpen, setIsPromoteOpen] = useState(false);
+  const [tab, setTab] = useState<TrusteesTab>('trustees');
+
+  // Deep-link support: /trustees?tab=coverage (used by the old /territory route).
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (new URLSearchParams(window.location.search).get('tab') === 'coverage') {
+      setTab('coverage');
+    }
+  }, []);
+
+  const selectTab = (next: TrusteesTab) => {
+    setTab(next);
+    if (typeof window !== 'undefined') {
+      const url = next === 'coverage' ? '/trustees?tab=coverage' : '/trustees';
+      window.history.replaceState(window.history.state, '', url);
+    }
+  };
 
   const isActiveParam = status === 'all' ? undefined : status === 'active' ? 'true' : 'false';
 
@@ -108,11 +128,37 @@ export default function TrusteesPage() {
           <h1 className="text-3xl font-bold text-slate-900">Trustees</h1>
           <p className="text-slate-500 mt-1">Promote users and monitor commission earnings</p>
         </div>
-        <Button className="bg-indigo-600 hover:bg-indigo-700" onClick={() => setIsPromoteOpen(true)}>
-          <Plus className="h-4 w-4" /> Promote Trustee
-        </Button>
+        {tab === 'trustees' && (
+          <Button className="bg-indigo-600 hover:bg-indigo-700" onClick={() => setIsPromoteOpen(true)}>
+            <Plus className="h-4 w-4" /> Promote Trustee
+          </Button>
+        )}
       </div>
 
+      {/* Tabs: agents (Trustees) vs cross-trustee coverage (former Territory page) */}
+      <div className="flex gap-6 border-b border-slate-200">
+        {([
+          { key: 'trustees' as const, label: 'Trustees' },
+          { key: 'coverage' as const, label: 'Coverage' },
+        ]).map((t) => (
+          <button
+            key={t.key}
+            type="button"
+            onClick={() => selectTab(t.key)}
+            className={`-mb-px border-b-2 px-1 pb-3 text-sm font-semibold transition-colors ${
+              tab === t.key
+                ? 'border-indigo-600 text-indigo-600'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'coverage' ? (
+        <CoverageAssignments />
+      ) : (
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
         <div className="p-4 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row gap-4">
           <div className="relative max-w-sm flex-1">
@@ -202,6 +248,7 @@ export default function TrusteesPage() {
           />
         )}
       </div>
+      )}
 
       <PromoteTrusteeModal open={isPromoteOpen} onOpenChange={setIsPromoteOpen} />
     </div>

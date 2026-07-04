@@ -18,8 +18,7 @@ import {
   CreditCard,
   UserCircle,
   Sparkles,
-  BadgeCheck,
-  MapPinned
+  BadgeCheck
 } from 'lucide-react';
 import { Button } from '../ui/button';
 
@@ -34,7 +33,6 @@ const navItems = [
   { name: 'Payments', href: '/payments', icon: CreditCard },
   { name: 'AI Readings', href: '/ai-readings', icon: Sparkles },
   { name: 'Trustees', href: '/trustees', icon: BadgeCheck },
-  { name: 'Territory', href: '/territory', icon: MapPinned },
   { name: 'Profile', href: '/profile', icon: UserCircle },
 ];
 
