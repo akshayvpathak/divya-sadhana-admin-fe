@@ -31,7 +31,7 @@ export const orderSchema = z.object({
   tax_amount: z.union([z.number(), z.string()]).transform((v) => parseFloat(String(v))).optional(),
   shipping_amount: z.union([z.number(), z.string()]).transform((v) => parseFloat(String(v))).optional(),
   total_amount: z.union([z.number(), z.string()]).transform((v) => parseFloat(String(v))).optional(),
-  notes: z.string().optional(),
+  notes: z.string().nullable().optional(),
   shiprocket_order_id: z.string().nullable().optional(),
   shiprocket_shipment_id: z.string().nullable().optional(),
   awb_code: z.string().nullable().optional(),

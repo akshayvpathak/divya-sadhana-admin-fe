@@ -3,8 +3,12 @@ import { PromoteTrusteePayload } from "@/schemas/trustees.schema";
 import {
   getTrusteeCommissions,
   getTrusteeDashboard,
+  getTrusteeEarningsSummary,
   getTrusteesList,
   promoteTrustee,
+  updateTrustee,
+  deleteTrustee,
+  UpdateTrusteePayload,
 } from "@/services/trustees.service";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
@@ -65,6 +69,59 @@ export const useTrusteeCommissionsQuery = (
       });
     },
     enabled: !!accessToken && !!trusteeId,
+  });
+};
+
+export const useTrusteeEarningsSummaryQuery = (trusteeId: string | null) => {
+  const { accessToken } = useAuth();
+
+  return useQuery({
+    queryKey: ["trustee-earnings-summary", trusteeId],
+    queryFn: async () => {
+      if (!accessToken || !trusteeId) throw new Error("Missing required data");
+      return getTrusteeEarningsSummary(trusteeId, accessToken);
+    },
+    enabled: !!accessToken && !!trusteeId,
+  });
+};
+
+export const useUpdateTrusteeMutation = () => {
+  const { accessToken } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, payload }: { id: string; payload: UpdateTrusteePayload }) => {
+      if (!accessToken) throw new Error("No access token");
+      return updateTrustee(id, payload, accessToken);
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["trustees"] });
+      queryClient.invalidateQueries({ queryKey: ["trustee-dashboard", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["trustee-earnings-summary", variables.id] });
+      toast.success("Trustee updated");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+};
+
+export const useDeleteTrusteeMutation = () => {
+  const { accessToken } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      if (!accessToken) throw new Error("No access token");
+      return deleteTrustee(id, accessToken);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["trustees"] });
+      toast.success("Trustee removed");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
   });
 };
 

@@ -1,12 +1,14 @@
 'use client';
 
 import { useMemo, useState, type ReactNode } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronLeft, Lock, Plus, Pencil, Wallet, TrendingUp } from 'lucide-react';
+import { ChevronLeft, Lock, Plus, Pencil, Wallet, TrendingUp, Trash2, ShoppingBag, Heart, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { EditTrusteeModal } from '@/components/forms/EditTrusteeModal';
 import {
   Select,
   SelectContent,
@@ -16,7 +18,11 @@ import {
 } from '@/components/ui/select';
 import { DataTable } from '@/components/common/DataTable/DataTable';
 import { DataTablePagination } from '@/components/common/DataTablePagination';
-import { useTrusteeDashboardQuery, useTrusteeCommissionsQuery } from '@/hooks/queries/useTrusteesQuery';
+import {
+  useTrusteeDashboardQuery,
+  useTrusteeCommissionsQuery,
+  useDeleteTrusteeMutation,
+} from '@/hooks/queries/useTrusteesQuery';
 import { useAssignmentsListQuery } from '@/hooks/queries/useTerritoryQuery';
 import { useCommissionLedgerColumns } from '@/hooks/tables/useCommissionLedgerColumns';
 import { AssignStateModal } from '@/components/forms/AssignStateModal';
@@ -57,6 +63,7 @@ function StatCard({
 
 export default function TrusteeDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const id = params.id as string;
 
   const [statusFilter, setStatusFilter] = useState('all');
@@ -65,6 +72,10 @@ export default function TrusteeDetailPage() {
 
   const [isAssignOpen, setIsAssignOpen] = useState(false);
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+
+  const { mutate: deleteTrustee, isPending: isDeleting } = useDeleteTrusteeMutation();
 
   const { data: dashboard, isLoading: dashboardLoading } = useTrusteeDashboardQuery(id);
   const { data: assignmentsData } = useAssignmentsListQuery({ trustee: id, page_size: 100 });
@@ -80,14 +91,20 @@ export default function TrusteeDetailPage() {
   const wallet = (d.wallet ?? {}) as Record<string, any>;
   const commissions = (d.commissions ?? {}) as Record<string, any>;
   const byKind = (commissions.by_kind ?? {}) as Record<string, any>;
+  const totals = (d.totals ?? {}) as Record<string, any>;
 
   const name =
     meta.name ||
     [meta.first_name, meta.last_name].filter(Boolean).join(' ').trim() ||
     meta.email ||
     'Trustee';
-  const code = meta.referral_code;
+  const code = meta.referral_code ?? d.referral_code;
   const isActive = meta.is_active;
+  const commissionPercent = String(meta.commission_percent ?? d.commission_percent ?? '');
+
+  const handleDelete = () => {
+    deleteTrustee(id, { onSuccess: () => router.push('/trustees') });
+  };
 
   const assignments = useMemo(() => assignmentsData?.data?.results ?? [], [assignmentsData]);
 
@@ -131,6 +148,21 @@ export default function TrusteeDetailPage() {
           )}
           {meta.email && <p className="text-slate-500 text-sm mt-0.5 truncate">{meta.email}</p>}
         </div>
+        {!dashboardLoading && (
+          <div className="flex shrink-0 items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setIsEditOpen(true)}>
+              <Pencil className="h-4 w-4" /> Edit
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsDeleteOpen(true)}
+              className="border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+            >
+              <Trash2 className="h-4 w-4" /> Delete
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Wallet */}
@@ -192,6 +224,35 @@ export default function TrusteeDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Referral / sales impact */}
+      {!dashboardLoading && (
+        <div>
+          <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Impact</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <StatCard
+              label="Orders referred"
+              value={String(totals.orders ?? 0)}
+              icon={<ShoppingBag className="h-3.5 w-3.5" />}
+              hint={`${formatINR(totals.orders_revenue)} revenue`}
+              tone="green"
+            />
+            <StatCard
+              label="Donations referred"
+              value={String(totals.donations ?? 0)}
+              icon={<Heart className="h-3.5 w-3.5" />}
+              hint={`${formatINR(totals.donations_amount)} raised`}
+              tone="rose"
+            />
+            <StatCard
+              label="Referred users"
+              value={String(totals.referred_users ?? 0)}
+              icon={<Users className="h-3.5 w-3.5" />}
+              tone="indigo"
+            />
+          </div>
+        </div>
+      )}
 
       {/* Territory */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
@@ -301,6 +362,25 @@ export default function TrusteeDetailPage() {
         trusteeId={id}
         trusteeLabel={name}
         assignment={editingAssignment}
+      />
+
+      <EditTrusteeModal
+        open={isEditOpen}
+        onOpenChange={setIsEditOpen}
+        trusteeId={id}
+        initial={{ commissionPercent, notes: String(meta.notes ?? d.notes ?? ''), isActive: !!isActive }}
+      />
+
+      <ConfirmModal
+        isOpen={isDeleteOpen}
+        onOpenChange={setIsDeleteOpen}
+        title="Remove trustee?"
+        description={`This removes ${name}'s trustee role and wallet access. This cannot be undone.`}
+        confirmText={isDeleting ? 'Removing...' : 'Remove'}
+        cancelText="Cancel"
+        variant="destructive"
+        disabled={isDeleting}
+        onConfirm={handleDelete}
       />
     </div>
   );

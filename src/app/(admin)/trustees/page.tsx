@@ -31,8 +31,15 @@ export default function TrusteesPage() {
 
   const isActiveParam = status === 'all' ? undefined : status === 'active' ? 'true' : 'false';
 
+  // The state filter is derived from territory assignments, so the API can't
+  // filter it server-side. When it's active we fetch the full set and paginate
+  // client-side; otherwise we use normal server pagination.
+  const PAGE_SIZE = 10;
+  const filtering = stateFilter !== 'all';
+
   const { data, isLoading } = useTrusteesListQuery({
-    page,
+    page: filtering ? 1 : page,
+    page_size: filtering ? 500 : PAGE_SIZE,
     search: debouncedSearch,
     is_active: isActiveParam,
     sort,
@@ -76,12 +83,17 @@ export default function TrusteesPage() {
   const columns = useTrusteeTableColumns({ getStates });
 
   const allRows = data?.data?.results ?? [];
-  const rows = useMemo(() => {
-    if (stateFilter === 'all') return allRows;
+  const filteredRows = useMemo(() => {
+    if (!filtering) return allRows;
     return allRows.filter((r) => getStates(r).includes(stateFilter));
-  }, [allRows, stateFilter, getStates]);
+  }, [allRows, filtering, stateFilter, getStates]);
 
-  const totalPages = data?.data?.count ? Math.ceil(data.data.count / 10) : 1;
+  // Count/pages reflect the FILTERED set when a state filter is active.
+  const totalItems = filtering ? filteredRows.length : data?.data?.count ?? filteredRows.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+  const rows = filtering
+    ? filteredRows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+    : filteredRows;
   const states = statesData?.data?.results ?? [];
 
   const handleSort = (field: string) => {
@@ -136,7 +148,7 @@ export default function TrusteesPage() {
               </SelectContent>
             </Select>
 
-            <Select value={stateFilter} onValueChange={(val) => setStateFilter(val || 'all')}>
+            <Select value={stateFilter} onValueChange={(val) => { setStateFilter(val || 'all'); setPage(1); }}>
               <SelectTrigger className="bg-white w-[200px]">
                 <SelectValue placeholder="All States">
                   {stateFilter === 'all' ? 'All States' : stateFilter}
@@ -185,7 +197,7 @@ export default function TrusteesPage() {
           <DataTablePagination
             currentPage={page}
             totalPages={totalPages}
-            totalItems={data.data.count ?? rows.length}
+            totalItems={totalItems}
             onPageChange={setPage}
           />
         )}

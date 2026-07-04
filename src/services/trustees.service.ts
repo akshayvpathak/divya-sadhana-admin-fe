@@ -9,7 +9,7 @@ import {
   CommissionsList,
   commissionsListSchema,
 } from "@/schemas/trustees.schema";
-import { ApiError, formatApiError } from "@/services/auth.service";
+import { ApiError, formatApiError, apiErrorFrom } from "@/services/auth.service";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://api.divyasadhana.org/api";
@@ -83,6 +83,86 @@ export const promoteTrustee = async (
 
   const json = await response.json();
   return trusteeSchema.parse(json.data || json);
+};
+
+export interface UpdateTrusteePayload {
+  commission_percent?: string;
+  is_active?: boolean;
+  state?: string;
+  district?: string;
+  notes?: string;
+}
+
+export const updateTrustee = async (
+  id: string,
+  payload: UpdateTrusteePayload,
+  accessToken: string
+): Promise<Trustee> => {
+  const response = await fetch(`${API_BASE_URL}/trustee/${id}/`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+      "X-CSRFTOKEN": getCsrfToken(),
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const json = await response.json().catch(() => ({}));
+    throw apiErrorFrom(json, "Failed to update trustee", response.status);
+  }
+
+  const json = await response.json();
+  return trusteeSchema.parse(json.data || json);
+};
+
+export const deleteTrustee = async (id: string, accessToken: string): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/trustee/${id}/`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "X-CSRFTOKEN": getCsrfToken(),
+    },
+  });
+
+  if (!response.ok) {
+    const json = await response.json().catch(() => ({}));
+    throw new ApiError(formatApiError(json, "Failed to delete trustee"), response.status);
+  }
+};
+
+export interface TrusteeEarningsSummary {
+  balance: string;
+  available_balance: string;
+  pending_balance: string;
+  held_amount: string;
+  pending_commission: string;
+  total_commission_lifetime: string;
+  total_commission_this_month: string;
+  total_reversals_lifetime: string;
+  currency: string;
+}
+
+export const getTrusteeEarningsSummary = async (
+  id: string,
+  accessToken: string
+): Promise<TrusteeEarningsSummary> => {
+  const response = await fetch(`${API_BASE_URL}/trustee/${id}/earnings-summary/`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: "" }));
+    throw new Error(error.message || "Failed to fetch earnings summary");
+  }
+
+  const json = await response.json();
+  return (json.data ?? {}) as TrusteeEarningsSummary;
 };
 
 export const getTrusteeDashboard = async (
