@@ -270,7 +270,7 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
           <Label htmlFor="name">Product Name <span className="text-rose-500">*</span></Label>
           <Input 
             id="name" 
-            placeholder="Wireless Headphones" 
+            placeholder="Product Name" 
             {...register('name')} 
             disabled={readOnly}
             className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}
@@ -374,7 +374,7 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
         <Label htmlFor="description">Description <span className="text-rose-500">*</span></Label>
         <Textarea 
           id="description" 
-          placeholder="High quality wireless headphones..." 
+          placeholder="Product description..." 
           {...register('description')} 
           disabled={readOnly}
           className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}

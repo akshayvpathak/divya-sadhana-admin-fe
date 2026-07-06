@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useDonationCampaignsListQuery, useDeleteDonationCampaignMutation } from '@/hooks/queries/useDonationCampaignsQuery';
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, Filter } from 'lucide-react';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,18 +11,25 @@ import { DataTable } from '@/components/common/DataTable/DataTable';
 import { useDonationCampaignTableColumns } from '@/hooks/tables/useDonationCampaignTableColumns';
 import { useDebounce } from '@/hooks/useDebounce';
 import { DataTablePagination } from '@/components/common/DataTablePagination';
+import { TableFilter } from '@/components/common/TableFilter';
 
 export default function DonationCampaignsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
+  const [status, setStatus] = useState('all');
   const [sort, setSort] = useState('');
   
   // Deletion state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [campaignToDelete, setCampaignToDelete] = useState<string | null>(null);
 
-  const { data, isLoading } = useDonationCampaignsListQuery({ page, search: debouncedSearch, sort });
+  const { data, isLoading } = useDonationCampaignsListQuery({
+    page,
+    search: debouncedSearch,
+    status: status === 'all' ? undefined : status,
+    sort
+  });
   const { mutate: deleteCampaign, isPending: isDeleting } = useDeleteDonationCampaignMutation();
 
   const openDeleteModal = (id: string) => {
@@ -52,6 +59,13 @@ export default function DonationCampaignsPage() {
     openDeleteModal,
   });
 
+  const statusOptions = [
+    { value: 'all', label: 'All Status' },
+    { value: 'active', label: 'Active' },
+    { value: 'completed', label: 'Completed' },
+    { value: 'inactive', label: 'Inactive' },
+  ];
+
   return (
     <div className="space-y-6  pb-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -67,17 +81,31 @@ export default function DonationCampaignsPage() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-        <div className="p-4 border-b border-slate-200 bg-slate-50">
-          <div className="relative max-w-sm">
+        <div className="p-4 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row gap-4 items-center justify-between">
+          <div className="relative max-w-sm flex-1 w-full">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <Input
-              placeholder="Search campaigns..."
+              placeholder="Search Campaigns..."
               className="pl-9 bg-white"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
                 setPage(1);
               }}
+            />
+          </div>
+
+          <div className="flex flex-wrap sm:flex-nowrap gap-2 items-center w-full sm:w-auto justify-end">
+            <Filter className="h-4 w-4 text-slate-400 shrink-0" />
+            <TableFilter
+              value={status}
+              onValueChange={(val) => {
+                setStatus(val);
+                setPage(1);
+              }}
+              options={statusOptions}
+              placeholder="All Status"
+              widthClass="w-[140px]"
             />
           </div>
         </div>

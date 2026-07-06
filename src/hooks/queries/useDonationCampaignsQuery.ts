@@ -49,6 +49,23 @@ export const useDonationCampaignsListQuery = (filters: {
   });
 };
 
+export const useAllDonationCampaignsQuery = () => {
+  const { accessToken } = useAuth();
+  return useQuery({
+    queryKey: ["donation-campaigns", "all"],
+    queryFn: async () => {
+      if (!accessToken) throw new Error("No access token");
+      const response = await getDonationCampaignsList(accessToken, {
+        page: 1,
+        page_size: 100,
+      });
+      return response.data.results;
+    },
+    enabled: !!accessToken,
+    staleTime: 30000,
+  });
+};
+
 export const useDonationCampaignQuery = (campaignId: string | null) => {
   const { accessToken } = useAuth();
 

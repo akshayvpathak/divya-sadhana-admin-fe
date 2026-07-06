@@ -85,7 +85,7 @@ export function CategoryForm({ categoryId, initialData: propsInitialData, onSubm
           <Label htmlFor="name">Category Name <span className="text-rose-500">*</span></Label>
           <Input
             id="name"
-            placeholder="Electronics"
+            placeholder="Category Name"
             {...register('name')}
             disabled={readOnly}
             className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}
@@ -108,7 +108,7 @@ export function CategoryForm({ categoryId, initialData: propsInitialData, onSubm
         <Label htmlFor="description">Description <span className="text-rose-500">*</span></Label>
         <Textarea
           id="description"
-          placeholder="All kinds of electronic devices..."
+          placeholder="Category description..."
           {...register('description')}
           disabled={readOnly}
           className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}

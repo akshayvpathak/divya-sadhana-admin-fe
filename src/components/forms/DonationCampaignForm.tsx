@@ -190,7 +190,7 @@ export function DonationCampaignForm({ campaignId, initialData: propsInitialData
           <Label htmlFor="title">Title <span className="text-rose-500">*</span></Label>
           <Input 
             id="title" 
-            placeholder="Clean Water Project" 
+            placeholder="Title of the campaign" 
             {...register('title')} 
             disabled={readOnly}
             className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}
@@ -202,7 +202,7 @@ export function DonationCampaignForm({ campaignId, initialData: propsInitialData
           <Label htmlFor="slug">Slug <span className="text-rose-500">*</span></Label>
           <Input 
             id="slug" 
-            placeholder="clean-water-project" 
+            placeholder="sulg-of-the-campaign" 
             {...register('slug')} 
             disabled={readOnly}
             className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}
@@ -286,7 +286,7 @@ export function DonationCampaignForm({ campaignId, initialData: propsInitialData
         <Label htmlFor="description">Description <span className="text-rose-500">*</span></Label>
         <Textarea 
           id="description" 
-          placeholder="Detailed description of the donation campaign..." 
+          placeholder="Description campaign..." 
           {...register('description')} 
           disabled={readOnly}
           className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}

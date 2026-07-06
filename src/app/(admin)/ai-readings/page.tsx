@@ -4,11 +4,11 @@ import { useState } from 'react';
 import { useAiReadingsListQuery } from '@/hooks/queries/useAiReadingsQuery';
 import { Search, Filter } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DataTable } from '@/components/common/DataTable/DataTable';
 import { useAiReadingsTableColumns } from '@/hooks/tables/useAiReadingsTableColumns';
 import { useDebounce } from '@/hooks/useDebounce';
 import { DataTablePagination } from '@/components/common/DataTablePagination';
+import { TableFilter } from '@/components/common/TableFilter';
 
 export default function AiReadingsPage() {
   const [page, setPage] = useState(1);
@@ -45,10 +45,10 @@ export default function AiReadingsPage() {
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
         <div className="p-4 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row gap-4 justify-between">
-          <div className="relative max-w-sm flex-1">
+          <div className="relative max-w-sm flex-1 w-full">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <Input
-              placeholder="Search request number or user email..."
+              placeholder="Search AI Reports..."
               className="pl-9 bg-white"
               value={search}
               onChange={(e) => {
@@ -58,47 +58,43 @@ export default function AiReadingsPage() {
             />
           </div>
 
-          <div className="flex flex-wrap sm:flex-nowrap gap-2 items-center">
+          <div className="flex flex-wrap sm:flex-nowrap gap-2 items-center w-full sm:w-auto justify-end">
             <Filter className="h-4 w-4 text-slate-400 shrink-0" />
             
             {/* Service Kind Filter */}
-            <Select 
-              value={serviceKind} 
+            <TableFilter
+              value={serviceKind}
               onValueChange={(val) => {
-                setServiceKind(val || 'all');
+                setServiceKind(val);
                 setPage(1);
               }}
-            >
-              <SelectTrigger className="bg-white w-[160px]">
-                <SelectValue placeholder="All Services" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Services</SelectItem>
-                <SelectItem value="face_reading">Face Reading</SelectItem>
-                <SelectItem value="palm_reading">Palm Reading</SelectItem>
-              </SelectContent>
-            </Select>
+              options={[
+                { value: 'all', label: 'All Services' },
+                { value: 'face_reading', label: 'Face Reading' },
+                { value: 'palm_reading', label: 'Palm Reading' },
+              ]}
+              placeholder="All Services"
+              widthClass="w-[160px]"
+            />
 
             {/* Status Filter */}
-            <Select 
-              value={status} 
+            <TableFilter
+              value={status}
               onValueChange={(val) => {
-                setStatus(val || 'all');
+                setStatus(val);
                 setPage(1);
               }}
-            >
-              <SelectTrigger className="bg-white w-[140px]">
-                <SelectValue placeholder="All Statuses" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="processing">Processing</SelectItem>
-                <SelectItem value="succeeded">Succeeded</SelectItem>
-                <SelectItem value="failed">Failed</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
+              options={[
+                { value: 'all', label: 'All Status' },
+                { value: 'pending', label: 'Pending' },
+                { value: 'processing', label: 'Processing' },
+                { value: 'succeeded', label: 'Succeeded' },
+                { value: 'failed', label: 'Failed' },
+                { value: 'cancelled', label: 'Cancelled' },
+              ]}
+              placeholder="All Status"
+              widthClass="w-[140px]"
+            />
           </div>
         </div>
 

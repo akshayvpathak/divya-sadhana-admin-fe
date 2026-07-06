@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useDonationsListQuery } from '@/hooks/queries/useDonationsQuery';
+import { useAllDonationCampaignsQuery } from '@/hooks/queries/useDonationCampaignsQuery';
 import { Search, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,19 +10,22 @@ import { DataTable } from '@/components/common/DataTable/DataTable';
 import { useDonationTableColumns } from '@/hooks/tables/useDonationTableColumns';
 import { useDebounce } from '@/hooks/useDebounce';
 import { DataTablePagination } from '@/components/common/DataTablePagination';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { TableFilter } from '@/components/common/TableFilter';
 
 export default function DonationsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
   const [status, setStatus] = useState('all');
+  const [campaign, setCampaign] = useState('all');
   const [sort, setSort] = useState('-paid_at');
 
+  const { data: campaignsData } = useAllDonationCampaignsQuery();
   const { data, isLoading } = useDonationsListQuery({
     page,
     search: debouncedSearch,
     status: status === 'all' ? undefined : status,
+    campaign: campaign === 'all' ? undefined : campaign,
     sort
   });
 
@@ -33,6 +37,19 @@ export default function DonationsPage() {
   const totalPages = data?.data?.count ? Math.ceil(data.data.count / 10) : 1;
   const columns = useDonationTableColumns();
 
+  const statusOptions = [
+    { value: 'all', label: 'All Status' },
+    { value: 'paid', label: 'Paid' },
+    { value: 'pending', label: 'Pending' },
+    { value: 'failed', label: 'Failed' },
+    { value: 'refunded', label: 'Refunded' },
+  ];
+
+  const campaignOptions = [
+    { value: 'all', label: 'All Campaigns' },
+    ...(campaignsData?.map((c) => ({ value: c.id, label: c.title })) || []),
+  ];
+
   return (
     <div className="space-y-6 pb-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -43,11 +60,11 @@ export default function DonationsPage() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-        <div className="p-4 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row gap-4 items-center">
+        <div className="p-4 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row gap-4 items-center justify-between">
           <div className="relative max-w-sm flex-1 w-full">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <Input
-              placeholder="Search donations..."
+              placeholder="Search Donations..."
               className="pl-9 bg-white"
               value={search}
               onChange={(e) => {
@@ -57,28 +74,30 @@ export default function DonationsPage() {
             />
           </div>
 
-          <div className="flex flex-wrap sm:flex-nowrap gap-2 items-center w-full sm:w-auto">
+          <div className="flex flex-wrap sm:flex-nowrap gap-2 items-center w-full sm:w-auto justify-end">
             <Filter className="h-4 w-4 text-slate-400 shrink-0" />
-            <Select
-              value={status}
+            
+            <TableFilter
+              value={campaign}
               onValueChange={(val) => {
-                setStatus(val || 'all');
+                setCampaign(val);
                 setPage(1);
               }}
-            >
-              <SelectTrigger className="bg-white w-[150px]">
-                <SelectValue placeholder="All Statuses">
-                  {status === 'paid' ? 'Paid' : status === 'pending' ? 'Pending' : status === 'failed' ? 'Failed' : status === 'refunded' ? 'Refunded' : 'All Statuses'}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="paid">Paid</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="failed">Failed</SelectItem>
-                <SelectItem value="refunded">Refunded</SelectItem>
-              </SelectContent>
-            </Select>
+              options={campaignOptions}
+              placeholder="All Campaigns"
+              widthClass="w-[180px]"
+            />
+
+            <TableFilter
+              value={status}
+              onValueChange={(val) => {
+                setStatus(val);
+                setPage(1);
+              }}
+              options={statusOptions}
+              placeholder="All Status"
+              widthClass="w-[140px]"
+            />
           </div>
         </div>
 

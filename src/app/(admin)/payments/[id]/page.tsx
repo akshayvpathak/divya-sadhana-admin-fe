@@ -77,6 +77,78 @@ export default function ViewPaymentPage() {
                   </div>
                 </div>
               </div>
+
+              {(() => {
+                const orderObj = (payment as any).order;
+                const donationObj = (payment as any).donation;
+                return (
+                  <>
+                    {orderObj && (
+                      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Associated Order</h3>
+                        <div>
+                          <span className="text-[10px] text-slate-400 font-bold uppercase block mb-1">Order Details</span>
+                          {typeof orderObj === 'object' ? (
+                            <div className="space-y-1 text-sm">
+                              {orderObj.order_number && (
+                                <p>
+                                  Order Number:{' '}
+                                  <Link href={`/orders/${orderObj.id}`} className="text-indigo-600 hover:underline font-bold">
+                                    #{orderObj.order_number}
+                                  </Link>
+                                </p>
+                              )}
+                              {orderObj.status && <p className="text-xs text-slate-500 capitalize">Status: {orderObj.status}</p>}
+                            </div>
+                          ) : (
+                            <Link href={`/orders/${orderObj}`} className="text-indigo-600 hover:underline font-bold text-sm font-mono">
+                              View Order Details
+                            </Link>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {donationObj && (
+                      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Associated Donation</h3>
+                        <div className="space-y-3 text-sm">
+                          {typeof donationObj === 'object' ? (
+                            <>
+                              {donationObj.donation_number && (
+                                <div>
+                                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Donation Number</span>
+                                  <span className="font-mono text-slate-900 font-bold">{donationObj.donation_number}</span>
+                                </div>
+                              )}
+                              {donationObj.donor_name && (
+                                <div>
+                                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Donor</span>
+                                  <span className="text-slate-900 font-bold">{donationObj.donor_name}</span>
+                                  {donationObj.donor_email && (
+                                    <span className="text-xs text-slate-500 block">{donationObj.donor_email}</span>
+                                  )}
+                                </div>
+                              )}
+                              {donationObj.campaign_title && (
+                                <div>
+                                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Campaign</span>
+                                  <span className="text-slate-900">{donationObj.campaign_title}</span>
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <div>
+                              <span className="text-[10px] text-slate-400 font-bold uppercase block">Donation ID</span>
+                              <span className="font-mono text-slate-900">{donationObj}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
 
             {/* Right Column: Financial & Status */}

@@ -144,10 +144,7 @@ export async function deleteCategory(
 
   if (!response.ok) {
     const json = await response.json();
-    throw new ApiError(
-      json?.message || "Failed to delete category",
-      response.status
-    );
+    throw apiErrorFrom(json, "Failed to delete category", response.status);
   }
 }
 

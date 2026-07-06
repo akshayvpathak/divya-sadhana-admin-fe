@@ -70,7 +70,7 @@ export default function CategoriesPage() {
           <div className="relative max-w-sm">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <Input
-              placeholder="Search categories..."
+              placeholder="Search Categories..."
               className="pl-9 bg-white"
               value={search}
               onChange={(e) => {
