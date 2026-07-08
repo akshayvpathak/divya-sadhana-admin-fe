@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useDonationCampaignsListQuery, useDeleteDonationCampaignMutation } from '@/hooks/queries/useDonationCampaignsQuery';
-import { Search, Plus, Filter } from 'lucide-react';
+import { Search, Plus } from 'lucide-react';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,23 +11,29 @@ import { DataTable } from '@/components/common/DataTable/DataTable';
 import { useDonationCampaignTableColumns } from '@/hooks/tables/useDonationCampaignTableColumns';
 import { useDebounce } from '@/hooks/useDebounce';
 import { DataTablePagination } from '@/components/common/DataTablePagination';
-import { TableFilter } from '@/components/common/TableFilter';
+import { FilterManager, useFilterManager } from '@/components/common/FilterManager';
+import { campaignStatusOptions } from '@/components/ui/badges/badge-status';
 
 export default function DonationCampaignsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
-  const [status, setStatus] = useState('all');
   const [sort, setSort] = useState('');
   
   // Deletion state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [campaignToDelete, setCampaignToDelete] = useState<string | null>(null);
 
+  const { filters, handleFilterChange, getApiParams } = useFilterManager({
+    status: 'all',
+  }, () => setPage(1));
+
+  const apiParams = getApiParams();
+
   const { data, isLoading } = useDonationCampaignsListQuery({
     page,
     search: debouncedSearch,
-    status: status === 'all' ? undefined : status,
+    status: apiParams.status,
     sort
   });
   const { mutate: deleteCampaign, isPending: isDeleting } = useDeleteDonationCampaignMutation();
@@ -59,11 +65,15 @@ export default function DonationCampaignsPage() {
     openDeleteModal,
   });
 
-  const statusOptions = [
-    { value: 'all', label: 'All Status' },
-    { value: 'active', label: 'Active' },
-    { value: 'completed', label: 'Completed' },
-    { value: 'inactive', label: 'Inactive' },
+  const statusOptions = campaignStatusOptions;
+
+  const filterConfigs = [
+    {
+      key: 'status',
+      placeholder: 'All Statuses',
+      options: statusOptions,
+      widthClass: 'w-[140px]',
+    },
   ];
 
   return (
@@ -95,19 +105,11 @@ export default function DonationCampaignsPage() {
             />
           </div>
 
-          <div className="flex flex-wrap sm:flex-nowrap gap-2 items-center w-full sm:w-auto justify-end">
-            <Filter className="h-4 w-4 text-slate-400 shrink-0" />
-            <TableFilter
-              value={status}
-              onValueChange={(val) => {
-                setStatus(val);
-                setPage(1);
-              }}
-              options={statusOptions}
-              placeholder="All Status"
-              widthClass="w-[140px]"
-            />
-          </div>
+          <FilterManager
+            configs={filterConfigs}
+            values={filters}
+            onFilterChange={handleFilterChange}
+          />
         </div>
 
         <DataTable

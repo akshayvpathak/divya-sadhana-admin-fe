@@ -2,27 +2,31 @@
 
 import { useState } from 'react';
 import { useAiReadingsListQuery } from '@/hooks/queries/useAiReadingsQuery';
-import { Search, Filter } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { DataTable } from '@/components/common/DataTable/DataTable';
 import { useAiReadingsTableColumns } from '@/hooks/tables/useAiReadingsTableColumns';
 import { useDebounce } from '@/hooks/useDebounce';
 import { DataTablePagination } from '@/components/common/DataTablePagination';
-import { TableFilter } from '@/components/common/TableFilter';
+import { FilterManager, useFilterManager } from '@/components/common/FilterManager';
+import { aiReadingStatusOptions } from '@/components/ui/badges/badge-status';
 
 export default function AiReadingsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
-  const [status, setStatus] = useState('all');
-  const [serviceKind, setServiceKind] = useState('all');
   const [sort, setSort] = useState('-created_at');
+
+  const { filters, handleFilterChange } = useFilterManager({
+    status: 'all',
+    serviceKind: 'all',
+  }, () => setPage(1));
 
   const { data, isLoading } = useAiReadingsListQuery(
     page,
     debouncedSearch,
-    status,
-    serviceKind,
+    filters.status,
+    filters.serviceKind,
     sort
   );
 
@@ -33,6 +37,25 @@ export default function AiReadingsPage() {
 
   const totalPages = data?.data?.count ? Math.ceil(data.data.count / 10) : 1;
   const columns = useAiReadingsTableColumns();
+
+  const filterConfigs = [
+    {
+      key: 'serviceKind',
+      placeholder: 'All Services',
+      options: [
+        { value: 'all', label: 'All Services' },
+        { value: 'face_reading', label: 'Face Reading' },
+        { value: 'palm_reading', label: 'Palm Reading' },
+      ],
+      widthClass: 'w-[160px]',
+    },
+    {
+      key: 'status',
+      placeholder: 'All Status',
+      options: aiReadingStatusOptions,
+      widthClass: 'w-[140px]',
+    },
+  ];
 
   return (
     <div className="space-y-6 pb-8">
@@ -58,44 +81,11 @@ export default function AiReadingsPage() {
             />
           </div>
 
-          <div className="flex flex-wrap sm:flex-nowrap gap-2 items-center w-full sm:w-auto justify-end">
-            <Filter className="h-4 w-4 text-slate-400 shrink-0" />
-            
-            {/* Service Kind Filter */}
-            <TableFilter
-              value={serviceKind}
-              onValueChange={(val) => {
-                setServiceKind(val);
-                setPage(1);
-              }}
-              options={[
-                { value: 'all', label: 'All Services' },
-                { value: 'face_reading', label: 'Face Reading' },
-                { value: 'palm_reading', label: 'Palm Reading' },
-              ]}
-              placeholder="All Services"
-              widthClass="w-[160px]"
-            />
-
-            {/* Status Filter */}
-            <TableFilter
-              value={status}
-              onValueChange={(val) => {
-                setStatus(val);
-                setPage(1);
-              }}
-              options={[
-                { value: 'all', label: 'All Status' },
-                { value: 'pending', label: 'Pending' },
-                { value: 'processing', label: 'Processing' },
-                { value: 'succeeded', label: 'Succeeded' },
-                { value: 'failed', label: 'Failed' },
-                { value: 'cancelled', label: 'Cancelled' },
-              ]}
-              placeholder="All Status"
-              widthClass="w-[140px]"
-            />
-          </div>
+          <FilterManager
+            configs={filterConfigs}
+            values={filters}
+            onFilterChange={handleFilterChange}
+          />
         </div>
 
         <DataTable

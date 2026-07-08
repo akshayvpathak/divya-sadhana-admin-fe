@@ -18,6 +18,8 @@ interface FetchOptions {
   search_fields?: string;
   sort?: string;
   category?: string;
+  is_active?: string;
+  is_published?: string;
 }
 
 /**
@@ -43,6 +45,8 @@ export const getProductsList = async (
   if (options.search_fields)
     params.append("search_fields", options.search_fields);
   if (options.sort) params.append("sort", options.sort);
+  if (options.is_active !== undefined) params.append("is_active", options.is_active);
+  if (options.is_published !== undefined) params.append("is_published", options.is_published);
   // Server-side category filter (matches the Product.category field). Not in the
   // generated schema's param list, but the storefront relies on the same filter;
   // callers keep a client-side fallback in case the backend ignores it.

@@ -10,6 +10,11 @@ import Image from 'next/image';
 import dayjs from 'dayjs';
 import { DonationCampaignForm } from '@/components/forms/DonationCampaignForm';
 import { formatINR } from '@/lib/currency';
+import { useState } from 'react';
+import { useDonationsListQuery } from '@/hooks/queries/useDonationsQuery';
+import { DataTable } from '@/components/common/DataTable/DataTable';
+import { useDonationTableColumns } from '@/hooks/tables/useDonationTableColumns';
+import { DataTablePagination } from '@/components/common/DataTablePagination';
 
 export default function ViewDonationCampaignPage() {
   const params = useParams();
@@ -23,6 +28,16 @@ export default function ViewDonationCampaignPage() {
   const { data, isLoading } = useDonationCampaignQuery(id);
   const { mutate: updateCampaign, isPending } = useUpdateDonationCampaignMutation();
   const campaign = data;
+
+  const [donationsPage, setDonationsPage] = useState(1);
+  const { data: donationsData, isLoading: donationsLoading } = useDonationsListQuery({
+    campaign: id,
+    page: donationsPage,
+  });
+
+  const rawColumns = useDonationTableColumns();
+  const donationsColumns = rawColumns.filter((col) => col.id !== 'campaign');
+  const donationsTotalPages = donationsData?.data?.count ? Math.ceil(donationsData.data.count / 10) : 1;
 
   const onSubmit = (formData: any) => {
     updateCampaign({ campaignId: id, payload: formData }, {
@@ -134,6 +149,39 @@ export default function ViewDonationCampaignPage() {
             <div className="prose prose-slate max-w-none">
               <p className="text-slate-600 leading-relaxed text-lg">{campaign.description}</p>
             </div>
+          </div>
+
+          {/* Donations Received Section */}
+          <div className="space-y-4 p-8 bg-white rounded-3xl border border-slate-200 shadow-sm">
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Donations Received</h2>
+                <p className="text-sm text-slate-500 mt-1">List of contributions to this campaign</p>
+              </div>
+              <span className="bg-indigo-50 text-indigo-700 text-xs font-bold px-3 py-1 rounded-full border border-indigo-100">
+                {donationsData?.data?.count || 0} Total
+              </span>
+            </div>
+            
+            <div className="border border-slate-100 rounded-2xl overflow-hidden mt-4">
+              <DataTable
+                columns={donationsColumns}
+                data={donationsData?.data?.results || []}
+                isLoading={donationsLoading}
+                emptyMessage="No donations received yet for this campaign"
+              />
+            </div>
+
+            {donationsData?.data && donationsData.data.count > 0 && (
+              <div className="pt-4 border-t border-slate-100">
+                <DataTablePagination
+                  currentPage={donationsPage}
+                  totalPages={donationsTotalPages}
+                  totalItems={donationsData.data.count}
+                  onPageChange={setDonationsPage}
+                />
+              </div>
+            )}
           </div>
         </div>
       )}

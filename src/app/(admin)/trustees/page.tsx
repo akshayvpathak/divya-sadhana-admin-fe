@@ -209,24 +209,6 @@ export default function TrusteesPage() {
                 ))}
               </SelectContent>
             </Select>
-
-            <Select
-              value={sort}
-              onValueChange={(val) => {
-                setSort(val || '-created_at');
-                setPage(1);
-              }}
-            >
-              <SelectTrigger className="bg-white w-[130px]">
-                <SelectValue placeholder="Sort">
-                  {sort === 'created_at' ? 'Oldest' : 'Newest'}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="-created_at">Newest</SelectItem>
-                <SelectItem value="created_at">Oldest</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </div>
 

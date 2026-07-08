@@ -1,14 +1,3 @@
-/**
- * Formats raw status values (including boolean and null/undefined values)
- * into user-friendly Title Case labels with underscores/hyphens replaced by spaces.
- * 
- * Examples:
- * - "IN_PROGRESS" -> "In Progress"
- * - "PAYMENT_PENDING" -> "Payment Pending"
- * - "active" -> "Active"
- * - true -> "Active"
- * - false -> "Inactive"
- */
 export function formatStatusLabel(status: string | boolean | null | undefined): string {
   if (status === null || status === undefined) return "";
   

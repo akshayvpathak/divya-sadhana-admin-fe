@@ -14,6 +14,7 @@ interface FetchOptions {
   search?: string;
   search_fields?: string;
   sort?: string;
+  status?: string;
 }
 
 export const getPaymentsList = async (
@@ -26,6 +27,7 @@ export const getPaymentsList = async (
   if (options.search) params.append("search", options.search);
   if (options.search_fields) params.append("search_fields", options.search_fields);
   if (options.sort) params.append("sort", options.sort);
+  if (options.status) params.append("status", options.status);
 
   const response = await fetch(`${API_BASE_URL}/payments/?${params.toString()}`, {
     method: "GET",

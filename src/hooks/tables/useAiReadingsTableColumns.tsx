@@ -4,6 +4,7 @@ import { Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ColumnConfig } from '@/components/common/DataTable/types';
 import dayjs from 'dayjs';
+import { ModuleStatus } from '@/components/ui/badges/ModuleStatus';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export interface AiReadingRow {
@@ -25,36 +26,7 @@ export interface AiReadingRow {
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 export function ReadingStatusBadge({ status }: { status: string }) {
-  let classes = "bg-slate-100 text-slate-700";
-  let label = status;
-
-  switch (status) {
-    case "pending":
-      classes = "bg-amber-100 text-amber-700 font-medium text-xs";
-      label = "Pending";
-      break;
-    case "processing":
-      classes = "bg-blue-100 text-blue-700 font-medium text-xs animate-pulse";
-      label = "Processing";
-      break;
-    case "succeeded":
-      classes = "bg-green-100 text-green-700 font-medium text-xs";
-      label = "Succeeded";
-      break;
-    case "failed":
-      classes = "bg-rose-100 text-rose-700 font-medium text-xs";
-      label = "Failed";
-      break;
-    case "cancelled":
-      classes = "bg-slate-100 text-slate-500 font-medium text-xs";
-      label = "Cancelled";
-      break;
-  }
-  return (
-    <span className={`inline-block px-2.5 py-1 rounded-full text-center whitespace-nowrap capitalize ${classes}`}>
-      {label}
-    </span>
-  );
+  return <ModuleStatus status={status} module="ai-readings" />;
 }
 
 export const useAiReadingsTableColumns = (): ColumnConfig<AiReadingRow>[] => {

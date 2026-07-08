@@ -13,6 +13,7 @@ import { DataTable } from '@/components/common/DataTable/DataTable';
 import { useProductTableColumns } from '@/hooks/tables/useProductTableColumns';
 import { useDebounce } from '@/hooks/useDebounce';
 import { DataTablePagination } from '@/components/common/DataTablePagination';
+import { productStatusOptions, productPublishedOptions } from '@/components/ui/badges/badge-status';
 
 export default function ProductsPage() {
   const [page, setPage] = useState(1);
@@ -20,13 +21,15 @@ export default function ProductsPage() {
   const debouncedSearch = useDebounce(search, 300);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [sort, setSort] = useState('');
+  const [status, setStatus] = useState('all');
+  const [published, setPublished] = useState('all');
   
   // Deletion state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
 
   const { data: categories } = useAllCategories();
-  const { data, isLoading } = useProducts(page, 10, debouncedSearch, selectedCategory, sort);
+  const { data, isLoading } = useProducts(page, 10, debouncedSearch, selectedCategory, sort, status, published);
   const { mutate: deleteProduct, isPending: isDeleting } = useDeleteProduct();
 
   const handleSort = (field: string) => {
@@ -77,8 +80,8 @@ export default function ProductsPage() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-        <div className="p-4 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row gap-4 items-center justify-between">
-          <div className="relative max-w-sm flex-1">
+        <div className="p-4 border-b border-slate-200 bg-slate-50 flex flex-col md:flex-row gap-4 items-center justify-between">
+          <div className="relative max-w-sm flex-1 w-full">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <Input
               placeholder="Search Products..."
@@ -90,8 +93,10 @@ export default function ProductsPage() {
               }}
             />
           </div>
-          <div className="w-full sm:w-64 flex items-center gap-2">
+          <div className="flex flex-wrap sm:flex-nowrap gap-2 items-center w-full md:w-auto">
             <Filter className="h-4 w-4 text-slate-400 shrink-0" />
+            
+            {/* Category Select */}
             <Select 
               value={selectedCategory} 
               onValueChange={(val) => {
@@ -99,7 +104,7 @@ export default function ProductsPage() {
                 setPage(1);
               }}
             >
-              <SelectTrigger className="bg-white">
+              <SelectTrigger className="bg-white w-[160px]">
                 <SelectValue placeholder="All Categories">
                   {selectedCategory === 'all' 
                     ? 'All Categories' 
@@ -116,6 +121,50 @@ export default function ProductsPage() {
                       {category.name}
                     </SelectItem>
                   ))}
+              </SelectContent>
+            </Select>
+
+            {/* Status Select */}
+            <Select
+              value={status}
+              onValueChange={(val) => {
+                setStatus(val || 'all');
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="bg-white w-[130px]">
+                <SelectValue placeholder="All Statuses">
+                  {productStatusOptions.find(o => o.value === status)?.label || 'All Statuses'}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {productStatusOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Published Select */}
+            <Select
+              value={published}
+              onValueChange={(val) => {
+                setPublished(val || 'all');
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="bg-white w-[140px]">
+                <SelectValue placeholder="All Published">
+                  {productPublishedOptions.find(o => o.value === published)?.label || 'All Published'}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {productPublishedOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

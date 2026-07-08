@@ -88,10 +88,13 @@ export const extractImageKey = (urlOrKey: string | null | undefined): string => 
   }
 };
 
-export const useProducts = (page = 1, limit = 10, search = '', categoryId = '', sort = '') => {
+export const useProducts = (page = 1, limit = 10, search = '', categoryId = '', sort = '', status = 'all', published = 'all') => {
   const { accessToken } = useAuth();
+  const isActiveParam = status === 'all' ? undefined : status === 'active' ? 'true' : 'false';
+  const isPublishedParam = published === 'all' ? undefined : published === 'published' ? 'true' : 'false';
+
   return useQuery({
-    queryKey: ['products', { page, limit, search, categoryId, sort }],
+    queryKey: ['products', { page, limit, search, categoryId, sort, status, published }],
     queryFn: async () => {
       if (!accessToken) throw new Error('No access token');
       const response = await getProductsList(accessToken, {
@@ -100,6 +103,8 @@ export const useProducts = (page = 1, limit = 10, search = '', categoryId = '', 
         search,
         sort,
         category: categoryId,
+        is_active: isActiveParam,
+        is_published: isPublishedParam,
       });
 
       // Server-side `category` is the primary filter (see products.service.ts).

@@ -40,4 +40,5 @@ export interface CategoriesListParams {
   search_fields?: string;
   fields?: string;
   sort?: string;
+  is_active?: string;
 }

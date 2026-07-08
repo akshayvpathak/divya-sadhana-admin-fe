@@ -256,14 +256,12 @@ export function DonationCampaignForm({ campaignId, initialData: propsInitialData
           >
             <SelectTrigger id="status" className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default" : "bg-white"}>
               <SelectValue placeholder="Select status">
-                {statusValue ? statusValue.toUpperCase() : 'Select status'}
+                {statusValue ? (statusValue === 'draft' ? 'Draft' : statusValue === 'active' ? 'Active' : statusValue) : 'Select status'}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="draft">Draft</SelectItem>
               <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="paused">Paused</SelectItem>
-              <SelectItem value="closed">Closed</SelectItem>
             </SelectContent>
           </Select>
           {errors.status && <p className="text-sm text-rose-500">{errors.status.message}</p>}

@@ -1,10 +1,10 @@
 import React from 'react';
 import dayjs from 'dayjs';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { ModuleStatus } from '@/components/ui/badges/ModuleStatus';
 import { ColumnConfig } from '@/components/common/DataTable/types';
 import { CommissionEntry } from '@/schemas/trustees.schema';
 import { formatINR } from '@/lib/currency';
-import { formatStatusLabel } from '@/lib/utils';
 
 function resolveOrderLabel(row: CommissionEntry): string {
   if (row.order_number) return row.order_number;
@@ -30,7 +30,7 @@ export const useCommissionLedgerColumns = (): ColumnConfig<CommissionEntry>[] =>
       accessorKey: 'kind',
       header: 'Kind',
       cellClassName: 'text-slate-700',
-      renderCell: (row) => formatStatusLabel(row.kind) || '—',
+      renderCell: (row) => row.kind ? <StatusBadge status={row.kind} /> : '—',
     },
     {
       id: 'amount',
@@ -45,7 +45,7 @@ export const useCommissionLedgerColumns = (): ColumnConfig<CommissionEntry>[] =>
       id: 'status',
       accessorKey: 'status',
       header: 'Status',
-      renderCell: (row) => <StatusBadge status={row.status} type="commission_status" />,
+      renderCell: (row) => <ModuleStatus status={row.status} module="commission" />,
     },
     {
       id: 'matures_at',

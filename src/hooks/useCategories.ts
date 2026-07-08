@@ -3,13 +3,14 @@ import { toast } from 'react-toastify';
 import { getCategoriesList, createCategory, updateCategory, deleteCategory, getCategory } from '../services/product-categories.service';
 import { useAuth } from '../context/AuthContext';
 
-export const useCategories = (page = 1, limit = 10, search = '', sort = '') => {
+export const useCategories = (page = 1, limit = 10, search = '', sort = '', status = 'all') => {
   const { accessToken } = useAuth();
+  const isActiveParam = status === 'all' ? undefined : status === 'active' ? 'true' : 'false';
   return useQuery({
-    queryKey: ['categories', { page, limit, search, sort }],
+    queryKey: ['categories', { page, limit, search, sort, status }],
     queryFn: async () => {
       if (!accessToken) throw new Error('No access token');
-      const response = await getCategoriesList({ page, paginate: limit, search, sort }, accessToken);
+      const response = await getCategoriesList({ page, paginate: limit, search, sort, is_active: isActiveParam }, accessToken);
       
       return {
         data: response.data.results.map(c => ({

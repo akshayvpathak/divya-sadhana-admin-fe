@@ -10,6 +10,7 @@ import { useOrderTableColumns } from '@/hooks/tables/useOrderTableColumns';
 import { useDebounce } from '@/hooks/useDebounce';
 import { DataTablePagination } from '@/components/common/DataTablePagination';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { orderStatusOptions, orderPaymentOptions, orderShippingOptions } from '@/components/ui/badges/badge-status';
 
 export default function OrdersPage() {
   const [page, setPage] = useState(1);
@@ -77,23 +78,15 @@ export default function OrdersPage() {
             >
               <SelectTrigger className="bg-white w-[150px]">
                 <SelectValue placeholder="All Statuses">
-                  {status === 'pending' ? 'Pending'
-                    : status === 'processing' ? 'Processing'
-                      : status === 'completed' ? 'Completed'
-                        : status === 'cancelled' ? 'Cancelled'
-                          : status === 'refunded' ? 'Refunded'
-                            : status === 'failed' ? 'Failed'
-                              : 'All Statuses'}
+                  {orderStatusOptions.find(o => o.value === status)?.label || 'All Statuses'}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="processing">Processing</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-                <SelectItem value="refunded">Refunded</SelectItem>
-                <SelectItem value="failed">Failed</SelectItem>
+                {orderStatusOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
@@ -107,17 +100,15 @@ export default function OrdersPage() {
             >
               <SelectTrigger className="bg-white w-[155px]">
                 <SelectValue placeholder="All Payment">
-                  {paymentStatus === 'paid' ? 'Paid'
-                    : paymentStatus === 'unpaid' ? 'Unpaid'
-                      : paymentStatus === 'pending' ? 'Pending'
-                        : 'All Payment'}
+                  {orderPaymentOptions.find(o => o.value === paymentStatus)?.label || 'All Payment'}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Payment</SelectItem>
-                <SelectItem value="paid">Paid</SelectItem>
-                <SelectItem value="unpaid">Unpaid</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
+                {orderPaymentOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
@@ -131,19 +122,15 @@ export default function OrdersPage() {
             >
               <SelectTrigger className="bg-white w-[200px]">
                 <SelectValue placeholder="All Shipping">
-                  {shippingStatus === 'pending' ? 'Pending'
-                    : shippingStatus === 'order_generated' ? 'Order Generated'
-                      : shippingStatus === 'shipped' ? 'Shipped'
-                        : shippingStatus === 'delivered' ? 'Delivered'
-                          : 'All Shipping'}
+                  {orderShippingOptions.find(o => o.value === shippingStatus)?.label || 'All Shipping'}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Shipping</SelectItem>
-                <SelectItem value="order_generated">Order Generated</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="shipped">Shipped</SelectItem>
-                <SelectItem value="delivered">Delivered</SelectItem>
+                {orderShippingOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

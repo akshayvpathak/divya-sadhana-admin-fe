@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useCategories, useDeleteCategory } from '@/hooks/useCategories';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
@@ -11,6 +11,8 @@ import { DataTable } from '@/components/common/DataTable/DataTable';
 import { useCategoryTableColumns } from '@/hooks/tables/useCategoryTableColumns';
 import { useDebounce } from '@/hooks/useDebounce';
 import { DataTablePagination } from '@/components/common/DataTablePagination';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { categoryStatusOptions } from '@/components/ui/badges/badge-status';
 
 export default function CategoriesPage() {
   const [page, setPage] = useState(1);
@@ -21,8 +23,9 @@ export default function CategoriesPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [sort, setSort] = useState('');
+  const [status, setStatus] = useState('all');
 
-  const { data, isLoading } = useCategories(page, 10, debouncedSearch, sort);
+  const { data, isLoading } = useCategories(page, 10, debouncedSearch, sort, status);
   const { mutate: deleteCategory, isPending: isDeleting } = useDeleteCategory();
 
   const handleSort = (field: string) => {
@@ -66,8 +69,8 @@ export default function CategoriesPage() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-        <div className="p-4 border-b border-slate-200 bg-slate-50">
-          <div className="relative max-w-sm">
+        <div className="p-4 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row gap-4 items-center justify-between">
+          <div className="relative max-w-sm flex-1 w-full">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <Input
               placeholder="Search Categories..."
@@ -78,6 +81,29 @@ export default function CategoriesPage() {
                 setPage(1);
               }}
             />
+          </div>
+          <div className="flex flex-wrap sm:flex-nowrap gap-2 items-center w-full sm:w-auto">
+            <Filter className="h-4 w-4 text-slate-400 shrink-0" />
+            <Select
+              value={status}
+              onValueChange={(val) => {
+                setStatus(val || 'all');
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="bg-white w-[140px]">
+                <SelectValue placeholder="All Statuses">
+                  {categoryStatusOptions.find(o => o.value === status)?.label || 'All Statuses'}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {categoryStatusOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 

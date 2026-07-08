@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronLeft, Sparkles, Image as ImageIcon, Lock, Unlock, Info, CreditCard, Download, Loader2 } from 'lucide-react';
+import { ChevronLeft, Sparkles, Image as ImageIcon, Lock, Unlock, Info, Download, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAiReadingQuery } from '@/hooks/queries/useAiReadingsQuery';
@@ -34,6 +34,8 @@ export default function AiReadingDetailPage() {
   const { data: reading, isLoading, error } = useAiReadingQuery(id);
   const [activeTab, setActiveTab] = useState<'full' | 'teaser'>('full');
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isDownloadingImage, setIsDownloadingImage] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
 
   const handleDownload = async () => {
@@ -71,6 +73,30 @@ export default function AiReadingDetailPage() {
     }
   };
 
+  const handleDownloadImage = async () => {
+    if (!reading?.input_image_key) return;
+    setIsDownloadingImage(true);
+    try {
+      const imgUrl = resolveReadingImageUrl(reading.input_image_key);
+      const response = await fetch(imgUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `uploaded-reading-image-${reading.request_number || 'image'}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success('Image file downloaded successfully');
+    } catch (err: any) {
+      window.open(resolveReadingImageUrl(reading.input_image_key), '_blank');
+      toast.info('Opening image in a new tab');
+    } finally {
+      setIsDownloadingImage(false);
+    }
+  };
+
   if (error) {
     return (
       <div className="max-w-6xl mx-auto p-8 text-center bg-rose-50 rounded-2xl border border-rose-200">
@@ -97,9 +123,27 @@ export default function AiReadingDetailPage() {
             <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
               {isLoading ? <Skeleton className="h-9 w-64" /> : `Reading Details`}
             </h1>
-            <p className="text-slate-500 mt-1">
-              {isLoading ? <Skeleton className="h-5 w-48 mt-1" /> : reading?.request_number}
-            </p>
+            {isLoading ? (
+              <Skeleton className="h-5 w-48 mt-1.5" />
+            ) : reading && (
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mt-1.5 text-xs sm:text-sm text-slate-500">
+                <span className="font-mono text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 font-semibold text-xs">
+                  {reading.request_number}
+                </span>
+                <span className="text-slate-300">•</span>
+                <span className="capitalize font-semibold text-slate-700">
+                  {reading.service_kind.replace('_', ' ')}
+                </span>
+                <span className="text-slate-300">•</span>
+                <span className="font-semibold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded border border-indigo-100">
+                  {reading.report_unlock_price} {reading.currency}
+                </span>
+                <span className="text-slate-300">•</span>
+                <span>
+                  Submitted {dayjs(reading.created_at).format('MMM D, YYYY HH:mm')}
+                </span>
+              </div>
+            )}
           </div>
         </div>
         {!isLoading && reading && (
@@ -278,7 +322,7 @@ export default function AiReadingDetailPage() {
                                 </body>
                               </html>
                             `}
-                            className="w-full min-h-[450px] border border-slate-200 rounded-xl bg-white"
+                            className="w-full min-h-[500px] border border-slate-200 rounded-xl bg-white"
                             title="Full Report Preview"
                           />
                         ) : (
@@ -329,146 +373,86 @@ export default function AiReadingDetailPage() {
                 )}
               </div>
             </div>
+          </div>
 
-            {/* Payment unlock logs / ledger */}
-            {reading.report?.unlocks && reading.report.unlocks.length > 0 && (
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="p-6 border-b border-slate-200 bg-slate-50 flex items-center gap-2">
-                  <CreditCard className="h-5 w-5 text-indigo-600" />
-                  <div>
-                    <h3 className="font-bold text-slate-900">Unlock & Payment Ledger</h3>
-                    <p className="text-xs text-slate-500 mt-0.5">Razorpay transaction monitoring history</p>
-                  </div>
+          {/* Right Column / Sidebar: User Inputs & Premium 3:4 Uploaded Image Card */}
+          <div className="space-y-6">
+            
+            {/* User Inputs Card */}
+            {reading.input_answers && Object.keys(reading.input_answers).length > 0 && (
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <div className="flex items-center gap-2 mb-4 text-slate-400">
+                  <Sparkles className="h-4 w-4 text-indigo-500" />
+                  <span className="text-xs font-bold uppercase tracking-wider">User Inputs</span>
                 </div>
-                <div className="divide-y divide-slate-100">
-                  {reading.report.unlocks.map((unlock) => (
-                    <div key={unlock.id} className="p-6 space-y-4 hover:bg-slate-50/50 transition-colors">
-                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                        <div className="font-mono text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-100">
-                          {unlock.internal_payment_ref}
-                        </div>
-                        <div className="flex gap-2 items-center">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${
-                            unlock.status === 'captured' 
-                              ? 'bg-green-100 text-green-700' 
-                              : unlock.status === 'failed' 
-                              ? 'bg-rose-100 text-rose-700' 
-                              : 'bg-amber-100 text-amber-700'
-                          }`}>
-                            {unlock.status}
-                          </span>
-                          <span className="text-sm font-bold text-slate-900">
-                            {unlock.amount} {unlock.currency}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-                        <div>
-                          <span className="text-[10px] text-slate-400 font-bold uppercase block mb-0.5">Order ID</span>
-                          <span className="font-mono text-slate-700 break-all">{unlock.provider_order_id || 'N/A'}</span>
-                        </div>
-                        <div>
-                          <span className="text-[10px] text-slate-400 font-bold uppercase block mb-0.5">Payment ID</span>
-                          <span className="font-mono text-slate-700 break-all">{unlock.provider_payment_id || 'N/A'}</span>
-                        </div>
-                        <div>
-                          <span className="text-[10px] text-slate-400 font-bold uppercase block mb-0.5">Capture Date</span>
-                          <span className="text-slate-700">
-                            {unlock.captured_at ? dayjs(unlock.captured_at).format('MMM D, YYYY HH:mm:ss') : 'N/A'}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      {(unlock.failure_code || unlock.failure_reason) && (
-                        <div className="bg-rose-50 text-rose-700 p-3 rounded-lg border border-rose-100 text-xs flex gap-2 items-start">
-                          <Info className="h-4 w-4 shrink-0 mt-0.5" />
-                          <div>
-                            <p className="font-bold">Transaction Failed: {unlock.failure_code}</p>
-                            <p className="mt-0.5">{unlock.failure_reason}</p>
-                          </div>
-                        </div>
-                      )}
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-150 text-sm space-y-2">
+                  {Object.entries(reading.input_answers).map(([key, value]) => (
+                    <div key={key} className="flex justify-between py-1 border-b border-slate-200/50 last:border-0 last:pb-0 first:pt-0">
+                      <span className="text-slate-500 capitalize font-medium">{key}</span>
+                      <span className="font-bold text-slate-800">{String(value)}</span>
                     </div>
                   ))}
                 </div>
               </div>
             )}
-          </div>
 
-          {/* Right Column / Sidebar: Reading Context & Prominent Image Preview (1/3 width) */}
-          <div className="space-y-6">
-            
-            {/* Reading Context */}
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
-              <div>
-                <div className="flex items-center gap-2 mb-4 text-slate-400">
-                  <Sparkles className="h-4 w-4" />
-                  <span className="text-xs font-bold uppercase tracking-wider">Reading Context</span>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Kind</span>
-                    <span className="text-sm font-semibold capitalize text-slate-950">
-                      {reading.service_kind.replace('_', ' ')}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Price</span>
-                    <span className="text-sm font-semibold text-slate-950">
-                      {reading.report_unlock_price} {reading.currency}
-                    </span>
-                  </div>
-                </div>
-
-                {/* User Inputs */}
-                {reading.input_answers && Object.keys(reading.input_answers).length > 0 && (
-                  <div className="mt-4 pt-4 border-t border-slate-100">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block mb-1">User Inputs</span>
-                    <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-150 text-xs">
-                      {Object.entries(reading.input_answers).map(([key, value]) => (
-                        <div key={key} className="flex justify-between py-0.5">
-                          <span className="text-slate-500 capitalize">{key}:</span>
-                          <span className="font-semibold text-slate-800">{String(value)}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-              
-              <div className="pt-4 mt-4 border-t border-slate-100 text-xs text-slate-400 flex justify-between">
-                <span>Submitted</span>
-                <span>{dayjs(reading.created_at).format('MMM D, YYYY HH:mm')}</span>
-              </div>
-            </div>
-
-            {/* Actual Uploaded Image Card */}
+            {/* Actual Uploaded Image Card (Responsive 3:4 frame & download functionality) */}
             <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
               <div>
                 <div className="flex items-center gap-2 mb-4 text-slate-400">
                   <ImageIcon className="h-4 w-4" />
-                  <span className="text-xs font-bold uppercase tracking-wider">Actual Uploaded Image</span>
+                  <span className="text-xs font-bold uppercase tracking-wider">Uploaded Image</span>
                 </div>
 
                 {reading.input_image_key ? (
                   <div className="space-y-4">
-                    <a
-                      href={resolveReadingImageUrl(reading.input_image_key)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="relative block group overflow-hidden rounded-xl border border-slate-200 bg-slate-50"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img 
-                        src={resolveReadingImageUrl(reading.input_image_key)} 
-                        alt="User upload"
-                        className="w-full h-auto max-h-72 object-cover group-hover:scale-[1.02] transition-transform duration-200"
-                      />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold">
-                        Open Full Image
+                    <div className="relative group overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 aspect-[3/4] shadow-inner flex items-center justify-center">
+                      {!imageError ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img 
+                          src={resolveReadingImageUrl(reading.input_image_key)} 
+                          alt="User upload"
+                          onError={() => setImageError(true)}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                        />
+                      ) : (
+                        <div className="flex flex-col items-center justify-center text-slate-400 bg-gradient-to-br from-indigo-50/50 via-slate-50 to-indigo-50/30 w-full h-full p-6 text-center">
+                          <div className="p-4 bg-indigo-50 rounded-full mb-3 text-indigo-500">
+                            <ImageIcon className="h-8 w-8" />
+                          </div>
+                          <p className="font-semibold text-slate-700 text-sm">Preview Unavailable</p>
+                          <p className="text-xs text-slate-400 max-w-[200px] mt-1">
+                            The upload asset is missing or could not be loaded from remote storage.
+                          </p>
+                        </div>
+                      )}
+                      
+                      {/* Image hover actions overlay */}
+                      <div className="absolute inset-0 bg-slate-950/65 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center gap-3">
+                        <a
+                          href={resolveReadingImageUrl(reading.input_image_key)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="bg-white hover:bg-slate-100 text-slate-900 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-lg flex items-center gap-1.5"
+                        >
+                          <Unlock className="h-3.5 w-3.5" />
+                          Open Full Image
+                        </a>
+                        <Button
+                          size="sm"
+                          onClick={handleDownloadImage}
+                          disabled={isDownloadingImage}
+                          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-lg flex items-center gap-1.5"
+                        >
+                          {isDownloadingImage ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Download className="h-3.5 w-3.5" />
+                          )}
+                          {isDownloadingImage ? 'Downloading...' : 'Download File'}
+                        </Button>
                       </div>
-                    </a>
+                    </div>
                     
                     <div className="pt-2 border-t border-slate-150">
                       <span className="text-[10px] text-slate-400 font-bold uppercase block">Storage Key</span>

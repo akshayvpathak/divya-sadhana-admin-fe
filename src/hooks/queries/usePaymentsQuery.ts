@@ -5,12 +5,13 @@ import { useQuery } from "@tanstack/react-query";
 export const usePaymentsListQuery = (
   page: number = 1,
   search: string = "",
-  sort: string = "-created_at"
+  sort: string = "-created_at",
+  status?: string
 ) => {
   const { accessToken } = useAuth();
 
   return useQuery({
-    queryKey: ["payments", page, search, sort],
+    queryKey: ["payments", page, search, sort, status],
     queryFn: async () => {
       if (!accessToken) throw new Error("No access token");
       return getPaymentsList(accessToken, {
@@ -20,6 +21,7 @@ export const usePaymentsListQuery = (
         search_fields:
           "internal_payment_ref,provider_order_id,provider_payment_id,idempotency_key,provider,status,user,order",
         sort,
+        status: status === 'all' ? undefined : status,
       });
     },
     enabled: !!accessToken,

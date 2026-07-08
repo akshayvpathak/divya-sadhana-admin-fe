@@ -3,29 +3,35 @@
 import { useState } from 'react';
 import { useDonationsListQuery } from '@/hooks/queries/useDonationsQuery';
 import { useAllDonationCampaignsQuery } from '@/hooks/queries/useDonationCampaignsQuery';
-import { Search, Filter } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { DataTable } from '@/components/common/DataTable/DataTable';
 import { useDonationTableColumns } from '@/hooks/tables/useDonationTableColumns';
 import { useDebounce } from '@/hooks/useDebounce';
 import { DataTablePagination } from '@/components/common/DataTablePagination';
-import { TableFilter } from '@/components/common/TableFilter';
+import { FilterManager, useFilterManager } from '@/components/common/FilterManager';
+import { donationStatusOptions } from '@/components/ui/badges/badge-status';
 
 export default function DonationsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
-  const [status, setStatus] = useState('all');
-  const [campaign, setCampaign] = useState('all');
   const [sort, setSort] = useState('-paid_at');
 
   const { data: campaignsData } = useAllDonationCampaignsQuery();
+
+  const { filters, handleFilterChange, getApiParams } = useFilterManager({
+    status: 'all',
+    campaign: 'all',
+  }, () => setPage(1));
+
+  const apiParams = getApiParams();
+
   const { data, isLoading } = useDonationsListQuery({
     page,
     search: debouncedSearch,
-    status: status === 'all' ? undefined : status,
-    campaign: campaign === 'all' ? undefined : campaign,
+    status: apiParams.status,
+    campaign: apiParams.campaign,
     sort
   });
 
@@ -37,17 +43,28 @@ export default function DonationsPage() {
   const totalPages = data?.data?.count ? Math.ceil(data.data.count / 10) : 1;
   const columns = useDonationTableColumns();
 
-  const statusOptions = [
-    { value: 'all', label: 'All Status' },
-    { value: 'paid', label: 'Paid' },
-    { value: 'pending', label: 'Pending' },
-    { value: 'failed', label: 'Failed' },
-    { value: 'refunded', label: 'Refunded' },
-  ];
-
+  const statusOptions = donationStatusOptions;
   const campaignOptions = [
     { value: 'all', label: 'All Campaigns' },
-    ...(campaignsData?.map((c) => ({ value: c.id, label: c.title })) || []),
+    ...(campaignsData || []).map((c: any) => ({
+      value: c.id,
+      label: c.title,
+    })),
+  ];
+
+  const filterConfigs = [
+    {
+      key: 'campaign',
+      placeholder: 'All Campaigns',
+      options: campaignOptions,
+      widthClass: 'w-[180px]',
+    },
+    {
+      key: 'status',
+      placeholder: 'All Status',
+      options: statusOptions,
+      widthClass: 'w-[140px]',
+    },
   ];
 
   return (
@@ -74,31 +91,11 @@ export default function DonationsPage() {
             />
           </div>
 
-          <div className="flex flex-wrap sm:flex-nowrap gap-2 items-center w-full sm:w-auto justify-end">
-            <Filter className="h-4 w-4 text-slate-400 shrink-0" />
-            
-            <TableFilter
-              value={campaign}
-              onValueChange={(val) => {
-                setCampaign(val);
-                setPage(1);
-              }}
-              options={campaignOptions}
-              placeholder="All Campaigns"
-              widthClass="w-[180px]"
-            />
-
-            <TableFilter
-              value={status}
-              onValueChange={(val) => {
-                setStatus(val);
-                setPage(1);
-              }}
-              options={statusOptions}
-              placeholder="All Status"
-              widthClass="w-[140px]"
-            />
-          </div>
+          <FilterManager
+            configs={filterConfigs}
+            values={filters}
+            onFilterChange={handleFilterChange}
+          />
         </div>
 
         <DataTable
