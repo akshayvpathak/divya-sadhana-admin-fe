@@ -379,22 +379,25 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
       <div className="space-y-2 pb-4">
         <Label htmlFor="description">Description <span className="text-rose-500">*</span></Label>
         <div className="bg-white rounded-md pb-6">
-          <Controller
-            name="description"
-            control={control}
-            render={({ field }) => (
-              <ReactQuill 
-                theme="snow"
-                value={field.value}
-                onChange={field.onChange}
-                readOnly={readOnly}
-                className={cn(
-                  "h-[200px] mb-12", 
-                  readOnly ? "bg-slate-50 border-slate-200 opacity-75 pointer-events-none" : ""
-                )}
-              />
-            )}
-          />
+          {readOnly ? (
+            <div 
+              className="p-4 bg-slate-50 border border-slate-200 rounded-md min-h-[200px] max-h-[400px] overflow-y-auto prose prose-sm max-w-none text-slate-700"
+              dangerouslySetInnerHTML={{ __html: watch('description') || '' }}
+            />
+          ) : (
+            <Controller
+              name="description"
+              control={control}
+              render={({ field }) => (
+                <ReactQuill 
+                  theme="snow"
+                  value={field.value}
+                  onChange={field.onChange}
+                  className="h-[200px] mb-12"
+                />
+              )}
+            />
+          )}
         </div>
         {errors.description && <p className="text-sm text-rose-500">{errors.description.message}</p>}
       </div>

@@ -146,9 +146,10 @@ export default function ViewDonationCampaignPage() {
           {/* Content Section */}
           <div className="space-y-4 p-8 bg-white rounded-3xl border border-slate-200 shadow-sm">
             <h2 className="text-2xl font-black text-slate-900 tracking-tight">{campaign.title}</h2>
-            <div className="prose prose-slate max-w-none">
-              <p className="text-slate-600 leading-relaxed text-lg">{campaign.description}</p>
-            </div>
+            <div 
+              className="prose prose-slate max-w-none text-slate-600 leading-relaxed text-lg"
+              dangerouslySetInnerHTML={{ __html: campaign.description || '' }}
+            />
           </div>
 
           {/* Donations Received Section */}

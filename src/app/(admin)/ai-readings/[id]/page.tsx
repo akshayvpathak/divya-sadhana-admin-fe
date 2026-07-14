@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronLeft, Sparkles, Image as ImageIcon, Lock, Unlock, Info, Download, Loader2 } from 'lucide-react';
@@ -10,33 +10,49 @@ import { useAiReadingQuery } from '@/hooks/queries/useAiReadingsQuery';
 import { ReadingStatusBadge } from '@/hooks/tables/useAiReadingsTableColumns';
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
+import { useMutation } from '@tanstack/react-query';
+import { previewService } from '@/services/preview.service';
 
-const resolveReadingImageUrl = (urlOrKey: string | null | undefined): string => {
-  if (!urlOrKey) return '';
-  if (urlOrKey.startsWith('http://') || urlOrKey.startsWith('https://')) {
-    return urlOrKey;
-  }
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://api.divyasadhana.org/api";
-  const base = API_BASE_URL.replace(/\/api\/?$/, '');
-  let path = urlOrKey;
-  if (path.startsWith('/')) {
-    path = path.substring(1);
-  }
-  if (path.startsWith('media/')) {
-    return `${base}/${path}`;
-  }
-  return `${base}/media/${path}`;
-};
 
 export default function AiReadingDetailPage() {
   const params = useParams();
   const id = params.id as string;
   const { data: reading, isLoading, error } = useAiReadingQuery(id);
+  
   const [activeTab, setActiveTab] = useState<'full' | 'teaser'>('full');
   const [isDownloading, setIsDownloading] = useState(false);
   const [isDownloadingImage, setIsDownloadingImage] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  
+  const { mutateAsync: fetchPreviewUrlAPI, isPending: isLoadingPreview } = useMutation({
+    mutationFn: (payload: { objectKey: string;}) =>
+      previewService.generatePreviewUrl(payload.objectKey),
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to load image preview.");
+    },
+  });
+
+  useEffect(() => {
+    if (reading?.input_image_key) {
+      fetchPreviewUrlAPI({
+        objectKey: reading.input_image_key,
+      })
+        .then((res) => {
+          if (res?.data?.url) {
+            setPreviewUrl(res.data.url);
+            setImageError(false);
+          } else {
+            setImageError(true);
+          }
+        })
+        .catch(() => {
+          // The onError inside useMutation handles the toast automatically!
+          setImageError(true);
+        });
+    }
+  }, [reading?.input_image_key, fetchPreviewUrlAPI]);
 
   const handleDownload = async () => {
     if (!reading?.report?.pdf_download_url) return;
@@ -77,7 +93,8 @@ export default function AiReadingDetailPage() {
     if (!reading?.input_image_key) return;
     setIsDownloadingImage(true);
     try {
-      const imgUrl = resolveReadingImageUrl(reading.input_image_key);
+      const imgUrl = previewUrl;
+      if (!imgUrl) throw new Error("Preview URL not available");
       const response = await fetch(imgUrl);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -90,8 +107,12 @@ export default function AiReadingDetailPage() {
       window.URL.revokeObjectURL(url);
       toast.success('Image file downloaded successfully');
     } catch (err: any) {
-      window.open(resolveReadingImageUrl(reading.input_image_key), '_blank');
-      toast.info('Opening image in a new tab');
+      if (previewUrl) {
+        window.open(previewUrl, '_blank');
+        toast.info('Opening image in a new tab');
+      } else {
+        toast.error('Image URL is not available');
+      }
     } finally {
       setIsDownloadingImage(false);
     }
@@ -387,7 +408,7 @@ export default function AiReadingDetailPage() {
                 </div>
                 <div className="bg-slate-50 p-4 rounded-xl border border-slate-150 text-sm space-y-2">
                   {Object.entries(reading.input_answers).map(([key, value]) => (
-                    <div key={key} className="flex justify-between py-1 border-b border-slate-200/50 last:border-0 last:pb-0 first:pt-0">
+                    <div key={key} className="flex justify-between py-1 border-b border-slate-200/50 last:border-0 last:pb-0 first:pt-0 flex-col">
                       <span className="text-slate-500 capitalize font-medium">{key}</span>
                       <span className="font-bold text-slate-800">{String(value)}</span>
                     </div>
@@ -407,11 +428,17 @@ export default function AiReadingDetailPage() {
                 {reading.input_image_key ? (
                   <div className="space-y-4">
                     <div className="relative group overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 aspect-[3/4] shadow-inner flex items-center justify-center">
-                      {!imageError ? (
+                      {isLoadingPreview || (!previewUrl && !imageError) ? (
+                        <div className="flex flex-col items-center justify-center text-slate-400 w-full h-full p-6 text-center">
+                          <Loader2 className="h-8 w-8 animate-spin mb-3 text-indigo-400" />
+                          <p className="font-semibold text-slate-600 text-sm">Loading Preview...</p>
+                        </div>
+                      ) : !imageError && previewUrl ? (
                         /* eslint-disable-next-line @next/next/no-img-element */
                         <img 
-                          src={resolveReadingImageUrl(reading.input_image_key)} 
+                          src={previewUrl} 
                           alt="User upload"
+                          referrerPolicy="no-referrer"
                           onError={() => setImageError(true)}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                         />
@@ -430,7 +457,7 @@ export default function AiReadingDetailPage() {
                       {/* Image hover actions overlay */}
                       <div className="absolute inset-0 bg-slate-950/65 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center gap-3">
                         <a
-                          href={resolveReadingImageUrl(reading.input_image_key)}
+                          href={previewUrl || "#"}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="bg-white hover:bg-slate-100 text-slate-900 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-lg flex items-center gap-1.5"
@@ -452,13 +479,6 @@ export default function AiReadingDetailPage() {
                           {isDownloadingImage ? 'Downloading...' : 'Download File'}
                         </Button>
                       </div>
-                    </div>
-                    
-                    <div className="pt-2 border-t border-slate-150">
-                      <span className="text-[10px] text-slate-400 font-bold uppercase block">Storage Key</span>
-                      <span className="text-xs font-mono break-all text-slate-600 block leading-tight mt-1">
-                        {reading.input_image_key}
-                      </span>
                     </div>
                   </div>
                 ) : (
