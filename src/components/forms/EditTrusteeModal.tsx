@@ -61,6 +61,7 @@ export function EditTrusteeModal({ open, onOpenChange, trusteeId, initial }: Edi
               step="0.01"
               value={commissionPercent}
               onChange={(e) => setCommissionPercent(e.target.value)}
+              min={0}
               className="bg-white"
             />
           </div>

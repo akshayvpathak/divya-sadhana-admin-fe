@@ -48,7 +48,7 @@ export default function ViewOrderPage() {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Link href="/orders">
           <Button variant="outline" size="icon">

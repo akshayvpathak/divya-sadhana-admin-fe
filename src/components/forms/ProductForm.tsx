@@ -1,7 +1,11 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import dynamic from 'next/dynamic';
+import 'react-quill-new/dist/quill.snow.css';
+
+const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false, loading: () => <p className="text-sm text-slate-500 py-4">Loading editor...</p> });
 import { productSchema, ProductFormData } from '@/schemas/product.schema';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -54,7 +58,7 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
     gallery_image_keys: fetchedProduct.gallery_image_keys || [],
   } : propsInitialData, [fetchedProduct, propsInitialData]);
 
-  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<ProductFormData>({
+  const { register, control, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema) as any,
     defaultValues: {
       name: '',
@@ -287,6 +291,7 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
             placeholder="99.99" 
             {...register('price')} 
             disabled={readOnly}
+            min={0}
             className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}
           />
           {errors.price && <p className="text-sm text-rose-500">{errors.price.message}</p>}
@@ -312,6 +317,7 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
             placeholder="100" 
             {...register('stock_quantity')} 
             disabled={readOnly}
+            min={0}
             className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}
           />
           {errors.stock_quantity && <p className="text-sm text-rose-500">{errors.stock_quantity.message}</p>}
@@ -370,16 +376,26 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
         </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2 pb-4">
         <Label htmlFor="description">Description <span className="text-rose-500">*</span></Label>
-        <Textarea 
-          id="description" 
-          placeholder="Product description..." 
-          {...register('description')} 
-          disabled={readOnly}
-          className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}
-          rows={4}
-        />
+        <div className="bg-white rounded-md pb-6">
+          <Controller
+            name="description"
+            control={control}
+            render={({ field }) => (
+              <ReactQuill 
+                theme="snow"
+                value={field.value}
+                onChange={field.onChange}
+                readOnly={readOnly}
+                className={cn(
+                  "h-[200px] mb-12", 
+                  readOnly ? "bg-slate-50 border-slate-200 opacity-75 pointer-events-none" : ""
+                )}
+              />
+            )}
+          />
+        </div>
         {errors.description && <p className="text-sm text-rose-500">{errors.description.message}</p>}
       </div>
       

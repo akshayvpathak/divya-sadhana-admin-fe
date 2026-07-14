@@ -12,6 +12,7 @@ export interface DonationCampaignRow {
   id: string;
   cover_image_url?: string | null;
   title: string;
+  description?: string | null;
   target_amount: number;
   raised_amount: number;
   progress_percent: number;
@@ -28,33 +29,36 @@ export const useDonationCampaignTableColumns = ({
 }: UseDonationCampaignTableColumnsProps): ColumnConfig<DonationCampaignRow>[] => {
   return [
     {
-      id: 'cover_image_url',
-      header: 'Image',
-      headerClassName: 'w-[80px]',
-      renderCell: (row) => (
-        <div className="h-10 w-10 relative rounded-md overflow-hidden bg-slate-100 border border-slate-200">
-          {row.cover_image_url ? (
-            <Image 
-              src={row.cover_image_url} 
-              alt={row.title} 
-              fill 
-              className="object-cover"
-              unoptimized
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <ImageIcon className="h-5 w-5 text-slate-300" />
-            </div>
-          )}
-        </div>
-      ),
-    },
-    {
       id: 'title',
       accessorKey: 'title',
-      header: 'Title',
+      header: 'Campaign',
       sortable: true,
-      cellClassName: 'font-medium max-w-[200px] truncate',
+      renderCell: (row) => (
+        <div className="flex items-center gap-3">
+          <div className="relative h-10 w-10 rounded-md overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
+            {row.cover_image_url ? (
+              <Image 
+                src={row.cover_image_url} 
+                alt={row.title} 
+                fill 
+                className="object-cover"
+                unoptimized
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <ImageIcon className="h-5 w-5 text-slate-300" />
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col max-w-[250px]">
+            <span className="font-medium truncate">{row.title}</span>
+            <span 
+              className="text-xs text-slate-500 overflow-hidden whitespace-nowrap text-ellipsis [&>*]:inline"
+              dangerouslySetInnerHTML={{ __html: row.description || '' }}
+            />
+          </div>
+        </div>
+      ),
     },
     {
       id: 'target_amount',

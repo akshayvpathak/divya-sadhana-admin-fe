@@ -36,7 +36,7 @@ export default function Navbar() {
       return (
         <div key={path} className="flex items-center">
           {index > 0 && <span className="mx-2 text-slate-400">/</span>}
-          <span className={isLast ? "text-slate-900 font-medium" : "text-slate-500"}>
+          <span className={isLast ? "text-slate-900 font-medium uppercase" : "text-slate-500"}>
             {title}
           </span>
         </div>

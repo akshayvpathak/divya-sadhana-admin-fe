@@ -16,7 +16,7 @@ export default function ViewPaymentPage() {
   const payment = data;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Link href="/payments">
           <Button variant="outline" size="icon">

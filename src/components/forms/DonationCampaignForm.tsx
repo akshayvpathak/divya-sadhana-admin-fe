@@ -1,7 +1,11 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import dynamic from 'next/dynamic';
+import 'react-quill-new/dist/quill.snow.css';
+
+const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false, loading: () => <p className="text-sm text-slate-500 py-4">Loading editor...</p> });
 import { createDonationCampaignSchema, CreateDonationCampaignPayload } from '@/schemas/donation-campaigns.schema';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -64,7 +68,7 @@ export function DonationCampaignForm({ campaignId, initialData: propsInitialData
     }
   }, [initialData]);
 
-  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<CreateDonationCampaignPayload>({
+  const { register, control, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<CreateDonationCampaignPayload>({
     resolver: zodResolver(createDonationCampaignSchema) as any,
     defaultValues: {
       title: '',
@@ -218,6 +222,7 @@ export function DonationCampaignForm({ campaignId, initialData: propsInitialData
             placeholder="10000" 
             {...register('target_amount')} 
             disabled={readOnly}
+            min={0}
             className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}
           />
           {errors.target_amount && <p className="text-sm text-rose-500">{errors.target_amount.message}</p>}
@@ -280,16 +285,23 @@ export function DonationCampaignForm({ campaignId, initialData: propsInitialData
         </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2 pb-4">
         <Label htmlFor="description">Description <span className="text-rose-500">*</span></Label>
-        <Textarea 
-          id="description" 
-          placeholder="Description campaign..." 
-          {...register('description')} 
-          disabled={readOnly}
-          className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}
-          rows={4}
-        />
+        <div className="bg-white rounded-md pb-6">
+          <Controller
+            name="description"
+            control={control}
+            render={({ field }) => (
+              <ReactQuill 
+                theme="snow"
+                value={field.value}
+                onChange={field.onChange}
+                readOnly={readOnly}
+                className={readOnly ? "bg-slate-50 border-slate-200 opacity-75 pointer-events-none h-[200px] mb-12" : "h-[200px] mb-12"}
+              />
+            )}
+          />
+        </div>
         {errors.description && <p className="text-sm text-rose-500">{errors.description.message}</p>}
       </div>
 

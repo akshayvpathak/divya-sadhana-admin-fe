@@ -51,11 +51,12 @@ export const useProductTableColumns = ({
               </div>
             )}
           </div>
-          <div className="flex flex-col">
-            <span className="font-medium">{row.name}</span>
-            <span className="text-xs text-slate-500 max-w-[150px] truncate">
-              {row.description}
-            </span>
+          <div className="flex flex-col max-w-[250px]">
+            <span className="font-medium truncate">{row.name}</span>
+            <span 
+              className="text-xs text-slate-500 overflow-hidden whitespace-nowrap text-ellipsis [&>*]:inline"
+              dangerouslySetInnerHTML={{ __html: row.description || '' }}
+            />
           </div>
         </div>
       ),

@@ -211,6 +211,7 @@ export function AssignStateModal({
               placeholder="Leave blank for global default (15%)"
               value={percent}
               onChange={(e) => setPercent(e.target.value)}
+              min={0}
               className="bg-white"
             />
           </div>

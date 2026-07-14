@@ -224,6 +224,7 @@ export function PromoteTrusteeModal({ open, onOpenChange }: PromoteTrusteeModalP
               placeholder="15"
               value={commissionPercent}
               onChange={(e) => setCommissionPercent(e.target.value)}
+              min={0}
               className="bg-white"
             />
           </div>
