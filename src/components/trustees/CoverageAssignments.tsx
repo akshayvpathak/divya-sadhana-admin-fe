@@ -1,9 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Filter } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { Filter } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -16,29 +14,21 @@ import { DataTablePagination } from '@/components/common/DataTablePagination';
 import {
   useAssignmentsListQuery,
   useStatesListQuery,
-  useDeleteAssignmentMutation,
 } from '@/hooks/queries/useTerritoryQuery';
 import { useTrusteesListQuery } from '@/hooks/queries/useTrusteesQuery';
 import { useAssignmentTableColumns } from '@/hooks/tables/useAssignmentTableColumns';
 import { trusteeDisplayName } from '@/hooks/tables/useTrusteeTableColumns';
-import { AssignStateModal } from '@/components/forms/AssignStateModal';
-import { Assignment } from '@/schemas/territory.schema';
 
 /**
  * Cross-trustee "who owns which state" coverage view (the former standalone
- * /territory page). Rendered as the "Coverage" tab on the Trustees page.
+ * /territory page). Read-only overview — assign/edit states from a trustee's
+ * detail page.
  */
 export function CoverageAssignments() {
   const [page, setPage] = useState(1);
   const [trusteeFilter, setTrusteeFilter] = useState('all');
   const [stateFilter, setStateFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
-
-  const [isAssignOpen, setIsAssignOpen] = useState(false);
-  const [editing, setEditing] = useState<Assignment | null>(null);
-
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [toDelete, setToDelete] = useState<string | null>(null);
 
   const { data: statesData } = useStatesListQuery({ is_active: 'true' });
   const { data: trusteesData } = useTrusteesListQuery({ page_size: 200 });
@@ -50,46 +40,19 @@ export function CoverageAssignments() {
     is_active: statusFilter === 'all' ? undefined : statusFilter === 'active' ? 'true' : 'false',
   });
 
-  const { mutate: deleteAssignment, isPending: isDeleting } = useDeleteAssignmentMutation();
-
   const states = statesData?.data?.results ?? [];
   const trustees = trusteesData?.data?.results ?? [];
   const rows = data?.data?.results ?? [];
   const totalPages = data?.data?.count ? Math.ceil(data.data.count / 10) : 1;
 
-  const openCreate = () => {
-    setEditing(null);
-    setIsAssignOpen(true);
-  };
-  const openEdit = (a: Assignment) => {
-    setEditing(a);
-    setIsAssignOpen(true);
-  };
-  const openDelete = (id: string) => {
-    setToDelete(id);
-    setIsDeleteOpen(true);
-  };
-  const confirmDelete = () => {
-    if (toDelete) {
-      deleteAssignment(toDelete, {
-        onSuccess: () => {
-          setIsDeleteOpen(false);
-          setToDelete(null);
-        },
-      });
-    }
-  };
-
-  const columns = useAssignmentTableColumns({ openEditModal: openEdit, openDeleteModal: openDelete });
+  const columns = useAssignmentTableColumns({ readOnly: true });
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <p className="text-sm text-slate-500">Area-trustee assignments — who owns which state (15% layer)</p>
-        <Button className="bg-indigo-600 hover:bg-indigo-700" onClick={openCreate}>
-          <Plus className="h-4 w-4" /> Assign State
-        </Button>
-      </div>
+      <p className="text-sm text-slate-500">
+        Area-trustee assignments — who owns which state (15% layer). Manage
+        assignments from a trustee&apos;s detail page.
+      </p>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
         <div className="p-4 border-b border-slate-200 bg-slate-50 flex flex-wrap gap-2 items-center">
@@ -176,19 +139,6 @@ export function CoverageAssignments() {
           />
         )}
       </div>
-
-      <AssignStateModal open={isAssignOpen} onOpenChange={setIsAssignOpen} assignment={editing} />
-
-      <ConfirmModal
-        isOpen={isDeleteOpen}
-        onOpenChange={setIsDeleteOpen}
-        title="Remove Assignment"
-        description="Are you sure you want to remove this area-trustee assignment?"
-        onConfirm={confirmDelete}
-        confirmText={isDeleting ? 'Removing...' : 'Remove'}
-        variant="destructive"
-        disabled={isDeleting}
-      />
     </div>
   );
 }

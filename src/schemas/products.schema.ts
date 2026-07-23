@@ -16,6 +16,15 @@ export const createProductSchema = z.object({
   primary_image_key: z.string().default(""),
   gallery_image_keys: z.array(z.string()).default([]),
   category: z.string().uuid("Valid category ID is required"),
+  slug: z
+    .string()
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug can only contain lowercase letters, numbers, and single hyphens")
+    .optional(),
+  meta_title: z.string().max(70).optional().or(z.literal("")),
+  meta_description: z.string().max(160).optional().or(z.literal("")),
+  meta_keywords: z.string().max(255).optional().or(z.literal("")),
+  og_image_key: z.string().optional().or(z.literal("")),
+  is_indexable: z.boolean().default(true),
 });
 
 export const updateProductSchema = createProductSchema.partial();
@@ -36,6 +45,14 @@ export const productSchema = z.object({
   /** Read-only: signed URLs from API; never send on create/PATCH */
   gallery_image_urls: z.array(z.string()).nullable().optional().default([]),
   category: z.string().nullable().optional().default(""),
+  slug: z.string().nullable().optional().default(""),
+  meta_title: z.string().nullable().optional().default(""),
+  meta_description: z.string().nullable().optional().default(""),
+  meta_keywords: z.string().nullable().optional().default(""),
+  og_image_key: z.string().nullable().optional().default(""),
+  /** Read-only: signed URL from API; never send on create/PATCH */
+  og_image_url: z.string().nullable().optional(),
+  is_indexable: z.boolean().nullable().optional().transform((val) => val ?? true),
   created_at: z.string().nullable().optional(),
   updated_at: z.string().nullable().optional(),
 });

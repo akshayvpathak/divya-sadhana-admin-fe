@@ -3,7 +3,7 @@ import { ModuleStatus, ModuleType } from './badges/ModuleStatus';
 
 interface StatusBadgeProps {
   status?: string | boolean | null;
-  type?: 'active' | 'published' | 'order_status' | 'payment_status' | 'shipping_status' | 'transaction_status' | 'campaign_status' | 'commission_status' | 'role';
+  type?: 'active' | 'published' | 'order_status' | 'payment_status' | 'shipping_status' | 'transaction_status' | 'campaign_status' | 'commission_status' | 'role' | 'service_booking_status' | 'service_category';
 }
 
 const typeToModuleMap: Record<string, ModuleType> = {
@@ -16,6 +16,8 @@ const typeToModuleMap: Record<string, ModuleType> = {
   campaign_status: 'campaign',
   commission_status: 'commission',
   role: 'role',
+  service_booking_status: 'service-booking',
+  service_category: 'service-category',
 };
 
 export function StatusBadge({ status, type }: StatusBadgeProps) {

@@ -52,6 +52,58 @@ export const promoteTrusteeSchema = z.object({
   notes: z.string().optional(),
 });
 
+/* ------------ Atomic promote-with-territory (multi-state) ---------- */
+// POST /api/trustee/promote-with-territory/ — all-or-nothing: creates the
+// trustee AND every territory assignment in one transaction.
+
+const stateAssignmentSchema = z.object({
+  state_id: z.string().min(1, "State is required"),
+  // number input yields a string; a bare number is also accepted per contract.
+  area_commission_percent: z.union([
+    z.string().min(1, "Area commission % is required"),
+    z.number(),
+  ]),
+});
+
+export const promoteTrusteeWithTerritorySchema = z.object({
+  email: z.string().trim().email("Select a valid user"),
+  commission_percent: z.string().min(1, "Commission % is required"),
+  district: z.string().min(1, "District is required"),
+  notes: z.string().optional(),
+  state_assignments: z
+    .array(stateAssignmentSchema)
+    .min(1, "Add at least one state"),
+});
+
+// response.data shape wrapped in the `{ message, data }` envelope.
+export const promoteTrusteeWithTerritoryResponseSchema = z
+  .object({
+    message: z.string().optional(),
+    data: z
+      .object({
+        trustee: z
+          .object({
+            id: z.string(),
+            referral_code: z.string().nullish(),
+            commission_percent: moneyLoose,
+            is_active: z.boolean().optional().default(true),
+          })
+          .passthrough(),
+        assignments: z.array(
+          z
+            .object({
+              id: z.string(),
+              state: z.string().nullish(),
+              state_name: z.string().nullish(),
+              is_active: z.boolean().optional().default(true),
+            })
+            .passthrough()
+        ),
+      })
+      .passthrough(),
+  })
+  .passthrough();
+
 /* --------------------------- Dashboard ----------------------------- */
 
 const walletSchema = z
@@ -137,6 +189,12 @@ export const commissionsListSchema = z
 export type Trustee = z.infer<typeof trusteeSchema>;
 export type TrusteesList = z.infer<typeof trusteesListSchema>;
 export type PromoteTrusteePayload = z.infer<typeof promoteTrusteeSchema>;
+export type PromoteTrusteeWithTerritoryPayload = z.infer<
+  typeof promoteTrusteeWithTerritorySchema
+>;
+export type PromoteTrusteeWithTerritoryResult = z.infer<
+  typeof promoteTrusteeWithTerritoryResponseSchema
+>["data"];
 export type TrusteeDashboard = z.infer<typeof trusteeDashboardSchema>["data"];
 export type CommissionEntry = z.infer<typeof commissionEntrySchema>;
 export type CommissionsList = z.infer<typeof commissionsListSchema>;

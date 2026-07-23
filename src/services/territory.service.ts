@@ -8,7 +8,7 @@ import {
   CreateAssignmentPayload,
   UpdateAssignmentPayload,
 } from "@/schemas/territory.schema";
-import { ApiError, formatApiError } from "@/services/auth.service";
+import { apiErrorFrom } from "@/services/auth.service";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://api.divyasadhana.org/api";
@@ -144,10 +144,7 @@ export const createAssignment = async (
 
   if (!response.ok) {
     const json = await response.json().catch(() => ({}));
-    throw new ApiError(
-      formatApiError(json, "Failed to create assignment"),
-      response.status
-    );
+    throw apiErrorFrom(json, "Failed to create assignment", response.status);
   }
 
   const json = await response.json();
@@ -171,10 +168,7 @@ export const updateAssignment = async (
 
   if (!response.ok) {
     const json = await response.json().catch(() => ({}));
-    throw new ApiError(
-      formatApiError(json, "Failed to update assignment"),
-      response.status
-    );
+    throw apiErrorFrom(json, "Failed to update assignment", response.status);
   }
 
   const json = await response.json();

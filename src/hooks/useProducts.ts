@@ -169,6 +169,15 @@ export const useProduct = (id: string) => {
         gallery_image_urls: (p.gallery_image_urls || [])
           .map((url) => (url ? cleanImageUrl(url) || url : ''))
           .filter(Boolean) as string[],
+        slug: p.slug || '',
+        meta_title: p.meta_title || '',
+        meta_description: p.meta_description || '',
+        meta_keywords: p.meta_keywords || '',
+        og_image_key: p.og_image_key || '',
+        og_image_url: p.og_image_url
+          ? (cleanImageUrl(p.og_image_url) || p.og_image_url)
+          : '',
+        is_indexable: p.is_indexable ?? true,
       };
     },
     enabled: !!id && !!accessToken,
@@ -191,7 +200,13 @@ export const useCreateProduct = () => {
         is_active: data.is_active,
         is_published: data.is_published,
         primary_image_key: extractImageKey(data.image),
-        gallery_image_keys: (data.gallery_image_keys || []).map((k: string) => extractImageKey(k))
+        gallery_image_keys: (data.gallery_image_keys || []).map((k: string) => extractImageKey(k)),
+        slug: data.slug,
+        meta_title: data.meta_title || '',
+        meta_description: data.meta_description || '',
+        meta_keywords: data.meta_keywords || '',
+        og_image_key: extractImageKey(data.og_image_key),
+        is_indexable: data.is_indexable ?? true,
       };
       if (data.categoryId) {
         payload.category = data.categoryId;
@@ -232,6 +247,12 @@ export const useUpdateProduct = () => {
       if (data.gallery_image_keys !== undefined) {
         updateData.gallery_image_keys = (data.gallery_image_keys || []).map((k: string) => extractImageKey(k));
       }
+      if (data.slug !== undefined) updateData.slug = data.slug;
+      if (data.meta_title !== undefined) updateData.meta_title = data.meta_title || '';
+      if (data.meta_description !== undefined) updateData.meta_description = data.meta_description || '';
+      if (data.meta_keywords !== undefined) updateData.meta_keywords = data.meta_keywords || '';
+      if (data.og_image_key !== undefined) updateData.og_image_key = extractImageKey(data.og_image_key);
+      if (data.is_indexable !== undefined) updateData.is_indexable = data.is_indexable;
 
       return updateProduct(id, updateData, accessToken);
     },

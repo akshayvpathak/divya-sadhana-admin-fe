@@ -141,6 +141,25 @@ export const roleStatusMap: Record<string, StatusConfig> = {
   user: badge("User", "slate"),
 };
 
+// Service Bookings Status
+export const serviceBookingStatusMap: Record<string, StatusConfig> = {
+  application_review: badge("Application Review", "warning"),
+  pending: badge("Pending", "orange"),
+  paid: badge("Paid", "success"),
+  scheduled: badge("Scheduled", "indigo"),
+  completed: badge("Completed", "success"),
+  cancelled: badge("Cancelled", "danger"),
+};
+
+// Sadhana Service Category
+export const serviceCategoryMap: Record<string, StatusConfig> = {
+  paramarsh: badge("Paramarsh", "info"),
+  anushthan: badge("Anushthan", "indigo"),
+  diksha: badge("Diksha", "success"),
+  subscription: badge("Subscription", "orange"),
+  class: badge("Class", "slate"),
+};
+
 // ============================================================================
 // 2. FILTER DROPDOWN OPTIONS (Automatically generated from the configs above)
 // ============================================================================
@@ -155,3 +174,5 @@ export const donationStatusOptions = getOptionsFromMap(paymentStatusMap, ["paid"
 export const campaignStatusOptions = getOptionsFromMap(campaignStatusMap, ["draft", "active"], "All Statuses", true); // forceTitleCase=true -> "Draft", "Active"
 export const paymentPageStatusOptions = getOptionsFromMap(paymentStatusMap, ["paid", "pending"], "All Statuses");
 export const aiReadingStatusOptions = getOptionsFromMap(aiReadingsStatusMap, ["succeeded"], "All Status");
+export const serviceBookingStatusOptions = getOptionsFromMap(serviceBookingStatusMap, ["application_review", "pending", "paid", "scheduled", "completed", "cancelled"], "All Statuses");
+export const serviceCategoryOptions = getOptionsFromMap(serviceCategoryMap, ["paramarsh", "anushthan", "diksha", "subscription", "class"], "All Categories");

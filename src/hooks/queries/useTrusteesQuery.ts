@@ -1,11 +1,14 @@
 import { useAuth } from "@/context/AuthContext";
-import { PromoteTrusteePayload } from "@/schemas/trustees.schema";
+import {
+  PromoteTrusteePayload,
+  PromoteTrusteeWithTerritoryPayload,
+} from "@/schemas/trustees.schema";
 import {
   getTrusteeCommissions,
   getTrusteeDashboard,
-  getTrusteeEarningsSummary,
   getTrusteesList,
   promoteTrustee,
+  promoteTrusteeWithTerritory,
   updateTrustee,
   deleteTrustee,
   UpdateTrusteePayload,
@@ -19,6 +22,7 @@ export const useTrusteesListQuery = (filters: {
   search?: string;
   is_active?: string;
   sort?: string;
+  state_id?: string;
 } = {}) => {
   const { accessToken } = useAuth();
 
@@ -32,6 +36,7 @@ export const useTrusteesListQuery = (filters: {
         search: filters.search,
         is_active: filters.is_active,
         sort: filters.sort,
+        state_id: filters.state_id,
       });
     },
     enabled: !!accessToken,
@@ -72,19 +77,6 @@ export const useTrusteeCommissionsQuery = (
   });
 };
 
-export const useTrusteeEarningsSummaryQuery = (trusteeId: string | null) => {
-  const { accessToken } = useAuth();
-
-  return useQuery({
-    queryKey: ["trustee-earnings-summary", trusteeId],
-    queryFn: async () => {
-      if (!accessToken || !trusteeId) throw new Error("Missing required data");
-      return getTrusteeEarningsSummary(trusteeId, accessToken);
-    },
-    enabled: !!accessToken && !!trusteeId,
-  });
-};
-
 export const useUpdateTrusteeMutation = () => {
   const { accessToken } = useAuth();
   const queryClient = useQueryClient();
@@ -97,7 +89,6 @@ export const useUpdateTrusteeMutation = () => {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["trustees"] });
       queryClient.invalidateQueries({ queryKey: ["trustee-dashboard", variables.id] });
-      queryClient.invalidateQueries({ queryKey: ["trustee-earnings-summary", variables.id] });
       toast.success("Trustee updated");
     },
     onError: (error: Error) => {
@@ -136,6 +127,26 @@ export const usePromoteTrusteeMutation = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["trustees"] });
+      toast.success("Trustee promoted");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+};
+
+export const usePromoteTrusteeWithTerritoryMutation = () => {
+  const { accessToken } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload: PromoteTrusteeWithTerritoryPayload) => {
+      if (!accessToken) throw new Error("No access token");
+      return promoteTrusteeWithTerritory(payload, accessToken);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["trustees"] });
+      queryClient.invalidateQueries({ queryKey: ["territory-assignments"] });
       toast.success("Trustee promoted");
     },
     onError: (error: Error) => {

@@ -7,15 +7,18 @@ import { Assignment } from '@/schemas/territory.schema';
 import { formatPercent } from '@/lib/currency';
 
 interface UseAssignmentTableColumnsProps {
-  openEditModal: (assignment: Assignment) => void;
-  openDeleteModal: (id: string) => void;
+  openEditModal?: (assignment: Assignment) => void;
+  openDeleteModal?: (id: string) => void;
+  /** When true, omit the Actions column (Coverage overview). */
+  readOnly?: boolean;
 }
 
 export const useAssignmentTableColumns = ({
   openEditModal,
   openDeleteModal,
-}: UseAssignmentTableColumnsProps): ColumnConfig<Assignment>[] => {
-  return [
+  readOnly = false,
+}: UseAssignmentTableColumnsProps = {}): ColumnConfig<Assignment>[] => {
+  const columns: ColumnConfig<Assignment>[] = [
     {
       id: 'trustee_email',
       accessorKey: 'trustee_email',
@@ -57,7 +60,10 @@ export const useAssignmentTableColumns = ({
       header: 'Status',
       renderCell: (row) => <StatusBadge status={row.is_active} type="active" />,
     },
-    {
+  ];
+
+  if (!readOnly && openEditModal && openDeleteModal) {
+    columns.push({
       id: 'actions',
       header: 'Actions',
       headerAlign: 'right',
@@ -84,6 +90,8 @@ export const useAssignmentTableColumns = ({
           </Button>
         </div>
       ),
-    },
-  ];
+    });
+  }
+
+  return columns;
 };

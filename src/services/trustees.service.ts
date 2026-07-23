@@ -4,6 +4,9 @@ import {
   Trustee,
   trusteeSchema,
   PromoteTrusteePayload,
+  PromoteTrusteeWithTerritoryPayload,
+  PromoteTrusteeWithTerritoryResult,
+  promoteTrusteeWithTerritoryResponseSchema,
   TrusteeDashboard,
   trusteeDashboardSchema,
   CommissionsList,
@@ -29,6 +32,8 @@ interface TrusteesListOptions {
   search?: string;
   is_active?: string;
   sort?: string;
+  /** Server-side filter: trustees assigned to this state (UUID). */
+  state_id?: string;
 }
 
 export const getTrusteesList = async (
@@ -41,6 +46,7 @@ export const getTrusteesList = async (
   if (options.search) params.append("search", options.search);
   if (options.is_active) params.append("is_active", options.is_active);
   if (options.sort) params.append("sort", options.sort);
+  if (options.state_id) params.append("state_id", options.state_id);
 
   const response = await fetch(`${API_BASE_URL}/trustee/?${params.toString()}`, {
     method: "GET",
@@ -75,14 +81,42 @@ export const promoteTrustee = async (
 
   if (!response.ok) {
     const json = await response.json().catch(() => ({}));
-    throw new ApiError(
-      formatApiError(json, "Failed to promote trustee"),
-      response.status
-    );
+    throw apiErrorFrom(json, "Failed to promote trustee", response.status);
   }
 
   const json = await response.json();
   return trusteeSchema.parse(json.data || json);
+};
+
+/**
+ * Atomic promote + territory assignment. POST /api/trustee/promote-with-territory/.
+ * All-or-nothing: the trustee and every state assignment are created together,
+ * so there is no best-effort follow-up call to reconcile.
+ */
+export const promoteTrusteeWithTerritory = async (
+  payload: PromoteTrusteeWithTerritoryPayload,
+  accessToken: string
+): Promise<PromoteTrusteeWithTerritoryResult> => {
+  const response = await fetch(
+    `${API_BASE_URL}/trustee/promote-with-territory/`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+        "X-CSRFTOKEN": getCsrfToken(),
+      },
+      body: JSON.stringify(payload),
+    }
+  );
+
+  if (!response.ok) {
+    const json = await response.json().catch(() => ({}));
+    throw apiErrorFrom(json, "Failed to promote trustee", response.status);
+  }
+
+  const json = await response.json();
+  return promoteTrusteeWithTerritoryResponseSchema.parse(json).data;
 };
 
 export interface UpdateTrusteePayload {
@@ -130,39 +164,6 @@ export const deleteTrustee = async (id: string, accessToken: string): Promise<vo
     const json = await response.json().catch(() => ({}));
     throw new ApiError(formatApiError(json, "Failed to delete trustee"), response.status);
   }
-};
-
-export interface TrusteeEarningsSummary {
-  balance: string;
-  available_balance: string;
-  pending_balance: string;
-  held_amount: string;
-  pending_commission: string;
-  total_commission_lifetime: string;
-  total_commission_this_month: string;
-  total_reversals_lifetime: string;
-  currency: string;
-}
-
-export const getTrusteeEarningsSummary = async (
-  id: string,
-  accessToken: string
-): Promise<TrusteeEarningsSummary> => {
-  const response = await fetch(`${API_BASE_URL}/trustee/${id}/earnings-summary/`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: "" }));
-    throw new Error(error.message || "Failed to fetch earnings summary");
-  }
-
-  const json = await response.json();
-  return (json.data ?? {}) as TrusteeEarningsSummary;
 };
 
 export const getTrusteeDashboard = async (

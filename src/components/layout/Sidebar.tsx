@@ -6,11 +6,11 @@ import { useAtom } from 'jotai';
 import { cn } from '@/lib/utils';
 import { sidebarAtom } from '@/store/auth';
 import { useAuth } from '@/context/AuthContext';
-import { 
-  LayoutDashboard, 
-  Users, 
-  Tags, 
-  Package, 
+import {
+  LayoutDashboard,
+  Users,
+  Tags,
+  Package,
   ChevronLeft,
   ShoppingCart,
   HeartHandshake,
@@ -18,11 +18,19 @@ import {
   CreditCard,
   UserCircle,
   Sparkles,
-  BadgeCheck
+  Moon,
+  BadgeCheck,
+  Wallet,
+  Flame,
+  ClipboardList,
+  CalendarDays,
+  type LucideIcon
 } from 'lucide-react';
 import { Button } from '../ui/button';
 
-const navItems = [
+type NavItem = { name: string; href: string; icon: LucideIcon; superuserOnly?: boolean };
+
+const navItems: NavItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Users', href: '/users', icon: Users },
   { name: 'Categories', href: '/categories', icon: Tags },
@@ -30,9 +38,14 @@ const navItems = [
   { name: 'Orders', href: '/orders', icon: ShoppingCart },
   { name: 'Donations', href: '/donations', icon: HeartHandshake },
   { name: 'Campaigns', href: '/donation-campaigns', icon: Megaphone },
+  { name: 'Sadhana Services', href: '/sadhana-services', icon: Flame },
+  { name: 'Service Bookings', href: '/service-bookings', icon: ClipboardList },
+  { name: 'Service Batches', href: '/service-batches', icon: CalendarDays },
   { name: 'Payments', href: '/payments', icon: CreditCard },
   { name: 'AI Readings', href: '/ai-readings', icon: Sparkles },
+  { name: 'Horoscope', href: '/horoscope', icon: Moon },
   { name: 'Trustees', href: '/trustees', icon: BadgeCheck },
+  { name: 'Withdrawals', href: '/withdrawals', icon: Wallet },
   { name: 'Profile', href: '/profile', icon: UserCircle },
 ];
 

@@ -3,7 +3,7 @@ import { Badge } from '../badge';
 import { cn } from '@/lib/utils';
 import { formatStatusLabel } from '@/lib/statusFormatter';
 import { StatusConfig } from './types';
-import { activeStatusMap, aiReadingsStatusMap, campaignStatusMap, commissionStatusMap, orderStatusMap, paymentStatusMap, publishedStatusMap, roleStatusMap, shippingStatusMap, transactionStatusMap } from './badge-status';
+import { activeStatusMap, aiReadingsStatusMap, campaignStatusMap, commissionStatusMap, orderStatusMap, paymentStatusMap, publishedStatusMap, roleStatusMap, serviceBookingStatusMap, serviceCategoryMap, shippingStatusMap, transactionStatusMap } from './badge-status';
 
 
 export type ModuleType =
@@ -16,7 +16,9 @@ export type ModuleType =
   | 'campaign'
   | 'commission'
   | 'role'
-  | 'ai-readings';
+  | 'ai-readings'
+  | 'service-booking'
+  | 'service-category';
 
 const statusMaps: Record<ModuleType, Record<string, StatusConfig>> = {
   active: activeStatusMap,
@@ -29,6 +31,8 @@ const statusMaps: Record<ModuleType, Record<string, StatusConfig>> = {
   commission: commissionStatusMap,
   role: roleStatusMap,
   'ai-readings': aiReadingsStatusMap,
+  'service-booking': serviceBookingStatusMap,
+  'service-category': serviceCategoryMap,
 };
 
 export interface ModuleStatusProps {

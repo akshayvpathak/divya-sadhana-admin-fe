@@ -47,15 +47,16 @@ export function formatApiError(json: any, defaultMessage: string): string {
 
 /**
  * Extract per-field validation errors from a `{ data: { errors: [...] } }` body.
- * Each backend error carries a `label`/`field` (the offending field) and a
- * `message`/`code`. Returns `[]` when there are no structured field errors.
+ * Each backend error carries a `key`/`field`/`label` (the offending field) and a
+ * `message`/`code`. The 422 contract sends `{ key, message }`, so `key` is read
+ * first. Returns `[]` when there are no structured field errors.
  */
 export function parseApiFieldErrors(json: any): ApiFieldError[] {
   const errors = json?.data?.errors;
   if (!Array.isArray(errors)) return [];
   return errors
     .map((e: any): ApiFieldError | null => {
-      const field = e?.field ?? e?.label ?? e?.name;
+      const field = e?.key ?? e?.field ?? e?.label ?? e?.name;
       if (!field || typeof field !== "string") return null;
       const message = e?.message || (e?.code ? String(e.code) : "Invalid value");
       return { field, message };

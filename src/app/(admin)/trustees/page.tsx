@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Search, Plus, Filter } from 'lucide-react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -18,7 +19,6 @@ import { useTrusteesListQuery } from '@/hooks/queries/useTrusteesQuery';
 import { useAssignmentsListQuery, useStatesListQuery } from '@/hooks/queries/useTerritoryQuery';
 import { useTrusteeTableColumns } from '@/hooks/tables/useTrusteeTableColumns';
 import { Trustee } from '@/schemas/trustees.schema';
-import { PromoteTrusteeModal } from '@/components/forms/PromoteTrusteeModal';
 import { CoverageAssignments } from '@/components/trustees/CoverageAssignments';
 
 type TrusteesTab = 'trustees' | 'coverage';
@@ -30,7 +30,6 @@ export default function TrusteesPage() {
   const [status, setStatus] = useState('all');
   const [stateFilter, setStateFilter] = useState('all');
   const [sort, setSort] = useState('-created_at');
-  const [isPromoteOpen, setIsPromoteOpen] = useState(false);
   const [tab, setTab] = useState<TrusteesTab>('trustees');
 
   // Deep-link support: /trustees?tab=coverage (used by the old /territory route).
@@ -51,18 +50,18 @@ export default function TrusteesPage() {
 
   const isActiveParam = status === 'all' ? undefined : status === 'active' ? 'true' : 'false';
 
-  // The state filter is derived from territory assignments, so the API can't
-  // filter it server-side. When it's active we fetch the full set and paginate
-  // client-side; otherwise we use normal server pagination.
+  // The backend filters trustees by assigned state via `?state_id={uuid}`, so the
+  // dropdown value is the state UUID and pagination stays fully server-side.
   const PAGE_SIZE = 10;
-  const filtering = stateFilter !== 'all';
+  const stateIdParam = stateFilter === 'all' ? undefined : stateFilter;
 
   const { data, isLoading } = useTrusteesListQuery({
-    page: filtering ? 1 : page,
-    page_size: filtering ? 500 : PAGE_SIZE,
+    page,
+    page_size: PAGE_SIZE,
     search: debouncedSearch,
     is_active: isActiveParam,
     sort,
+    state_id: stateIdParam,
   });
 
   // Resolve attributed states per trustee from active assignments (single fetch).
@@ -102,18 +101,9 @@ export default function TrusteesPage() {
 
   const columns = useTrusteeTableColumns({ getStates });
 
-  const allRows = data?.data?.results ?? [];
-  const filteredRows = useMemo(() => {
-    if (!filtering) return allRows;
-    return allRows.filter((r) => getStates(r).includes(stateFilter));
-  }, [allRows, filtering, stateFilter, getStates]);
-
-  // Count/pages reflect the FILTERED set when a state filter is active.
-  const totalItems = filtering ? filteredRows.length : data?.data?.count ?? filteredRows.length;
+  const rows = data?.data?.results ?? [];
+  const totalItems = data?.data?.count ?? rows.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
-  const rows = filtering
-    ? filteredRows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
-    : filteredRows;
   const states = statesData?.data?.results ?? [];
 
   const handleSort = (field: string) => {
@@ -129,9 +119,11 @@ export default function TrusteesPage() {
           <p className="text-slate-500 mt-1">Promote users and monitor commission earnings</p>
         </div>
         {tab === 'trustees' && (
-          <Button className="bg-indigo-600 hover:bg-indigo-700" onClick={() => setIsPromoteOpen(true)}>
-            <Plus className="h-4 w-4" /> Promote Trustee
-          </Button>
+          <Link href="/trustees/create">
+            <Button className="bg-indigo-600 hover:bg-indigo-700">
+              <Plus className="h-4 w-4" /> Promote Trustee
+            </Button>
+          </Link>
         )}
       </div>
 
@@ -197,13 +189,15 @@ export default function TrusteesPage() {
             <Select value={stateFilter} onValueChange={(val) => { setStateFilter(val || 'all'); setPage(1); }}>
               <SelectTrigger className="bg-white w-[200px]">
                 <SelectValue placeholder="All States">
-                  {stateFilter === 'all' ? 'All States' : stateFilter}
+                  {stateFilter === 'all'
+                    ? 'All States'
+                    : states.find((s) => s.id === stateFilter)?.name ?? 'All States'}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All States</SelectItem>
                 {states.map((s) => (
-                  <SelectItem key={s.id} value={s.name}>
+                  <SelectItem key={s.id} value={s.id}>
                     {s.name}
                   </SelectItem>
                 ))}
@@ -232,7 +226,6 @@ export default function TrusteesPage() {
       </div>
       )}
 
-      <PromoteTrusteeModal open={isPromoteOpen} onOpenChange={setIsPromoteOpen} />
     </div>
   );
 }
