@@ -35,7 +35,8 @@ interface SelectedUser {
 
 const DEFAULT_VALUES: PromoteTrusteeWithTerritoryPayload = {
   email: '',
-  commission_percent: '15',
+  role: 'trustee',
+  commission_percent: '2',
   district: '',
   notes: '',
   state_assignments: [{ state_id: '', area_commission_percent: '15' }],
@@ -79,6 +80,25 @@ export function PromoteTrusteeForm() {
   });
 
   const stateAssignments = watch('state_assignments');
+  const role = watch('role');
+
+  // Handle static commissions based on role
+  useMemo(() => {
+    let percent = '2';
+    if (role === 'state_adhiyaksh') percent = '3';
+    else if (role === 'district_adhiyaksh') percent = '10';
+
+    if (watch('commission_percent') !== percent) {
+      setTimeout(() => setValue('commission_percent', percent, { shouldValidate: true }), 0);
+    }
+    
+    // Also set area commission for the first assignment if applicable
+    if (role !== 'district_adhiyaksh' && stateAssignments?.[0]) {
+      if (stateAssignments[0].area_commission_percent !== percent) {
+        setTimeout(() => setValue('state_assignments.0.area_commission_percent', percent, { shouldValidate: true }), 0);
+      }
+    }
+  }, [role, setValue, watch, stateAssignments]);
 
   const pickUser = (u: { id: string; email: string; first_name: string; last_name: string }) => {
     setSelectedUser({
@@ -101,10 +121,11 @@ export function PromoteTrusteeForm() {
     promoteTrustee(
       {
         email: values.email,
+        role: values.role,
         commission_percent: values.commission_percent,
-        district: values.district,
+        district: values.role === 'district_adhiyaksh' ? values.district : undefined,
         notes: values.notes || undefined,
-        state_assignments: values.state_assignments,
+        state_assignments: values.role === 'district_adhiyaksh' ? [] : values.state_assignments,
       },
       {
         onSuccess: (result) => {
@@ -117,6 +138,7 @@ export function PromoteTrusteeForm() {
         onError: (err) => {
           const applied = applyServerFieldErrors(err, setError, [
             'email',
+            'role',
             'commission_percent',
             'district',
             'notes',
@@ -214,15 +236,38 @@ export function PromoteTrusteeForm() {
         </div>
       </section>
 
-      {/* Trustee defaults */}
+      {/* Role defaults */}
       <section className="space-y-4 border-t border-slate-100 pt-8">
         <div>
-          <h2 className="text-base font-semibold text-slate-900">Trustee defaults</h2>
+          <h2 className="text-base font-semibold text-slate-900">Role & defaults</h2>
           <p className="text-sm text-slate-500">
-            Base commission and district. A referral code and wallet are created automatically.
+            Base commission and role details. A referral code and wallet are created automatically.
           </p>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 max-w-xl">
+        <div className="grid gap-4 sm:grid-cols-3 max-w-2xl">
+          <div className="space-y-1.5">
+            <Label htmlFor="promote-role">
+              Role <span className="text-rose-500">*</span>
+            </Label>
+            <Select
+              value={role}
+              onValueChange={(val) =>
+                setValue('role', val as any, { shouldValidate: true })
+              }
+            >
+              <SelectTrigger className="bg-white">
+                <SelectValue placeholder="Select role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="trustee">Trustee</SelectItem>
+                <SelectItem value="state_adhiyaksh">State Adhiyaksh</SelectItem>
+                <SelectItem value="district_adhiyaksh">District Adhiyaksh</SelectItem>
+              </SelectContent>
+            </Select>
+            {errors.role && (
+              <p className="text-sm text-rose-500">{errors.role.message}</p>
+            )}
+          </div>
           <div className="space-y-1.5">
             <Label htmlFor="promote-percent">
               Commission % <span className="text-rose-500">*</span>
@@ -231,29 +276,32 @@ export function PromoteTrusteeForm() {
               id="promote-percent"
               type="number"
               step="0.01"
-              placeholder="15"
+              placeholder="2"
               min={0}
-              className="bg-white"
+              disabled
+              className="bg-slate-100 cursor-not-allowed"
               {...register('commission_percent')}
             />
             {errors.commission_percent && (
               <p className="text-sm text-rose-500">{errors.commission_percent.message}</p>
             )}
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="promote-district">
-              District <span className="text-rose-500">*</span>
-            </Label>
-            <Input
-              id="promote-district"
-              placeholder="e.g. Rajkot"
-              className="bg-white"
-              {...register('district')}
-            />
-            {errors.district && (
-              <p className="text-sm text-rose-500">{errors.district.message}</p>
-            )}
-          </div>
+          {role === 'district_adhiyaksh' && (
+            <div className="space-y-1.5">
+              <Label htmlFor="promote-district">
+                District <span className="text-rose-500">*</span>
+              </Label>
+              <Input
+                id="promote-district"
+                placeholder="e.g. Rajkot"
+                className="bg-white"
+                {...register('district')}
+              />
+              {errors.district && (
+                <p className="text-sm text-rose-500">{errors.district.message}</p>
+              )}
+            </div>
+          )}
         </div>
         <div className="space-y-1.5 max-w-xl">
           <Label htmlFor="promote-notes">Notes</Label>
@@ -268,98 +316,103 @@ export function PromoteTrusteeForm() {
       </section>
 
       {/* Area coverage */}
-      <section className="space-y-4 border-t border-slate-100 pt-8">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h2 className="text-base font-semibold text-slate-900">
-              Area coverage <span className="text-rose-500">*</span>
-            </h2>
-            <p className="text-sm text-slate-500">
-              Assign one or more states. Area % overrides the base commission for that state.
-            </p>
+      {role !== 'district_adhiyaksh' && (
+        <section className="space-y-4 border-t border-slate-100 pt-8">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="text-base font-semibold text-slate-900">
+                Area coverage <span className="text-rose-500">*</span>
+              </h2>
+              <p className="text-sm text-slate-500">
+                Assign one or more states. Area % overrides the base commission for that state.
+              </p>
+            </div>
+            {role !== 'state_adhiyaksh' && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="shrink-0"
+                onClick={() =>
+                  append({ state_id: '', area_commission_percent: watch('commission_percent') || '' })
+                }
+              >
+                <Plus className="h-4 w-4" /> Add state
+              </Button>
+            )}
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="shrink-0"
-            onClick={() =>
-              append({ state_id: '', area_commission_percent: watch('commission_percent') || '' })
-            }
-          >
-            <Plus className="h-4 w-4" /> Add state
-          </Button>
-        </div>
-        <div className="space-y-3 max-w-2xl">
-          {fields.map((field, index) => {
-            const currentId = stateAssignments?.[index]?.state_id ?? '';
-            const takenIds = (stateAssignments ?? [])
-              .map((r, i) => (i === index ? '' : r?.state_id))
-              .filter(Boolean) as string[];
-            const rowErr = errors.state_assignments?.[index];
-            return (
-              <div key={field.id} className="flex items-start gap-2">
-                <div className="flex-1 space-y-1">
-                  <Select
-                    value={currentId}
-                    onValueChange={(val) =>
-                      setValue(`state_assignments.${index}.state_id`, val ?? '', {
-                        shouldValidate: true,
-                      })
-                    }
+          <div className="space-y-3 max-w-2xl">
+            {fields.map((field, index) => {
+              const currentId = stateAssignments?.[index]?.state_id ?? '';
+              const takenIds = (stateAssignments ?? [])
+                .map((r, i) => (i === index ? '' : r?.state_id))
+                .filter(Boolean) as string[];
+              const rowErr = errors.state_assignments?.[index];
+              return (
+                <div key={field.id} className="flex items-start gap-2">
+                  <div className="flex-1 space-y-1">
+                    <Select
+                      value={currentId}
+                      onValueChange={(val) =>
+                        setValue(`state_assignments.${index}.state_id`, val ?? '', {
+                          shouldValidate: true,
+                        })
+                      }
+                    >
+                      <SelectTrigger className="bg-white">
+                        <SelectValue placeholder="Select state">
+                          {states.find((s) => s.id === currentId)?.name || 'Select state'}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {states.map((s) => (
+                          <SelectItem key={s.id} value={s.id} disabled={takenIds.includes(s.id)}>
+                            {s.name} {s.code ? `(${s.code})` : ''}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {rowErr?.state_id && (
+                      <p className="text-sm text-rose-500">{rowErr.state_id.message}</p>
+                    )}
+                  </div>
+                  <div className="w-28 space-y-1">
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min={0}
+                      placeholder="Area %"
+                      disabled
+                      className="bg-slate-100 cursor-not-allowed"
+                      aria-label={`Area commission percent for state ${index + 1}`}
+                      {...register(`state_assignments.${index}.area_commission_percent`)}
+                    />
+                    {rowErr?.area_commission_percent && (
+                      <p className="text-sm text-rose-500">
+                        {rowErr.area_commission_percent.message as string}
+                      </p>
+                    )}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => remove(index)}
+                    disabled={fields.length === 1}
+                    className="mt-1 text-slate-400 hover:text-rose-600 disabled:opacity-40"
+                    title="Remove state"
                   >
-                    <SelectTrigger className="bg-white">
-                      <SelectValue placeholder="Select state">
-                        {states.find((s) => s.id === currentId)?.name || 'Select state'}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {states.map((s) => (
-                        <SelectItem key={s.id} value={s.id} disabled={takenIds.includes(s.id)}>
-                          {s.name} {s.code ? `(${s.code})` : ''}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {rowErr?.state_id && (
-                    <p className="text-sm text-rose-500">{rowErr.state_id.message}</p>
-                  )}
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
-                <div className="w-28 space-y-1">
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min={0}
-                    placeholder="Area %"
-                    className="bg-white"
-                    aria-label={`Area commission percent for state ${index + 1}`}
-                    {...register(`state_assignments.${index}.area_commission_percent`)}
-                  />
-                  {rowErr?.area_commission_percent && (
-                    <p className="text-sm text-rose-500">
-                      {rowErr.area_commission_percent.message as string}
-                    </p>
-                  )}
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => remove(index)}
-                  disabled={fields.length === 1}
-                  className="mt-1 text-slate-400 hover:text-rose-600 disabled:opacity-40"
-                  title="Remove state"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            );
-          })}
-        </div>
-        {typeof errors.state_assignments?.message === 'string' && (
-          <p className="text-sm text-rose-500">{errors.state_assignments.message}</p>
-        )}
-      </section>
+              );
+            })}
+          </div>
+          {typeof errors.state_assignments?.message === 'string' && (
+            <p className="text-sm text-rose-500">{errors.state_assignments.message}</p>
+          )}
+        </section>
+      )}
 
       {errors.root?.message && (
         <p className="text-sm text-rose-500 border-t border-slate-100 pt-4">{errors.root.message}</p>
@@ -376,7 +429,7 @@ export function PromoteTrusteeForm() {
           disabled={isPending}
           className="bg-indigo-600 hover:bg-indigo-700"
         >
-          {isPending ? 'Promoting...' : 'Promote Trustee'}
+          {isPending ? 'Promoting...' : 'Promote Kshetriya Adhiyaksh'}
         </Button>
       </div>
     </form>

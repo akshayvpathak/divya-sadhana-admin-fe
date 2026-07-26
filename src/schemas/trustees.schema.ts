@@ -22,6 +22,7 @@ export const trusteeSchema = z
     state: z.string().nullish(),
     district: z.string().nullish(),
     notes: z.string().nullish(),
+    role: z.enum(["trustee", "state_adhiyaksh", "district_adhiyaksh"]).nullish(),
     is_active: z.boolean().optional().default(true),
     // some APIs inline the assigned states; accept any shape
     states: z.array(z.any()).optional(),
@@ -67,12 +68,38 @@ const stateAssignmentSchema = z.object({
 
 export const promoteTrusteeWithTerritorySchema = z.object({
   email: z.string().trim().email("Select a valid user"),
+  role: z.enum(["trustee", "state_adhiyaksh", "district_adhiyaksh"]).default("trustee"),
   commission_percent: z.string().min(1, "Commission % is required"),
-  district: z.string().min(1, "District is required"),
+  district: z.string().optional(),
   notes: z.string().optional(),
-  state_assignments: z
-    .array(stateAssignmentSchema)
-    .min(1, "Add at least one state"),
+  state_assignments: z.array(stateAssignmentSchema).optional(),
+}).superRefine((data, ctx) => {
+  if (data.role === "district_adhiyaksh") {
+    if (!data.district) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "District is required for District Adhiyaksh",
+        path: ["district"],
+      });
+    }
+  } else {
+    // For trustee or state_adhiyaksh, state_assignments is required
+    if (!data.state_assignments || data.state_assignments.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Add at least one state",
+        path: ["state_assignments"],
+      });
+    }
+  }
+
+  if (data.role === "state_adhiyaksh" && data.state_assignments && data.state_assignments.length > 1) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "State Adhiyaksh can be assigned only one state",
+      path: ["state_assignments"],
+    });
+  }
 });
 
 // response.data shape wrapped in the `{ message, data }` envelope.

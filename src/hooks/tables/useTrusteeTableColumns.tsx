@@ -33,6 +33,16 @@ export const useTrusteeTableColumns = ({
       renderCell: (row) => trusteeDisplayName(row),
     },
     {
+      id: 'role',
+      accessorKey: 'role',
+      header: 'Role',
+      cellClassName: 'text-slate-600 font-medium capitalize',
+      renderCell: (row) => {
+        if (!row.role || row.role === 'trustee') return 'Trustee';
+        return row.role.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
+      },
+    },
+    {
       id: 'email',
       accessorKey: 'email',
       header: 'Email',
