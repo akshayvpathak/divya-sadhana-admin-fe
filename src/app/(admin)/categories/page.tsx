@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useCategories, useDeleteCategory } from '@/hooks/useCategories';
 import { Plus, Search, Filter } from 'lucide-react';
+import { ClearFiltersButton } from '@/components/common/ClearFiltersButton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
@@ -24,6 +25,16 @@ export default function CategoriesPage() {
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [sort, setSort] = useState('');
   const [status, setStatus] = useState('all');
+
+  // Function to clear all filters
+  const clearAllFilters = () => {
+    setSearch('');
+    setStatus('all');
+    setPage(1);
+  };
+
+  // Button visible only when any filter is active
+  const hasActiveFilters = search !== '' || status !== 'all';
 
   const { data, isLoading } = useCategories(page, 10, debouncedSearch, sort, status);
   const { mutate: deleteCategory, isPending: isDeleting } = useDeleteCategory();
@@ -69,12 +80,12 @@ export default function CategoriesPage() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-        <div className="p-4 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <div className="p-4 border-b border-slate-200 bg-slate-50 flex flex-col md:flex-row gap-4 items-center justify-between">
           <div className="relative max-w-sm flex-1 w-full">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <Input
               placeholder="Search Categories..."
-              className="pl-9 bg-white"
+              className="pl-9 bg-white w-full"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -82,7 +93,7 @@ export default function CategoriesPage() {
               }}
             />
           </div>
-          <div className="flex flex-wrap sm:flex-nowrap gap-2 items-center w-full sm:w-auto">
+          <div className="flex flex-wrap sm:flex-nowrap gap-2 items-center w-full md:w-auto">
             <Filter className="h-4 w-4 text-slate-400 shrink-0" />
             <Select
               value={status}
@@ -104,6 +115,9 @@ export default function CategoriesPage() {
                 ))}
               </SelectContent>
             </Select>
+            {hasActiveFilters && (
+              <ClearFiltersButton onClear={clearAllFilters} />
+            )}
           </div>
         </div>
 

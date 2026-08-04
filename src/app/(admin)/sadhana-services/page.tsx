@@ -26,8 +26,11 @@ export default function SadhanaServicesPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [serviceToDelete, setServiceToDelete] = useState<string | null>(null);
 
-  const { filters, handleFilterChange, getApiParams } = useFilterManager({ category: 'all' }, () => setPage(1));
+  const { filters, handleFilterChange, getApiParams, resetFilters, hasActiveFilters: filterManagerActive } = useFilterManager({ category: 'all' }, () => setPage(1));
   const apiParams = getApiParams();
+
+  // Button visible when search or any filter is active
+  const hasActiveFilters = search !== '' || filterManagerActive;
 
   const { data, isLoading } = useSadhanaServicesListQuery({
     page,
@@ -80,12 +83,12 @@ export default function SadhanaServicesPage() {
       </div>
 
       <div className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex flex-col items-center justify-between gap-4 border-b border-slate-200 bg-slate-50 p-4 sm:flex-row">
+        <div className="flex flex-col items-center justify-between gap-4 border-b border-slate-200 bg-slate-50 p-4 md:flex-row">
           <div className="relative w-full max-w-sm flex-1">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <Input
               placeholder="Search services..."
-              className="bg-white pl-9"
+              className="bg-white pl-9 w-full"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -93,7 +96,13 @@ export default function SadhanaServicesPage() {
               }}
             />
           </div>
-          <FilterManager configs={filterConfigs} values={filters} onFilterChange={handleFilterChange} />
+          <FilterManager
+            configs={filterConfigs}
+            values={filters}
+            onFilterChange={handleFilterChange}
+            onClear={() => { resetFilters(); setSearch(''); setPage(1); }}
+            hasActiveFilters={hasActiveFilters}
+          />
         </div>
 
         <DataTable

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useProducts, useDeleteProduct } from '@/hooks/useProducts';
 import { useAllCategories } from '@/hooks/useCategories';
 import { Plus, Search, Filter } from 'lucide-react';
+import { ClearFiltersButton } from '@/components/common/ClearFiltersButton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
@@ -23,6 +24,22 @@ export default function ProductsPage() {
   const [sort, setSort] = useState('');
   const [status, setStatus] = useState('all');
   const [published, setPublished] = useState('all');
+
+  // Function to clear all filters
+  const clearAllFilters = () => {
+    setSearch('');
+    setSelectedCategory('all');
+    setStatus('all');
+    setPublished('all');
+    setPage(1);
+  };
+
+  // Button visible only when any filter is active
+  const hasActiveFilters =
+    search !== '' ||
+    selectedCategory !== 'all' ||
+    status !== 'all' ||
+    published !== 'all';
   
   // Deletion state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -85,7 +102,7 @@ export default function ProductsPage() {
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <Input
               placeholder="Search Products..."
-              className="pl-9 bg-white"
+              className="pl-9 bg-white w-full"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -167,6 +184,9 @@ export default function ProductsPage() {
                 ))}
               </SelectContent>
             </Select>
+            {hasActiveFilters && (
+              <ClearFiltersButton onClear={clearAllFilters} />
+            )}
           </div>
         </div>
 

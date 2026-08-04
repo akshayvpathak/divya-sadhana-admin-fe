@@ -68,7 +68,7 @@ export function PromoteTrusteeForm() {
     watch,
     control,
     formState: { errors },
-  } = useForm<PromoteTrusteeWithTerritoryPayload>({
+  } = useForm({
     resolver: zodResolver(promoteTrusteeWithTerritorySchema),
     defaultValues: DEFAULT_VALUES,
   });
@@ -133,7 +133,7 @@ export function PromoteTrusteeForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onValid)} className="space-y-8">
+    <div className="rounded-xl bg-gradient-to-r from-indigo-100 to-purple-100 backdrop-blur-md shadow-xl p-6 md:p-8"><form onSubmit={handleSubmit(onValid)} className="space-y-8">
       {/* User */}
       <section className="space-y-4">
         <div>
@@ -367,18 +367,18 @@ export function PromoteTrusteeForm() {
 
       <div className="flex justify-end gap-2 border-t border-slate-100 pt-6">
         <Link href="/trustees">
-          <Button type="button" variant="outline">
+          <Button type="button" variant="outline" className="transition-colors duration-200">
             Cancel
           </Button>
         </Link>
         <Button
           type="submit"
           disabled={isPending}
-          className="bg-indigo-600 hover:bg-indigo-700"
+          className="bg-indigo-600 hover:bg-indigo-700 transition-colors duration-200"
         >
           {isPending ? 'Promoting...' : 'Promote Trustee'}
         </Button>
       </div>
-    </form>
+    </form></div>
   );
 }

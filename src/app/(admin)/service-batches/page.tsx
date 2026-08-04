@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Search, Plus } from 'lucide-react';
+import { ClearFiltersButton } from '@/components/common/ClearFiltersButton';
 import {
   useServiceBatchesListQuery,
   useDeleteServiceBatchMutation,
@@ -20,6 +21,14 @@ export default function ServiceBatchesPage() {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
   const [sort, setSort] = useState('');
+
+  // Button visible when search is active
+  const hasActiveFilters = search !== '';
+
+  const clearAllFilters = () => {
+    setSearch('');
+    setPage(1);
+  };
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [batchToDelete, setBatchToDelete] = useState<string | null>(null);
@@ -66,12 +75,12 @@ export default function ServiceBatchesPage() {
       </div>
 
       <div className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex items-center gap-4 border-b border-slate-200 bg-slate-50 p-4">
+        <div className="flex flex-col md:flex-row gap-4 items-center justify-between border-b border-slate-200 bg-slate-50 p-4">
           <div className="relative w-full max-w-sm flex-1">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <Input
               placeholder="Search batches..."
-              className="bg-white pl-9"
+              className="bg-white pl-9 w-full"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -79,6 +88,9 @@ export default function ServiceBatchesPage() {
               }}
             />
           </div>
+          {hasActiveFilters && (
+            <ClearFiltersButton onClear={clearAllFilters} />
+          )}
         </div>
 
         <DataTable

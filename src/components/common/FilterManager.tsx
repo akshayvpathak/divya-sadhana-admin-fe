@@ -2,6 +2,7 @@ import React from 'react';
 import { Filter } from 'lucide-react';
 import { TableFilter } from './TableFilter';
 import { useState } from 'react';
+import { ClearFiltersButton } from './ClearFiltersButton';
 
 export interface FilterOption {
   value: string;
@@ -49,12 +50,18 @@ export function useFilterManager<T extends Record<string, string>>(
     }
   };
 
+  // Returns true if any filter value differs from its initial value
+  const hasActiveFilters = (Object.keys(initialFilters) as (keyof T)[]).some(
+    (key) => filters[key] !== initialFilters[key]
+  );
+
   return {
     filters,
     handleFilterChange,
     getApiParams,
     resetFilters,
     setFilters,
+    hasActiveFilters,
   };
 }
 
@@ -62,6 +69,10 @@ interface FilterManagerProps {
   configs: FilterConfig[];
   values: Record<string, string>;
   onFilterChange: (key: string, value: string) => void;
+  /** Pass the resetFilters fn from useFilterManager to show the clear button */
+  onClear?: () => void;
+  /** When true, a red "Clear Filters" button is shown at the right end */
+  hasActiveFilters?: boolean;
   className?: string;
 }
 
@@ -69,12 +80,14 @@ export function FilterManager({
   configs,
   values,
   onFilterChange,
+  onClear,
+  hasActiveFilters = false,
   className = "",
 }: FilterManagerProps) {
   if (!configs || configs.length === 0) return null;
 
   return (
-    <div className={`flex flex-wrap sm:flex-nowrap gap-2 items-center w-full sm:w-auto justify-end ${className}`}>
+    <div className={`flex flex-wrap sm:flex-nowrap gap-2 items-center w-full md:w-auto justify-end ${className}`}>
       <Filter className="h-4 w-4 text-slate-400 shrink-0" />
       {configs.map((config) => (
         <TableFilter
@@ -86,6 +99,10 @@ export function FilterManager({
           widthClass={config.widthClass}
         />
       ))}
+      {hasActiveFilters && onClear && (
+        <ClearFiltersButton onClear={onClear} />
+      )}
     </div>
   );
 }
+

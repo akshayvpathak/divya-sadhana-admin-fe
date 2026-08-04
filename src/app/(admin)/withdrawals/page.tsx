@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Filter } from 'lucide-react';
+import { ClearFiltersButton } from '@/components/common/ClearFiltersButton';
 import {
   Select,
   SelectContent,
@@ -28,6 +29,14 @@ const STATUS_OPTIONS = [
 export default function WithdrawalsPage() {
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState('all');
+
+  // Button visible only when status filter is active
+  const hasActiveFilters = status !== 'all';
+
+  const clearAllFilters = () => {
+    setStatus('all');
+    setPage(1);
+  };
 
   const { data, isLoading, isError, error } = useWithdrawalsListQuery({
     page,
@@ -56,8 +65,8 @@ export default function WithdrawalsPage() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-        <div className="p-4 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row gap-4 items-center justify-end">
-          <div className="flex flex-wrap sm:flex-nowrap gap-2 items-center">
+        <div className="p-4 border-b border-slate-200 bg-slate-50 flex flex-col md:flex-row gap-4 items-center justify-end">
+          <div className="flex flex-wrap sm:flex-nowrap gap-2 items-center w-full md:w-auto">
             <Filter className="h-4 w-4 text-slate-400 shrink-0" />
             <Select
               value={status}
@@ -79,6 +88,9 @@ export default function WithdrawalsPage() {
                 ))}
               </SelectContent>
             </Select>
+            {hasActiveFilters && (
+              <ClearFiltersButton onClear={clearAllFilters} />
+            )}
           </div>
         </div>
 
