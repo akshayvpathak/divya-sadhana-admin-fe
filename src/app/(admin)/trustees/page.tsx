@@ -143,7 +143,7 @@ export default function TrusteesPage() {
     <div className="space-y-6 pb-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Trustees</h1>
+          <h1 className="text-3xl font-bold text-slate-900">Network Members</h1>
           <p className="text-slate-500 mt-1">Appoint trustees, state executives, and district presidents</p>
         </div>
         {tab === 'trustees' && (
@@ -158,7 +158,7 @@ export default function TrusteesPage() {
       {/* Tabs: agents (Trustees) vs cross-trustee coverage (former Territory page) */}
       <div className="flex gap-6 border-b border-slate-200">
         {([
-          { key: 'trustees' as const, label: 'Trustees' },
+          { key: 'trustees' as const, label: 'Members' },
           { key: 'coverage' as const, label: 'Coverage' },
           { key: 'retention' as const, label: 'Retention' },
         ]).map((t) => (
@@ -187,7 +187,7 @@ export default function TrusteesPage() {
           <div className="relative max-w-sm flex-1 w-full">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <Input
-              placeholder="Search Trustees..."
+              placeholder="Search members..."
               className="pl-9 bg-white w-full"
               value={search}
               onChange={(e) => {
@@ -246,7 +246,7 @@ export default function TrusteesPage() {
           isLoading={isLoading}
           sort={sort}
           onSort={handleSort}
-          emptyMessage="No trustees found"
+          emptyMessage="No members found"
         />
 
         {data?.data && (

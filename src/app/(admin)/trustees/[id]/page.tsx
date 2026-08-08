@@ -1,14 +1,12 @@
 'use client';
 
 import { useMemo, useState, type ReactNode } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronLeft, Lock, Plus, Pencil, Wallet, TrendingUp, Trash2, ShoppingBag, Heart, Users } from 'lucide-react';
+import { ChevronLeft, Lock, Wallet, TrendingUp, ShoppingBag, Heart, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
-import { ConfirmModal } from '@/components/ui/ConfirmModal';
-import { EditTrusteeModal } from '@/components/forms/EditTrusteeModal';
 import {
   Select,
   SelectContent,
@@ -21,12 +19,9 @@ import { DataTablePagination } from '@/components/common/DataTablePagination';
 import {
   useTrusteeDashboardQuery,
   useTrusteeCommissionsQuery,
-  useDeleteTrusteeMutation,
 } from '@/hooks/queries/useTrusteesQuery';
 import { useAssignmentsListQuery } from '@/hooks/queries/useTerritoryQuery';
 import { useCommissionLedgerColumns } from '@/hooks/tables/useCommissionLedgerColumns';
-import { AssignStateModal } from '@/components/forms/AssignStateModal';
-import { Assignment } from '@/schemas/territory.schema';
 import { formatINR, formatPercent } from '@/lib/currency';
 
 function StatCard({
@@ -63,19 +58,11 @@ function StatCard({
 
 export default function TrusteeDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const id = params.id as string;
 
   const [statusFilter, setStatusFilter] = useState('all');
   const [kindFilter, setKindFilter] = useState('all');
   const [ledgerPage, setLedgerPage] = useState(1);
-
-  const [isAssignOpen, setIsAssignOpen] = useState(false);
-  const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
-  const [isEditOpen, setIsEditOpen] = useState(false);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-
-  const { mutate: deleteTrustee, isPending: isDeleting } = useDeleteTrusteeMutation();
 
   const { data: dashboard, isLoading: dashboardLoading } = useTrusteeDashboardQuery(id);
   const { data: assignmentsData } = useAssignmentsListQuery({ member: id, page_size: 100 });
@@ -102,7 +89,6 @@ export default function TrusteeDetailPage() {
     'Member';
   const code = meta.referral_code ?? d.referral_code;
   const isActive = meta.is_active;
-  const commissionPercent = String(meta.commission_percent ?? d.commission_percent ?? '');
   const attribution = (d.attribution ?? {}) as Record<string, any>;
   const role =
     (typeof meta.role === 'string' && meta.role) ||
@@ -114,12 +100,6 @@ export default function TrusteeDetailPage() {
     attribution.role_display ||
     d.role_display ||
     role.replace(/_/g, ' ');
-  const isTrusteeRole = role === 'trustee';
-
-  const handleDelete = () => {
-    deleteTrustee(id, { onSuccess: () => router.push('/trustees') });
-  };
-
   // Prefer server filter (`member=`). Also drop any leaked rows that aren't this member.
   const assignments = useMemo(() => {
     const rows = assignmentsData?.data?.results ?? [];
@@ -136,15 +116,6 @@ export default function TrusteeDetailPage() {
   const ledgerTotalPages = commissionsData?.data?.count
     ? Math.ceil(commissionsData.data.count / 10)
     : 1;
-
-  const openAssign = () => {
-    setEditingAssignment(null);
-    setIsAssignOpen(true);
-  };
-  const openEdit = (a: Assignment) => {
-    setEditingAssignment(a);
-    setIsAssignOpen(true);
-  };
 
   return (
     <div className="space-y-6 pb-10">
@@ -176,21 +147,6 @@ export default function TrusteeDetailPage() {
             <p className="text-slate-500 text-sm mt-0.5 truncate">{meta.email || meta.user_email}</p>
           )}
         </div>
-        {!dashboardLoading && (
-          <div className="flex shrink-0 items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setIsEditOpen(true)}>
-              <Pencil className="h-4 w-4" /> Edit
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsDeleteOpen(true)}
-              className="border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
-            >
-              <Trash2 className="h-4 w-4" /> Delete
-            </Button>
-          </div>
-        )}
       </div>
 
       {/* Wallet */}
@@ -304,11 +260,6 @@ export default function TrusteeDetailPage() {
                   : 'Trustee seats (up to 3 states).'}
             </p>
           </div>
-          {isTrusteeRole && (
-            <Button size="sm" variant="outline" onClick={openAssign}>
-              <Plus className="h-4 w-4" /> Assign state
-            </Button>
-          )}
         </div>
         {assignments.length === 0 ? (
           <p className="text-sm text-amber-600">
@@ -335,16 +286,6 @@ export default function TrusteeDetailPage() {
                     <span className="text-xs text-slate-500">{formatPercent(override)}</span>
                   ) : null}
                   {!a.is_active && <StatusBadge status={a.is_active} type="active" />}
-                  {isTrusteeRole && (
-                    <button
-                      type="button"
-                      onClick={() => openEdit(a)}
-                      className="text-slate-400 hover:text-indigo-600"
-                      title="Edit"
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                  )}
                 </div>
               );
             })}
@@ -416,32 +357,6 @@ export default function TrusteeDetailPage() {
         )}
       </div>
 
-      <AssignStateModal
-        open={isAssignOpen}
-        onOpenChange={setIsAssignOpen}
-        trusteeId={id}
-        trusteeLabel={name}
-        assignment={editingAssignment}
-      />
-
-      <EditTrusteeModal
-        open={isEditOpen}
-        onOpenChange={setIsEditOpen}
-        trusteeId={id}
-        initial={{ commissionPercent, notes: String(meta.notes ?? d.notes ?? ''), isActive: !!isActive }}
-      />
-
-      <ConfirmModal
-        isOpen={isDeleteOpen}
-        onOpenChange={setIsDeleteOpen}
-        title="Remove trustee?"
-        description={`This removes ${name}'s network role and wallet access. This cannot be undone.`}
-        confirmText={isDeleting ? 'Removing...' : 'Remove'}
-        cancelText="Cancel"
-        variant="destructive"
-        disabled={isDeleting}
-        onConfirm={handleDelete}
-      />
     </div>
   );
 }

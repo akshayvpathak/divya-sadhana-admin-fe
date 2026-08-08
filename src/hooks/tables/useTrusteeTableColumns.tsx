@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { Eye } from 'lucide-react';
+import { Eye, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { ColumnConfig } from '@/components/common/DataTable/types';
@@ -61,13 +61,15 @@ export const useTrusteeTableColumns = ({
     {
       id: 'role',
       header: 'Role',
+      headerClassName: 'min-w-[240px]',
+      cellClassName: 'min-w-[240px]',
       renderCell: (row) => {
         const role = row.role || 'trustee';
         const label = networkRoleLabel(row);
         const badge = ROLE_BADGE[role] ?? 'bg-slate-50 text-slate-700 border-slate-200';
         return (
           <span
-            className={`inline-flex max-w-[180px] truncate rounded-full border px-2 py-0.5 text-[11px] font-semibold ${badge}`}
+            className={`inline-flex whitespace-nowrap rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${badge}`}
             title={label}
           >
             {label}
@@ -128,6 +130,16 @@ export const useTrusteeTableColumns = ({
               title="View"
             >
               <Eye className="h-4 w-4" />
+            </Button>
+          </Link>
+          <Link href={`/trustees/${row.id}/edit`}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-slate-400 hover:text-indigo-600"
+              title="Edit"
+            >
+              <Pencil className="h-4 w-4" />
             </Button>
           </Link>
         </div>

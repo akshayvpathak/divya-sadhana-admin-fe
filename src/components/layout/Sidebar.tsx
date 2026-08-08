@@ -44,7 +44,7 @@ const navItems: NavItem[] = [
   { name: 'Payments', href: '/payments', icon: CreditCard },
   { name: 'AI Readings', href: '/ai-readings', icon: Sparkles },
   { name: 'Horoscope', href: '/horoscope', icon: Moon },
-  { name: 'Trustees', href: '/trustees', icon: BadgeCheck },
+  { name: 'Network Members', href: '/trustees', icon: BadgeCheck },
   { name: 'Withdrawals', href: '/withdrawals', icon: Wallet },
   { name: 'Profile', href: '/profile', icon: UserCircle },
 ];

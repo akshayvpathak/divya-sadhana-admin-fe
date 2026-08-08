@@ -73,6 +73,8 @@ export const assignmentsListSchema = z
 export const createAssignmentSchema = z.object({
   trustee: z.string().min(1, "Trustee is required"),
   state: z.string().min(1, "State is required"),
+  /** District President seats bind a district beneath the state. */
+  district: z.string().nullish(),
   area_commission_percent: z.string().optional(),
   is_active: z.boolean().default(true),
 });
