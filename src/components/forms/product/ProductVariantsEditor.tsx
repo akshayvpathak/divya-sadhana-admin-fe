@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Loader2, Plus, Trash2, Save } from 'lucide-react';
+import { Loader2, Plus, Trash2, Save, Grid2x2, IndianRupee } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,7 +21,7 @@ import {
   useUpdateVariant,
   useDeleteVariant,
 } from '@/hooks/useProducts';
-import type { ProductVariant } from '@/schemas/products.schema';
+import type { ProductOptionGroup, ProductVariant } from '@/schemas/products.schema';
 
 interface ProductVariantsEditorProps {
   productId: string;
@@ -29,6 +29,12 @@ interface ProductVariantsEditorProps {
 }
 
 type DraftValue = { label: string; value: string };
+type VariantDraft = {
+  sku: string;
+  price: string;
+  stock_quantity: string;
+  is_active: boolean;
+};
 
 function slugifyCode(input: string): string {
   return input
@@ -45,6 +51,10 @@ function variantOptionIds(v: ProductVariant): string[] {
   return [];
 }
 
+function sortedIdKey(ids: string[]): string {
+  return [...ids].sort().join('|');
+}
+
 function formatVariantLabel(
   v: ProductVariant,
   valueLabelById: Map<string, string>
@@ -57,6 +67,32 @@ function formatVariantLabel(
       .map((id) => valueLabelById.get(id) || id.slice(0, 8))
       .join(' · ') || '—'
   );
+}
+
+/** Cartesian product of one value from each option group. */
+function allCombinations(
+  groups: ProductOptionGroup[]
+): { option_value_ids: string[]; labels: string[]; valueCodes: string[] }[] {
+  if (groups.length === 0) return [];
+  let combos: { option_value_ids: string[]; labels: string[]; valueCodes: string[] }[] = [
+    { option_value_ids: [], labels: [], valueCodes: [] },
+  ];
+  for (const g of groups) {
+    const values = g.values || [];
+    if (values.length === 0) return [];
+    const next: typeof combos = [];
+    for (const c of combos) {
+      for (const v of values) {
+        next.push({
+          option_value_ids: [...c.option_value_ids, v.id],
+          labels: [...c.labels, v.label || v.value || v.id],
+          valueCodes: [...c.valueCodes, v.value || slugifyCode(v.label || v.id)],
+        });
+      }
+    }
+    combos = next;
+  }
+  return combos;
 }
 
 export default function ProductVariantsEditor({
@@ -83,21 +119,23 @@ export default function ProductVariantsEditor({
   );
   const [variantSku, setVariantSku] = useState('');
   const [variantPrice, setVariantPrice] = useState('');
-  const [variantStock, setVariantStock] = useState('0');
+  const [variantStock, setVariantStock] = useState('50');
   const [variantActive, setVariantActive] = useState(true);
+  const [skuTouched, setSkuTouched] = useState(false);
 
-  const [drafts, setDrafts] = useState<
-    Record<
-      string,
-      { sku: string; price: string; stock_quantity: string; is_active: boolean }
-    >
-  >({});
+  const [defaultPrice, setDefaultPrice] = useState('');
+  const [defaultStock, setDefaultStock] = useState('50');
+  const [generating, setGenerating] = useState(false);
+  const [savingAll, setSavingAll] = useState(false);
+
+  const [drafts, setDrafts] = useState<Record<string, VariantDraft>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const optionGroups = product?.option_groups ?? [];
   const variants = product?.variants ?? [];
   const hasVariants = Boolean(product?.has_variants) || variants.length > 0;
+  const baseSku = (product?.sku || product?.slug || 'product').trim();
 
   const valueLabelById = useMemo(() => {
     const map = new Map<string, string>();
@@ -109,7 +147,22 @@ export default function ProductVariantsEditor({
     return map;
   }, [optionGroups]);
 
-  const getDraft = (v: ProductVariant) =>
+  const existingKeys = useMemo(() => {
+    const set = new Set<string>();
+    for (const v of variants) {
+      const ids = variantOptionIds(v);
+      if (ids.length) set.add(sortedIdKey(ids));
+    }
+    return set;
+  }, [variants]);
+
+  const missingCombos = useMemo(() => {
+    return allCombinations(optionGroups).filter(
+      (c) => !existingKeys.has(sortedIdKey(c.option_value_ids))
+    );
+  }, [optionGroups, existingKeys]);
+
+  const getDraft = (v: ProductVariant): VariantDraft =>
     drafts[v.id] ?? {
       sku: v.sku || '',
       price: String(v.price ?? 0),
@@ -117,9 +170,22 @@ export default function ProductVariantsEditor({
       is_active: v.is_active ?? true,
     };
 
+  const isDirty = (v: ProductVariant) => {
+    const d = drafts[v.id];
+    if (!d) return false;
+    return (
+      d.sku !== (v.sku || '') ||
+      d.price !== String(v.price ?? 0) ||
+      d.stock_quantity !== String(v.stock_quantity ?? 0) ||
+      d.is_active !== (v.is_active ?? true)
+    );
+  };
+
+  const dirtyVariants = variants.filter(isDirty);
+
   const setDraftField = (
     id: string,
-    field: 'sku' | 'price' | 'stock_quantity' | 'is_active',
+    field: keyof VariantDraft,
     value: string | boolean
   ) => {
     const current = variants.find((row) => row.id === id);
@@ -129,6 +195,23 @@ export default function ProductVariantsEditor({
       ...prev,
       [id]: { ...base, [field]: value },
     }));
+  };
+
+  const suggestSku = (valueCodes: string[]) =>
+    [baseSku, ...valueCodes.filter(Boolean)].join('-').replace(/_+/g, '-');
+
+  // Auto-suggest SKU when picking options for a new variant
+  const updateSelection = (groupId: string, valueId: string) => {
+    const next = { ...selectedByGroup, [groupId]: valueId };
+    setSelectedByGroup(next);
+    if (!skuTouched) {
+      const codes = optionGroups.map((g) => {
+        const id = next[g.id];
+        const val = (g.values || []).find((x) => x.id === id);
+        return val?.value || slugifyCode(val?.label || '');
+      });
+      if (codes.every(Boolean)) setVariantSku(suggestSku(codes));
+    }
   };
 
   const resetGroupForm = () => {
@@ -143,8 +226,9 @@ export default function ProductVariantsEditor({
     setSelectedByGroup({});
     setVariantSku('');
     setVariantPrice('');
-    setVariantStock('0');
+    setVariantStock(defaultStock || '50');
     setVariantActive(true);
+    setSkuTouched(false);
     setShowVariantForm(false);
   };
 
@@ -162,7 +246,7 @@ export default function ProductVariantsEditor({
       return;
     }
     if (values.length === 0) {
-      toast.error('Add at least one option value');
+      toast.error('Add at least one option value (include English value code for Hindi labels)');
       return;
     }
 
@@ -175,7 +259,7 @@ export default function ProductVariantsEditor({
       });
       resetGroupForm();
     } catch {
-      /* toast handled in hook */
+      /* toast in hook */
     }
   };
 
@@ -194,7 +278,7 @@ export default function ProductVariantsEditor({
     }
     const price = parseFloat(variantPrice);
     if (!Number.isFinite(price) || price < 0) {
-      toast.error('Enter a valid price');
+      toast.error('Enter a price for this variant (₹)');
       return;
     }
     const stock = parseInt(variantStock, 10);
@@ -214,7 +298,50 @@ export default function ProductVariantsEditor({
       });
       resetVariantForm();
     } catch {
-      /* toast handled in hook */
+      /* toast in hook */
+    }
+  };
+
+  const handleGenerateMissing = async () => {
+    if (missingCombos.length === 0) {
+      toast.info('All combinations already have variants');
+      return;
+    }
+    const price = parseFloat(defaultPrice);
+    if (!Number.isFinite(price) || price < 0) {
+      toast.error('Set a default price (₹) first — you can edit each row after');
+      return;
+    }
+    const stock = parseInt(defaultStock, 10);
+    if (!Number.isFinite(stock) || stock < 0) {
+      toast.error('Set a default stock quantity');
+      return;
+    }
+
+    setGenerating(true);
+    let ok = 0;
+    let fail = 0;
+    try {
+      for (let i = 0; i < missingCombos.length; i++) {
+        const combo = missingCombos[i];
+        try {
+          await createVariant.mutateAsync({
+            sku: suggestSku(combo.valueCodes),
+            price: String(price),
+            stock_quantity: stock,
+            is_active: true,
+            position: variants.length + i,
+            option_value_ids: combo.option_value_ids,
+          });
+          ok += 1;
+        } catch {
+          fail += 1;
+        }
+      }
+      if (ok) toast.success(`Created ${ok} variant${ok === 1 ? '' : 's'} — edit prices in the table`);
+      if (fail) toast.error(`${fail} variant${fail === 1 ? '' : 's'} failed`);
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -229,7 +356,7 @@ export default function ProductVariantsEditor({
       return;
     }
     if (!Number.isFinite(price) || price < 0) {
-      toast.error('Enter a valid price');
+      toast.error('Enter a valid price (₹)');
       return;
     }
     if (!Number.isFinite(stock) || stock < 0) {
@@ -254,9 +381,53 @@ export default function ProductVariantsEditor({
         return next;
       });
     } catch {
-      /* toast handled in hook */
+      /* toast in hook */
     } finally {
       setSavingId(null);
+    }
+  };
+
+  const handleSaveAllPrices = async () => {
+    if (dirtyVariants.length === 0) {
+      toast.info('No price/stock changes to save');
+      return;
+    }
+    setSavingAll(true);
+    let ok = 0;
+    let fail = 0;
+    try {
+      for (const v of dirtyVariants) {
+        const draft = getDraft(v);
+        const price = parseFloat(draft.price);
+        const stock = parseInt(draft.stock_quantity, 10);
+        if (!draft.sku.trim() || !Number.isFinite(price) || price < 0 || !Number.isFinite(stock) || stock < 0) {
+          fail += 1;
+          continue;
+        }
+        try {
+          await updateVariant.mutateAsync({
+            variantId: v.id,
+            data: {
+              sku: draft.sku.trim(),
+              price: String(price),
+              stock_quantity: stock,
+              is_active: draft.is_active,
+            },
+          });
+          ok += 1;
+          setDrafts((prev) => {
+            const next = { ...prev };
+            delete next[v.id];
+            return next;
+          });
+        } catch {
+          fail += 1;
+        }
+      }
+      if (ok) toast.success(`Saved ${ok} variant price${ok === 1 ? '' : 's'}`);
+      if (fail) toast.error(`${fail} row${fail === 1 ? '' : 's'} failed`);
+    } finally {
+      setSavingAll(false);
     }
   };
 
@@ -271,7 +442,7 @@ export default function ProductVariantsEditor({
         return next;
       });
     } catch {
-      /* toast handled in hook */
+      /* toast in hook */
     } finally {
       setDeletingId(null);
     }
@@ -296,13 +467,14 @@ export default function ProductVariantsEditor({
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500">
-            Variants
+          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+            <IndianRupee className="h-4 w-4" />
+            Variant pricing
           </h3>
           <p className="text-sm text-slate-500 mt-1">
             {hasVariants
-              ? `Variable product${priceRange ? ` · ${priceRange}` : ''}. Price, SKU, and stock live on each variant.`
-              : 'Simple product. Add option groups (e.g. flavor, weight) then create variants.'}
+              ? `Each row is a sellable SKU with its own price & stock${priceRange ? ` · shop shows ${priceRange}` : ''}.`
+              : 'Add option groups, then set a price on every size / flavor combination.'}
           </p>
         </div>
         {!readOnly && (
@@ -350,7 +522,7 @@ export default function ProductVariantsEditor({
                 value={groupName}
                 onChange={(e) => {
                   setGroupName(e.target.value);
-                  if (!codeTouched) setGroupCode(slugifyCode(e.target.value));
+                  if (!codeTouched) setGroupCode(slugifyCode(e.target.value) || 'option');
                 }}
               />
             </div>
@@ -369,6 +541,9 @@ export default function ProductVariantsEditor({
 
           <div className="space-y-2">
             <Label>Values</Label>
+            <p className="text-xs text-slate-500">
+              Label = what customers see. Value = English code used in SKUs (required for Hindi labels).
+            </p>
             {groupValues.map((row, i) => (
               <div key={i} className="flex gap-2 items-start">
                 <Input
@@ -447,25 +622,96 @@ export default function ProductVariantsEditor({
         </div>
       )}
 
+      {optionGroups.length > 0 && !readOnly && (
+        <div className="rounded-lg border border-indigo-100 bg-indigo-50/40 p-4 space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p className="text-sm font-medium text-slate-800">
+                Generate all combinations
+              </p>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Creates missing rows (e.g. 5 flavors × 3 weights = 15) with a starter price — then edit each price in the table.
+                {missingCombos.length > 0
+                  ? ` ${missingCombos.length} missing.`
+                  : ' All combinations exist.'}
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+            <div className="space-y-1">
+              <Label>Default price (₹) for new rows</Label>
+              <Input
+                type="number"
+                min={0}
+                step="0.01"
+                placeholder="200"
+                value={defaultPrice}
+                onChange={(e) => setDefaultPrice(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Default stock</Label>
+              <Input
+                type="number"
+                min={0}
+                value={defaultStock}
+                onChange={(e) => setDefaultStock(e.target.value)}
+              />
+            </div>
+            <Button
+              type="button"
+              disabled={generating || missingCombos.length === 0}
+              onClick={handleGenerateMissing}
+            >
+              {generating ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Grid2x2 className="h-4 w-4" />
+              )}
+              Generate {missingCombos.length || ''} variants
+            </Button>
+          </div>
+        </div>
+      )}
+
       {optionGroups.length > 0 && (
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <Label>Sellable variants ({variants.length})</Label>
-            {!readOnly && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setShowVariantForm((v) => !v)}
-              >
-                <Plus className="h-4 w-4" /> Add variant
-              </Button>
-            )}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <Label>Sellable variants — set price per row ({variants.length})</Label>
+            <div className="flex flex-wrap gap-2">
+              {!readOnly && dirtyVariants.length > 0 && (
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={savingAll}
+                  onClick={handleSaveAllPrices}
+                >
+                  {savingAll ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  Save all prices ({dirtyVariants.length})
+                </Button>
+              )}
+              {!readOnly && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowVariantForm((v) => !v)}
+                >
+                  <Plus className="h-4 w-4" /> Add one variant
+                </Button>
+              )}
+            </div>
           </div>
 
           {!readOnly && showVariantForm && (
             <div className="rounded-lg border border-slate-200 p-4 space-y-3 bg-white">
-              <p className="text-sm font-medium text-slate-700">New variant</p>
+              <p className="text-sm font-medium text-slate-700">
+                New variant with its own price
+              </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {optionGroups.map((g) => (
                   <div key={g.id} className="space-y-1">
@@ -474,7 +720,7 @@ export default function ProductVariantsEditor({
                       value={selectedByGroup[g.id] || undefined}
                       onValueChange={(val) => {
                         if (!val) return;
-                        setSelectedByGroup((prev) => ({ ...prev, [g.id]: val }));
+                        updateSelection(g.id, val);
                       }}
                     >
                       <SelectTrigger>
@@ -495,15 +741,19 @@ export default function ProductVariantsEditor({
                   <Input
                     placeholder="product-flavor-size"
                     value={variantSku}
-                    onChange={(e) => setVariantSku(e.target.value)}
+                    onChange={(e) => {
+                      setSkuTouched(true);
+                      setVariantSku(e.target.value);
+                    }}
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label>Price (₹)</Label>
+                  <Label>Price (₹) <span className="text-rose-500">*</span></Label>
                   <Input
                     type="number"
                     min={0}
                     step="0.01"
+                    placeholder="200"
                     value={variantPrice}
                     onChange={(e) => setVariantPrice(e.target.value)}
                   />
@@ -522,7 +772,7 @@ export default function ProductVariantsEditor({
                     checked={variantActive}
                     onCheckedChange={setVariantActive}
                   />
-                  <Label>Active</Label>
+                  <Label>Active (sellable)</Label>
                 </div>
               </div>
               <div className="flex gap-2">
@@ -551,8 +801,7 @@ export default function ProductVariantsEditor({
 
           {variants.length === 0 ? (
             <p className="text-sm text-slate-500">
-              No variants yet. Add one combination of option values with its own
-              SKU, price, and stock.
+              No variants yet. Use <strong>Generate all combinations</strong> with a default price, or add one variant at a time.
             </p>
           ) : (
             <div className="overflow-x-auto rounded-lg border border-slate-200">
@@ -561,7 +810,7 @@ export default function ProductVariantsEditor({
                   <tr>
                     <th className="px-3 py-2 font-semibold">Options</th>
                     <th className="px-3 py-2 font-semibold">SKU</th>
-                    <th className="px-3 py-2 font-semibold">Price</th>
+                    <th className="px-3 py-2 font-semibold">Price (₹)</th>
                     <th className="px-3 py-2 font-semibold">Stock</th>
                     <th className="px-3 py-2 font-semibold">Active</th>
                     {!readOnly && (
@@ -574,8 +823,12 @@ export default function ProductVariantsEditor({
                 <tbody className="divide-y divide-slate-100">
                   {variants.map((v) => {
                     const draft = getDraft(v);
+                    const dirty = isDirty(v);
                     return (
-                      <tr key={v.id} className="bg-white">
+                      <tr
+                        key={v.id}
+                        className={dirty ? 'bg-amber-50/60' : 'bg-white'}
+                      >
                         <td className="px-3 py-2 text-slate-700 whitespace-nowrap">
                           {formatVariantLabel(v, valueLabelById)}
                         </td>
@@ -594,18 +847,23 @@ export default function ProductVariantsEditor({
                         </td>
                         <td className="px-3 py-2">
                           {readOnly ? (
-                            <span>₹{v.price}</span>
+                            <span className="font-medium">₹{v.price}</span>
                           ) : (
-                            <Input
-                              className="h-8 w-24"
-                              type="number"
-                              min={0}
-                              step="0.01"
-                              value={draft.price}
-                              onChange={(e) =>
-                                setDraftField(v.id, 'price', e.target.value)
-                              }
-                            />
+                            <div className="relative w-28">
+                              <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+                                ₹
+                              </span>
+                              <Input
+                                className="h-8 pl-5 font-medium"
+                                type="number"
+                                min={0}
+                                step="0.01"
+                                value={draft.price}
+                                onChange={(e) =>
+                                  setDraftField(v.id, 'price', e.target.value)
+                                }
+                              />
+                            </div>
                           )}
                         </td>
                         <td className="px-3 py-2">
@@ -655,9 +913,9 @@ export default function ProductVariantsEditor({
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8"
-                                disabled={savingId === v.id}
+                                disabled={savingId === v.id || !dirty}
                                 onClick={() => handleSaveVariant(v.id)}
-                                title="Save"
+                                title="Save this row"
                               >
                                 {savingId === v.id ? (
                                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -696,8 +954,8 @@ export default function ProductVariantsEditor({
       {optionGroups.length === 0 && !showGroupForm && (
         <p className="text-sm text-slate-500">
           {readOnly
-            ? 'This product has no variants.'
-            : 'Start by adding an option group (e.g. Weight or Flavor), then create variants for each combination.'}
+            ? 'This product has no variants — price is on the product itself.'
+            : 'Start by adding an option group (Weight / Flavor), then generate variants and set each price.'}
         </p>
       )}
     </div>

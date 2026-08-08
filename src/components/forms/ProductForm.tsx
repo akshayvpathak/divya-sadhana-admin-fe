@@ -98,6 +98,16 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
   const isPublished = watch('is_published');
   const isIndexable = watch('is_indexable');
   const ogImageKey = watch('og_image_key');
+  const hasVariants =
+    Boolean(fetchedProduct?.has_variants) ||
+    (fetchedProduct?.variants?.length ?? 0) > 0;
+  const variantPriceHint =
+    hasVariants && fetchedProduct?.min_price != null
+      ? fetchedProduct.max_price != null &&
+        fetchedProduct.max_price !== fetchedProduct.min_price
+        ? `₹${fetchedProduct.min_price} – ₹${fetchedProduct.max_price}`
+        : `From ₹${fetchedProduct.min_price}`
+      : null;
   const galleryImageKeys = watch('gallery_image_keys') || [];
 
   useEffect(() => {
@@ -383,44 +393,64 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="price">Price ($)</Label>
+          <Label htmlFor="price">
+            {hasVariants ? 'Display price (₹)' : 'Price (₹)'}
+          </Label>
           <Input 
             id="price" 
             type="number" 
             step="0.01" 
             placeholder="99.99" 
             {...register('price')} 
-            disabled={readOnly}
+            disabled={readOnly || hasVariants}
             min={0}
-            className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}
+            className={(readOnly || hasVariants) ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}
           />
-          {errors.price && <p className="text-sm text-rose-500">{errors.price.message}</p>}
+          {hasVariants ? (
+            <p className="text-xs text-slate-500">
+              Charged price is set per variant below{variantPriceHint ? ` · shop shows ${variantPriceHint}` : ''}.
+            </p>
+          ) : (
+            errors.price && <p className="text-sm text-rose-500">{errors.price.message}</p>
+          )}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="sku">SKU <span className="text-rose-500">*</span></Label>
+          <Label htmlFor="sku">
+            {hasVariants ? 'Base SKU' : <>SKU <span className="text-rose-500">*</span></>}
+          </Label>
           <Input 
             id="sku" 
             placeholder="PROD-123" 
             {...register('sku')} 
-            disabled={readOnly}
-            className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}
+            disabled={readOnly || hasVariants}
+            className={(readOnly || hasVariants) ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}
           />
-          {errors.sku && <p className="text-sm text-rose-500">{errors.sku.message}</p>}
+          {hasVariants ? (
+            <p className="text-xs text-slate-500">Sellable SKUs are on each variant.</p>
+          ) : (
+            errors.sku && <p className="text-sm text-rose-500">{errors.sku.message}</p>
+          )}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="stock_quantity">Stock Quantity</Label>
+          <Label htmlFor="stock_quantity">
+            {hasVariants ? 'Parent stock' : 'Stock Quantity'}
+          </Label>
           <Input 
             id="stock_quantity" 
             type="number" 
             placeholder="100" 
             {...register('stock_quantity')} 
-            disabled={readOnly}
+            disabled={readOnly || hasVariants}
             min={0}
-            className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}
+            className={(readOnly || hasVariants) ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}
           />
-          {errors.stock_quantity && <p className="text-sm text-rose-500">{errors.stock_quantity.message}</p>}
+          {hasVariants ? (
+            <p className="text-xs text-slate-500">Inventory is tracked per variant.</p>
+          ) : (
+            errors.stock_quantity && <p className="text-sm text-rose-500">{errors.stock_quantity.message}</p>
+          )}
         </div>
 
         <div className="space-y-2">
