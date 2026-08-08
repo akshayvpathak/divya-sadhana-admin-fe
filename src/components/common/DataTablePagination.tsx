@@ -17,7 +17,9 @@ export function DataTablePagination({
   pageSize = 10,
   onPageChange,
 }: DataTablePaginationProps) {
-  if (totalPages <= 1) return null;
+  // Always show the results summary so short lists don't leave a blank card footer.
+  // Page controls only appear when there is more than one page.
+  const showControls = totalPages > 1;
 
   // Generate page numbers to display
   const getPageNumbers = () => {
@@ -66,14 +68,17 @@ export function DataTablePagination({
   const startItem = (currentPage - 1) * pageSize + 1;
   const endItem = Math.min(currentPage * pageSize, totalItems);
 
+  if (totalItems <= 0) return null;
+
   return (
     <div className="p-4 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-4">
       <p className="text-sm text-slate-500">
-        Showing <span className="font-medium">{startItem}</span> to{' '}
-        <span className="font-medium">{endItem}</span> of{' '}
-        <span className="font-medium">{totalItems}</span> results
+        Showing <span className="font-medium text-slate-700">{startItem}</span> to{' '}
+        <span className="font-medium text-slate-700">{endItem}</span> of{' '}
+        <span className="font-medium text-slate-700">{totalItems}</span> results
       </p>
       
+      {showControls ? (
       <div className="flex items-center gap-2">
         {/* Jump to First Page */}
         <Button
@@ -156,6 +161,7 @@ export function DataTablePagination({
           <ChevronsRight className="h-4 w-4" />
         </Button>
       </div>
+      ) : null}
     </div>
   );
 }

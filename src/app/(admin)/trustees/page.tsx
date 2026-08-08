@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Search, Plus, Filter } from 'lucide-react';
+import { Search, Plus, Filter, Users, MapPin, Link2 } from 'lucide-react';
 import { ClearFiltersButton } from '@/components/common/ClearFiltersButton';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -22,8 +22,15 @@ import { useTrusteeTableColumns } from '@/hooks/tables/useTrusteeTableColumns';
 import { Trustee } from '@/schemas/trustees.schema';
 import { CoverageTerritory } from '@/components/trustees/CoverageTerritory';
 import { RetentionReport } from '@/components/trustees/RetentionReport';
+import { cn } from '@/lib/utils';
 
 type TrusteesTab = 'trustees' | 'coverage' | 'retention';
+
+const TABS: { key: TrusteesTab; label: string; hint: string }[] = [
+  { key: 'trustees', label: 'Trustees', hint: 'Members' },
+  { key: 'coverage', label: 'Coverage', hint: 'Territory seats' },
+  { key: 'retention', label: 'Retention', hint: 'Commission hold' },
+];
 
 export default function TrusteesPage() {
   const [page, setPage] = useState(1);
@@ -34,7 +41,6 @@ export default function TrusteesPage() {
   const [sort, setSort] = useState('-created_at');
   const [tab, setTab] = useState<TrusteesTab>('trustees');
 
-  // Button visible only when any filter is active
   const hasActiveFilters =
     search !== '' ||
     status !== 'all' ||
@@ -133,6 +139,22 @@ export default function TrusteesPage() {
   const totalItems = data?.data?.count ?? rows.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
   const states = statesData?.data?.results ?? [];
+  const activeAssignments = assignmentsData?.data?.results ?? [];
+  const assignedMemberIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const a of activeAssignments) {
+      if (a.member) ids.add(a.member);
+      if (a.trustee) ids.add(a.trustee);
+    }
+    return ids;
+  }, [activeAssignments]);
+  const coveredStates = useMemo(() => {
+    const names = new Set<string>();
+    for (const a of activeAssignments) {
+      if (a.state_name) names.add(a.state_name);
+    }
+    return names.size;
+  }, [activeAssignments]);
 
   const handleSort = (field: string) => {
     setSort(field);
@@ -143,38 +165,41 @@ export default function TrusteesPage() {
     <div className="space-y-6 pb-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Trustees</h1>
-          <p className="text-slate-500 mt-1">Appoint trustees, state executives, and district presidents</p>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Trustees</h1>
+          <p className="text-slate-500 mt-1">
+            Appoint trustees, state executives, and district presidents
+          </p>
         </div>
         {tab === 'trustees' && (
           <Link href="/trustees/create">
-            <Button className="bg-indigo-600 hover:bg-indigo-700">
+            <Button className="bg-indigo-600 hover:bg-indigo-700 shadow-sm shadow-indigo-600/20">
               <Plus className="h-4 w-4" /> Appoint member
             </Button>
           </Link>
         )}
       </div>
 
-      {/* Tabs: agents (Trustees) vs cross-trustee coverage (former Territory page) */}
-      <div className="flex gap-6 border-b border-slate-200">
-        {([
-          { key: 'trustees' as const, label: 'Trustees' },
-          { key: 'coverage' as const, label: 'Coverage' },
-          { key: 'retention' as const, label: 'Retention' },
-        ]).map((t) => (
-          <button
-            key={t.key}
-            type="button"
-            onClick={() => selectTab(t.key)}
-            className={`-mb-px border-b-2 px-1 pb-3 text-sm font-semibold transition-colors ${
-              tab === t.key
-                ? 'border-indigo-600 text-indigo-600'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="inline-flex rounded-xl bg-slate-100/90 p-1 ring-1 ring-slate-200/80">
+          {TABS.map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => selectTab(t.key)}
+              className={cn(
+                'rounded-lg px-3.5 py-2 text-sm font-semibold transition-all',
+                tab === t.key
+                  ? 'bg-white text-indigo-700 shadow-sm ring-1 ring-slate-200/80'
+                  : 'text-slate-500 hover:text-slate-800'
+              )}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+        <span className="hidden sm:inline text-xs text-slate-400 ml-1">
+          {TABS.find((t) => t.key === tab)?.hint}
+        </span>
       </div>
 
       {tab === 'coverage' ? (
@@ -182,84 +207,144 @@ export default function TrusteesPage() {
       ) : tab === 'retention' ? (
         <RetentionReport />
       ) : (
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-        <div className="p-4 border-b border-slate-200 bg-slate-50 flex flex-col md:flex-row gap-4 items-center justify-between">
-          <div className="relative max-w-sm flex-1 w-full">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-            <Input
-              placeholder="Search Trustees..."
-              className="pl-9 bg-white w-full"
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-            />
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="rounded-xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                  <Users className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                    Members
+                  </p>
+                  <p className="text-xl font-semibold tabular-nums text-slate-900">
+                    {isLoading ? '—' : totalItems}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                  <Link2 className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                    With territory
+                  </p>
+                  <p className="text-xl font-semibold tabular-nums text-slate-900">
+                    {assignedMemberIds.size}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sky-50 text-sky-600">
+                  <MapPin className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                    States covered
+                  </p>
+                  <p className="text-xl font-semibold tabular-nums text-slate-900">
+                    {coveredStates}
+                    <span className="ml-1 text-sm font-normal text-slate-400">
+                      / {states.length || '—'}
+                    </span>
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="flex flex-wrap sm:flex-nowrap gap-2 items-center w-full md:w-auto">
-            <Filter className="h-4 w-4 text-slate-400 shrink-0" />
-            <Select
-              value={status}
-              onValueChange={(val) => {
-                setStatus(val || 'all');
-                setPage(1);
-              }}
-            >
-              <SelectTrigger className="bg-white w-[130px]">
-                <SelectValue placeholder="All Statuses">
-                  {status === 'active' ? 'Active' : status === 'inactive' ? 'Inactive' : 'All Statuses'}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
 
-            <Select value={stateFilter} onValueChange={(val) => { setStateFilter(val || 'all'); setPage(1); }}>
-              <SelectTrigger className="bg-white w-[200px]">
-                <SelectValue placeholder="All States">
-                  {stateFilter === 'all'
-                    ? 'All States'
-                    : states.find((s) => s.id === stateFilter)?.name ?? 'All States'}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All States</SelectItem>
-                {states.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>
-                    {s.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {hasActiveFilters && (
-              <ClearFiltersButton onClear={clearAllFilters} />
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+            <div className="p-4 border-b border-slate-200 bg-slate-50/80 flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+              <div className="relative max-w-md flex-1 w-full">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input
+                  placeholder="Search by name, email, or code..."
+                  className="pl-9 bg-white w-full h-10"
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPage(1);
+                  }}
+                />
+              </div>
+              <div className="flex flex-wrap sm:flex-nowrap gap-2 items-center w-full md:w-auto">
+                <Filter className="h-4 w-4 text-slate-400 shrink-0 hidden sm:block" />
+                <Select
+                  value={status}
+                  onValueChange={(val) => {
+                    setStatus(val || 'all');
+                    setPage(1);
+                  }}
+                >
+                  <SelectTrigger className="bg-white w-full sm:w-[140px] h-10">
+                    <SelectValue placeholder="All Statuses">
+                      {status === 'active'
+                        ? 'Active'
+                        : status === 'inactive'
+                          ? 'Inactive'
+                          : 'All Statuses'}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  value={stateFilter}
+                  onValueChange={(val) => {
+                    setStateFilter(val || 'all');
+                    setPage(1);
+                  }}
+                >
+                  <SelectTrigger className="bg-white w-full sm:w-[200px] h-10">
+                    <SelectValue placeholder="All States">
+                      {stateFilter === 'all'
+                        ? 'All States'
+                        : states.find((s) => s.id === stateFilter)?.name ?? 'All States'}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All States</SelectItem>
+                    {states.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {hasActiveFilters && <ClearFiltersButton onClear={clearAllFilters} />}
+              </div>
+            </div>
+
+            <DataTable
+              columns={columns}
+              data={rows}
+              isLoading={isLoading}
+              sort={sort}
+              onSort={handleSort}
+              emptyMessage="No trustees found"
+            />
+
+            {data?.data && (
+              <DataTablePagination
+                currentPage={page}
+                totalPages={totalPages}
+                totalItems={totalItems}
+                onPageChange={setPage}
+              />
             )}
           </div>
-        </div>
-
-        <DataTable
-          columns={columns}
-          data={rows}
-          isLoading={isLoading}
-          sort={sort}
-          onSort={handleSort}
-          emptyMessage="No trustees found"
-        />
-
-        {data?.data && (
-          <DataTablePagination
-            currentPage={page}
-            totalPages={totalPages}
-            totalItems={totalItems}
-            onPageChange={setPage}
-          />
-        )}
-      </div>
+        </>
       )}
-
     </div>
   );
 }

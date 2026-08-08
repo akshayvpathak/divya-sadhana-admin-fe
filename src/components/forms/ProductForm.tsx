@@ -23,6 +23,7 @@ import { useUploadImageMutation } from '@/hooks/queries/useImageUploadQuery';
 import { Upload, X, Loader2 } from 'lucide-react';
 import { useState, useCallback } from 'react';
 import { toast } from 'react-toastify';
+import ProductVariantsEditor from '@/components/forms/product/ProductVariantsEditor';
 
 interface ProductFormProps {
   productId?: string;
@@ -500,6 +501,12 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
         </div>
         {errors.description && <p className="text-sm text-rose-500">{errors.description.message}</p>}
       </div>
+
+      {productId && (
+        <div className="rounded-xl border border-slate-200 p-4">
+          <ProductVariantsEditor productId={productId} readOnly={readOnly} />
+        </div>
+      )}
 
       <div className="space-y-4">
         <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500">

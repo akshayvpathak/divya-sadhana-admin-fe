@@ -31,7 +31,7 @@ export default function CreateProductPage() {
         </Link>
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Create New Product</h1>
-          <p className="text-slate-500 mt-1">Add a new item to your inventory</p>
+          <p className="text-slate-500 mt-1">Add a new item to your inventory. After saving, open Edit to add variants (size / flavor).</p>
         </div>
       </div>
 

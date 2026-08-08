@@ -1,8 +1,11 @@
 import {
+  CreateOptionGroupPayload,
   CreateProductPayload,
+  CreateVariantPayload,
   Product,
   ProductsList,
   UpdateProductPayload,
+  UpdateVariantPayload,
   productsListSchema,
   productSchema,
 } from "@/schemas/products.schema";
@@ -287,4 +290,117 @@ export const removeGalleryImage = async (
 
   const json = await response.json();
   return productSchema.parse(json.data || json);
+};
+
+/**
+ * Create an option group (e.g. flavor / weight) with values on a product.
+ * Response is the updated product detail (includes option_groups).
+ */
+export const createOptionGroup = async (
+  productId: string,
+  payload: CreateOptionGroupPayload,
+  accessToken: string
+): Promise<unknown> => {
+  const response = await fetch(
+    `${API_BASE_URL}/products/${productId}/option-groups/`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+        "X-CSRFTOKEN": getCsrfToken(),
+      },
+      body: JSON.stringify(payload),
+    }
+  );
+
+  if (!response.ok) {
+    const json = await response.json();
+    throw apiErrorFrom(json, "Failed to create option group", response.status);
+  }
+
+  // Response shape varies (product detail vs group). Caller invalidates product query.
+  return response.json();
+};
+
+/**
+ * Create a sellable variant under a product.
+ */
+export const createVariant = async (
+  productId: string,
+  payload: CreateVariantPayload,
+  accessToken: string
+): Promise<unknown> => {
+  const response = await fetch(
+    `${API_BASE_URL}/products/${productId}/variants/`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+        "X-CSRFTOKEN": getCsrfToken(),
+      },
+      body: JSON.stringify(payload),
+    }
+  );
+
+  if (!response.ok) {
+    const json = await response.json();
+    throw apiErrorFrom(json, "Failed to create variant", response.status);
+  }
+
+  return response.json();
+};
+
+/**
+ * Update a variant (price / stock / sku / active).
+ */
+export const updateVariant = async (
+  variantId: string,
+  payload: UpdateVariantPayload,
+  accessToken: string
+): Promise<unknown> => {
+  const response = await fetch(
+    `${API_BASE_URL}/product-variants/${variantId}/`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+        "X-CSRFTOKEN": getCsrfToken(),
+      },
+      body: JSON.stringify(payload),
+    }
+  );
+
+  if (!response.ok) {
+    const json = await response.json();
+    throw apiErrorFrom(json, "Failed to update variant", response.status);
+  }
+
+  return response.json();
+};
+
+/**
+ * Delete a variant.
+ */
+export const deleteVariant = async (
+  variantId: string,
+  accessToken: string
+): Promise<void> => {
+  const response = await fetch(
+    `${API_BASE_URL}/product-variants/${variantId}/`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "X-CSRFTOKEN": getCsrfToken(),
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const json = await response.json().catch(() => ({}));
+    throw apiErrorFrom(json, "Failed to delete variant", response.status);
+  }
 };

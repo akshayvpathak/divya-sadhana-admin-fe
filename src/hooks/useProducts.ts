@@ -1,6 +1,21 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
-import { getProductsList, createProduct, updateProduct, deleteProduct, getProduct } from '../services/products.service';
+import {
+  getProductsList,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  getProduct,
+  createOptionGroup,
+  createVariant,
+  updateVariant,
+  deleteVariant,
+} from '../services/products.service';
+import type {
+  CreateOptionGroupPayload,
+  CreateVariantPayload,
+  UpdateVariantPayload,
+} from '../schemas/products.schema';
 import { useAuth } from '../context/AuthContext';
 
 export const cleanImageUrl = (url: string | null | undefined) => {
@@ -178,6 +193,11 @@ export const useProduct = (id: string) => {
           ? (cleanImageUrl(p.og_image_url) || p.og_image_url)
           : '',
         is_indexable: p.is_indexable ?? true,
+        has_variants: p.has_variants ?? false,
+        min_price: p.min_price ?? null,
+        max_price: p.max_price ?? null,
+        option_groups: p.option_groups || [],
+        variants: p.variants || [],
       };
     },
     enabled: !!id && !!accessToken,
@@ -279,6 +299,92 @@ export const useDeleteProduct = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       toast.success('Product deleted successfully');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+};
+
+export const useCreateOptionGroup = (productId: string) => {
+  const queryClient = useQueryClient();
+  const { accessToken } = useAuth();
+
+  return useMutation({
+    mutationFn: async (payload: CreateOptionGroupPayload) => {
+      if (!accessToken) throw new Error('No access token');
+      return createOptionGroup(productId, payload, accessToken);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['product', productId] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success('Option group created');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+};
+
+export const useCreateVariant = (productId: string) => {
+  const queryClient = useQueryClient();
+  const { accessToken } = useAuth();
+
+  return useMutation({
+    mutationFn: async (payload: CreateVariantPayload) => {
+      if (!accessToken) throw new Error('No access token');
+      return createVariant(productId, payload, accessToken);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['product', productId] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success('Variant created');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+};
+
+export const useUpdateVariant = (productId: string) => {
+  const queryClient = useQueryClient();
+  const { accessToken } = useAuth();
+
+  return useMutation({
+    mutationFn: async ({
+      variantId,
+      data,
+    }: {
+      variantId: string;
+      data: UpdateVariantPayload;
+    }) => {
+      if (!accessToken) throw new Error('No access token');
+      return updateVariant(variantId, data, accessToken);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['product', productId] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success('Variant updated');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+};
+
+export const useDeleteVariant = (productId: string) => {
+  const queryClient = useQueryClient();
+  const { accessToken } = useAuth();
+
+  return useMutation({
+    mutationFn: async (variantId: string) => {
+      if (!accessToken) throw new Error('No access token');
+      return deleteVariant(variantId, accessToken);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['product', productId] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success('Variant deleted');
     },
     onError: (error: Error) => {
       toast.error(error.message);
