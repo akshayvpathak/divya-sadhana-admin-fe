@@ -45,6 +45,31 @@ function slugifyCode(input: string): string {
     .slice(0, 40);
 }
 
+/** "flavor" → "Flavor", "net_weight" → "Net Weight". */
+function humanizeCode(code: string): string {
+  return code
+    .replace(/[_-]+/g, ' ')
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+/**
+ * Admin-facing name for an option group. Prefers the English `code` because
+ * `name` is what customers see and is often stored in Hindi (फ्लेवर / वजन).
+ */
+function groupLabel(g: ProductOptionGroup): string {
+  // 'option' is the fallback slugifyCode produces for a name with no Latin
+  // characters, so it identifies nothing — prefer the stored name over it.
+  if (g.code && g.code !== 'option') return humanizeCode(g.code);
+  return g.name || 'Option';
+}
+
+function optionValueLabel(g: ProductOptionGroup, valueId: string): string {
+  const match = (g.values || []).find((v) => v.id === valueId);
+  if (!match) return '';
+  return match.label || match.value || '';
+}
+
 function variantOptionIds(v: ProductVariant): string[] {
   if (v.option_value_ids?.length) return v.option_value_ids;
   if (v.option_values?.length) return v.option_values;
@@ -471,11 +496,6 @@ export default function ProductVariantsEditor({
             <IndianRupee className="h-4 w-4" />
             Variant pricing
           </h3>
-          <p className="text-sm text-slate-500 mt-1">
-            {hasVariants
-              ? `Each row is a sellable SKU with its own price & stock${priceRange ? ` · shop shows ${priceRange}` : ''}.`
-              : 'Add option groups, then set a price on every size / flavor combination.'}
-          </p>
         </div>
         {!readOnly && (
           <Button
@@ -541,9 +561,6 @@ export default function ProductVariantsEditor({
 
           <div className="space-y-2">
             <Label>Values</Label>
-            <p className="text-xs text-slate-500">
-              Label = what customers see. Value = English code used in SKUs (required for Hindi labels).
-            </p>
             {groupValues.map((row, i) => (
               <div key={i} className="flex gap-2 items-start">
                 <Input
@@ -622,58 +639,6 @@ export default function ProductVariantsEditor({
         </div>
       )}
 
-      {optionGroups.length > 0 && !readOnly && (
-        <div className="rounded-lg border border-indigo-100 bg-indigo-50/40 p-4 space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <p className="text-sm font-medium text-slate-800">
-                Generate all combinations
-              </p>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Creates missing rows (e.g. 5 flavors × 3 weights = 15) with a starter price — then edit each price in the table.
-                {missingCombos.length > 0
-                  ? ` ${missingCombos.length} missing.`
-                  : ' All combinations exist.'}
-              </p>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
-            <div className="space-y-1">
-              <Label>Default price (₹) for new rows</Label>
-              <Input
-                type="number"
-                min={0}
-                step="0.01"
-                placeholder="200"
-                value={defaultPrice}
-                onChange={(e) => setDefaultPrice(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label>Default stock</Label>
-              <Input
-                type="number"
-                min={0}
-                value={defaultStock}
-                onChange={(e) => setDefaultStock(e.target.value)}
-              />
-            </div>
-            <Button
-              type="button"
-              disabled={generating || missingCombos.length === 0}
-              onClick={handleGenerateMissing}
-            >
-              {generating ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Grid2x2 className="h-4 w-4" />
-              )}
-              Generate {missingCombos.length || ''} variants
-            </Button>
-          </div>
-        </div>
-      )}
-
       {optionGroups.length > 0 && (
         <div className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -713,29 +678,41 @@ export default function ProductVariantsEditor({
                 New variant with its own price
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {optionGroups.map((g) => (
-                  <div key={g.id} className="space-y-1">
-                    <Label>{g.name || g.code}</Label>
-                    <Select
-                      value={selectedByGroup[g.id] || undefined}
-                      onValueChange={(val) => {
-                        if (!val) return;
-                        updateSelection(g.id, val);
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={`Select ${g.name || g.code}`} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {(g.values || []).map((v) => (
-                          <SelectItem key={v.id} value={v.id}>
-                            {v.label || v.value}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                ))}
+                {optionGroups.map((g) => {
+                  const label = groupLabel(g);
+                  const placeholder = `Select ${label}`;
+                  const selectedId = selectedByGroup[g.id] ?? null;
+                  return (
+                    <div key={g.id} className="space-y-1">
+                      <Label>{label}</Label>
+                      <Select
+                        // `null`, not `undefined` — undefined leaves the Select
+                        // uncontrolled, and picking a value would then flip it to
+                        // controlled, which base-ui logs as an error.
+                        value={selectedId}
+                        onValueChange={(val) => {
+                          if (!val) return;
+                          updateSelection(g.id, val);
+                        }}
+                      >
+                        <SelectTrigger>
+                          {/* Without children, SelectValue renders the raw value —
+                              i.e. the option-value UUID. */}
+                          <SelectValue placeholder={placeholder}>
+                            {selectedId ? optionValueLabel(g, selectedId) || placeholder : placeholder}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(g.values || []).map((v) => (
+                            <SelectItem key={v.id} value={v.id}>
+                              {v.label || v.value}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  );
+                })}
                 <div className="space-y-1">
                   <Label>SKU</Label>
                   <Input

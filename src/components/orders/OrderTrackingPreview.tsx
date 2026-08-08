@@ -4,16 +4,23 @@ import { ExternalLink, Package } from 'lucide-react';
 import { useOrderTrackingQuery } from '@/hooks/queries/useOrdersQuery';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { cn } from '@/lib/utils';
 
 type Props = {
   orderId: string;
+  /** Drop the card chrome when rendered as a section of a larger card. */
+  embedded?: boolean;
 };
 
-export default function OrderTrackingPreview({ orderId }: Props) {
+export default function OrderTrackingPreview({ orderId, embedded = false }: Props) {
   const { data, isLoading, error } = useOrderTrackingQuery(orderId);
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div
+      className={cn(
+        !embedded && 'rounded-2xl border border-slate-200 bg-white p-6 shadow-sm'
+      )}
+    >
       <div className="mb-4 flex items-center justify-between gap-3">
         <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-slate-500">
           <Package className="h-4 w-4" />

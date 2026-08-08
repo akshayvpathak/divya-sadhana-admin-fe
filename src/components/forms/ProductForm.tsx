@@ -1,103 +1,146 @@
-'use client';
+"use client";
 
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import dynamic from 'next/dynamic';
-import 'react-quill-new/dist/quill.snow.css';
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import dynamic from "next/dynamic";
+import "react-quill-new/dist/quill.snow.css";
 
-const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false, loading: () => <p className="text-sm text-slate-500 py-4">Loading editor...</p> });
-import { productSchema, ProductFormData } from '@/schemas/product.schema';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import Link from 'next/link';
-import { useEffect, useMemo } from 'react';
-import { useProduct, resolveProductImageUrl } from '@/hooks/useProducts';
-import { useAllCategories } from '@/hooks/useCategories';
-import { cn } from '@/lib/utils';
+const ReactQuill = dynamic(() => import("react-quill-new"), {
+  ssr: false,
+  loading: () => (
+    <p className="text-sm text-slate-500 py-4">Loading editor...</p>
+  ),
+});
+import { productSchema, ProductFormData } from "@/schemas/product.schema";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import Link from "next/link";
+import { useEffect, useMemo } from "react";
+import { useProduct, resolveProductImageUrl } from "@/hooks/useProducts";
+import { useAllCategories } from "@/hooks/useCategories";
+import { cn } from "@/lib/utils";
 
-import { Switch } from '@/components/ui/switch';
-import { useUploadImageMutation } from '@/hooks/queries/useImageUploadQuery';
-import { Upload, X, Loader2 } from 'lucide-react';
-import { useState, useCallback } from 'react';
-import { toast } from 'react-toastify';
-import ProductVariantsEditor from '@/components/forms/product/ProductVariantsEditor';
+import { Switch } from "@/components/ui/switch";
+import { useUploadImageMutation } from "@/hooks/queries/useImageUploadQuery";
+import { Upload, X, Loader2 } from "lucide-react";
+import { useState, useCallback } from "react";
+import { toast } from "react-toastify";
+import ProductVariantsEditor from "@/components/forms/product/ProductVariantsEditor";
 
 interface ProductFormProps {
   productId?: string;
   initialData?: ProductFormData;
-  categories?: { id: string; name: string; isActive?: boolean; is_active?: boolean }[];
+  categories?: {
+    id: string;
+    name: string;
+    isActive?: boolean;
+    is_active?: boolean;
+  }[];
   onSubmit?: (data: ProductFormData) => void;
   isPending?: boolean;
   readOnly?: boolean;
 }
 
-export function ProductForm({ productId, initialData: propsInitialData, categories: propsCategories, onSubmit, isPending, readOnly = false }: ProductFormProps) {
-  const { data: fetchedProduct, isLoading: isFetchingProduct } = useProduct(productId || '');
-  const { data: fetchedCategories, isLoading: isFetchingCategories } = useAllCategories();
+export function ProductForm({
+  productId,
+  initialData: propsInitialData,
+  categories: propsCategories,
+  onSubmit,
+  isPending,
+  readOnly = false,
+}: ProductFormProps) {
+  const { data: fetchedProduct, isLoading: isFetchingProduct } = useProduct(
+    productId || "",
+  );
+  const { data: fetchedCategories, isLoading: isFetchingCategories } =
+    useAllCategories();
   const uploadPrimaryMutation = useUploadImageMutation();
   const uploadGalleryMutation = useUploadImageMutation();
-  const uploadOgMutation = useUploadImageMutation('product_og');
+  const uploadOgMutation = useUploadImageMutation("product_og");
   const [isDragging, setIsDragging] = useState(false);
   const [isOgDragging, setIsOgDragging] = useState(false);
-  const [localPreviews, setLocalPreviews] = useState<{ id: string; url: string; isUploading: boolean; key?: string }[]>([]);
-  const [primaryPreviewUrl, setPrimaryPreviewUrl] = useState<string>('');
-  const [ogPreviewUrl, setOgPreviewUrl] = useState<string>('');
+  const [localPreviews, setLocalPreviews] = useState<
+    { id: string; url: string; isUploading: boolean; key?: string }[]
+  >([]);
+  const [primaryPreviewUrl, setPrimaryPreviewUrl] = useState<string>("");
+  const [ogPreviewUrl, setOgPreviewUrl] = useState<string>("");
 
   const categories = fetchedCategories || propsCategories;
   const isFetching = isFetchingProduct || isFetchingCategories;
 
-  const initialData = useMemo(() => fetchedProduct ? {
-    name: fetchedProduct.name || '',
-    price: fetchedProduct.price,
-    description: fetchedProduct.description || '',
-    categoryId: fetchedProduct.categoryId || '',
-    image: fetchedProduct.primary_image_key || fetchedProduct.image || '',
-    sku: fetchedProduct.sku || '',
-    stock_quantity: fetchedProduct.stock || 0,
-    is_active: fetchedProduct.is_active ?? true,
-    is_published: fetchedProduct.is_published ?? false,
-    gallery_image_keys: fetchedProduct.gallery_image_keys || [],
-    slug: fetchedProduct.slug || '',
-    meta_title: fetchedProduct.meta_title || '',
-    meta_description: fetchedProduct.meta_description || '',
-    meta_keywords: fetchedProduct.meta_keywords || '',
-    og_image_key: fetchedProduct.og_image_key || '',
-    is_indexable: fetchedProduct.is_indexable ?? true,
-  } : propsInitialData, [fetchedProduct, propsInitialData]);
+  const initialData = useMemo(
+    () =>
+      fetchedProduct
+        ? {
+            name: fetchedProduct.name || "",
+            price: fetchedProduct.price,
+            description: fetchedProduct.description || "",
+            categoryId: fetchedProduct.categoryId || "",
+            image:
+              fetchedProduct.primary_image_key || fetchedProduct.image || "",
+            sku: fetchedProduct.sku || "",
+            stock_quantity: fetchedProduct.stock || 0,
+            is_active: fetchedProduct.is_active ?? true,
+            is_published: fetchedProduct.is_published ?? false,
+            gallery_image_keys: fetchedProduct.gallery_image_keys || [],
+            slug: fetchedProduct.slug || "",
+            meta_title: fetchedProduct.meta_title || "",
+            meta_description: fetchedProduct.meta_description || "",
+            meta_keywords: fetchedProduct.meta_keywords || "",
+            og_image_key: fetchedProduct.og_image_key || "",
+            is_indexable: fetchedProduct.is_indexable ?? true,
+          }
+        : propsInitialData,
+    [fetchedProduct, propsInitialData],
+  );
 
-  const { register, control, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<ProductFormData>({
+  const {
+    register,
+    control,
+    handleSubmit,
+    reset,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema) as any,
     defaultValues: {
-      name: '',
+      name: "",
       price: 0,
-      description: '',
-      categoryId: '',
-      image: '',
-      sku: '',
+      description: "",
+      categoryId: "",
+      image: "",
+      sku: "",
       stock_quantity: 0,
       is_active: true,
       is_published: false,
       gallery_image_keys: [],
-      slug: '',
-      meta_title: '',
-      meta_description: '',
-      meta_keywords: '',
-      og_image_key: '',
+      slug: "",
+      meta_title: "",
+      meta_description: "",
+      meta_keywords: "",
+      og_image_key: "",
       is_indexable: true,
       ...initialData,
     },
   });
 
-  const categoryId = watch('categoryId');
-  const nameValue = watch('name');
-  const imageKey = watch('image');
-  const is_active = watch('is_active');
-  const isPublished = watch('is_published');
-  const isIndexable = watch('is_indexable');
-  const ogImageKey = watch('og_image_key');
+  const categoryId = watch("categoryId");
+  const nameValue = watch("name");
+  const imageKey = watch("image");
+  const is_active = watch("is_active");
+  const isPublished = watch("is_published");
+  const isIndexable = watch("is_indexable");
+  const ogImageKey = watch("og_image_key");
   const hasVariants =
     Boolean(fetchedProduct?.has_variants) ||
     (fetchedProduct?.variants?.length ?? 0) > 0;
@@ -108,24 +151,24 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
         ? `₹${fetchedProduct.min_price} – ₹${fetchedProduct.max_price}`
         : `From ₹${fetchedProduct.min_price}`
       : null;
-  const galleryImageKeys = watch('gallery_image_keys') || [];
+  const galleryImageKeys = watch("gallery_image_keys") || [];
 
   useEffect(() => {
-    register('image');
-    register('is_active');
-    register('is_published');
-    register('gallery_image_keys');
-    register('og_image_key');
-    register('is_indexable');
+    register("image");
+    register("is_active");
+    register("is_published");
+    register("gallery_image_keys");
+    register("og_image_key");
+    register("is_indexable");
   }, [register]);
 
   useEffect(() => {
     if (!readOnly && !productId && nameValue) {
       const generatedSlug = nameValue
         .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)+/g, '');
-      setValue('slug', generatedSlug, { shouldValidate: true });
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)+/g, "");
+      setValue("slug", generatedSlug, { shouldValidate: true });
     }
   }, [nameValue, setValue, readOnly, productId]);
 
@@ -135,7 +178,7 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
     } else if (initialData?.image) {
       setPrimaryPreviewUrl(resolveProductImageUrl(initialData.image));
     } else {
-      setPrimaryPreviewUrl('');
+      setPrimaryPreviewUrl("");
     }
   }, [initialData, fetchedProduct]);
 
@@ -145,25 +188,27 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
     } else if (ogImageKey) {
       setOgPreviewUrl(resolveProductImageUrl(ogImageKey));
     } else {
-      setOgPreviewUrl('');
+      setOgPreviewUrl("");
     }
   }, [fetchedProduct, ogImageKey]);
 
   // Load existing gallery images into local previews on mount/reset
   useEffect(() => {
     if (initialData?.gallery_image_keys?.length) {
-      const existingPreviews = initialData.gallery_image_keys.map((key, index) => {
-        let url = resolveProductImageUrl(key);
-        if (fetchedProduct?.gallery_image_urls?.[index]) {
-          url = fetchedProduct.gallery_image_urls[index];
-        }
-        return {
-          id: key,
-          url,
-          isUploading: false,
-          key
-        };
-      });
+      const existingPreviews = initialData.gallery_image_keys.map(
+        (key, index) => {
+          let url = resolveProductImageUrl(key);
+          if (fetchedProduct?.gallery_image_urls?.[index]) {
+            url = fetchedProduct.gallery_image_urls[index];
+          }
+          return {
+            id: key,
+            url,
+            isUploading: false,
+            key,
+          };
+        },
+      );
       setLocalPreviews(existingPreviews);
     } else {
       setLocalPreviews([]);
@@ -182,26 +227,32 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
     }
   };
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    if (!readOnly) setIsDragging(true);
-  }, [readOnly]);
+  const handleDragOver = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      if (!readOnly) setIsDragging(true);
+    },
+    [readOnly],
+  );
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
   }, []);
 
-  const handleDrop = useCallback(async (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    if (readOnly) return;
+  const handleDrop = useCallback(
+    async (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
+      if (readOnly) return;
 
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) {
-      handleFileUpload(files[0]);
-    }
-  }, [readOnly]);
+      const files = Array.from(e.dataTransfer.files);
+      if (files.length > 0) {
+        handleFileUpload(files[0]);
+      }
+    },
+    [readOnly],
+  );
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -211,12 +262,12 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
   };
 
   const handleFileUpload = async (file: File) => {
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please upload an image file');
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file");
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('File exceeds 5MB limit');
+      toast.error("File exceeds 5MB limit");
       return;
     }
 
@@ -226,21 +277,23 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
     try {
       const keys = await uploadPrimaryMutation.mutateAsync([file]);
       if (keys && keys.length > 0) {
-        setValue('image', keys[0]);
-        toast.success('Image uploaded successfully');
+        setValue("image", keys[0]);
+        toast.success("Image uploaded successfully");
       }
     } catch (error) {
-      toast.error('Failed to upload image');
-      setPrimaryPreviewUrl('');
+      toast.error("Failed to upload image");
+      setPrimaryPreviewUrl("");
     }
   };
 
-  const handleGalleryFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleGalleryFileSelect = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
-    const validFiles = files.filter(file => {
-      if (!file.type.startsWith('image/')) {
+    const validFiles = files.filter((file) => {
+      if (!file.type.startsWith("image/")) {
         toast.error(`File ${file.name} is not an image`);
         return false;
       }
@@ -254,26 +307,28 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
     if (validFiles.length === 0) return;
 
     // Create local preview URLs and add them to local state immediately
-    const newPreviews = validFiles.map(file => ({
+    const newPreviews = validFiles.map((file) => ({
       id: Math.random().toString(36).substring(7),
       url: URL.createObjectURL(file),
       isUploading: true,
-      file
+      file,
     }));
 
-    setLocalPreviews(prev => [...prev, ...newPreviews]);
+    setLocalPreviews((prev) => [...prev, ...newPreviews]);
 
     try {
       const keys = await uploadGalleryMutation.mutateAsync(validFiles);
       if (keys && keys.length > 0) {
         // Map returned keys back to the previews
-        const currentKeys = watch('gallery_image_keys') || [];
-        setValue('gallery_image_keys', [...currentKeys, ...keys], { shouldDirty: true });
-        
-        setLocalPreviews(prev => {
+        const currentKeys = watch("gallery_image_keys") || [];
+        setValue("gallery_image_keys", [...currentKeys, ...keys], {
+          shouldDirty: true,
+        });
+
+        setLocalPreviews((prev) => {
           let keyIndex = 0;
-          return prev.map(p => {
-            const isNew = newPreviews.some(np => np.id === p.id);
+          return prev.map((p) => {
+            const isNew = newPreviews.some((np) => np.id === p.id);
             if (isNew && keyIndex < keys.length) {
               const assignedKey = keys[keyIndex++];
               return { ...p, isUploading: false, key: assignedKey };
@@ -284,33 +339,39 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
         toast.success(`${validFiles.length} image(s) uploaded to gallery`);
       }
     } catch (error) {
-      toast.error('Failed to upload gallery images');
+      toast.error("Failed to upload gallery images");
       // Remove all newly added previews on failure
-      const newIds = newPreviews.map(np => np.id);
-      setLocalPreviews(prev => prev.filter(p => !newIds.includes(p.id)));
+      const newIds = newPreviews.map((np) => np.id);
+      setLocalPreviews((prev) => prev.filter((p) => !newIds.includes(p.id)));
     }
   };
 
-  const handleOgDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    if (!readOnly) setIsOgDragging(true);
-  }, [readOnly]);
+  const handleOgDragOver = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      if (!readOnly) setIsOgDragging(true);
+    },
+    [readOnly],
+  );
 
   const handleOgDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsOgDragging(false);
   }, []);
 
-  const handleOgDrop = useCallback(async (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsOgDragging(false);
-    if (readOnly) return;
+  const handleOgDrop = useCallback(
+    async (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsOgDragging(false);
+      if (readOnly) return;
 
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) {
-      await handleOgFileUpload(files[0]);
-    }
-  }, [readOnly]);
+      const files = Array.from(e.dataTransfer.files);
+      if (files.length > 0) {
+        await handleOgFileUpload(files[0]);
+      }
+    },
+    [readOnly],
+  );
 
   const handleOgFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -320,12 +381,12 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
   };
 
   const handleOgFileUpload = async (file: File) => {
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please upload an image file');
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file");
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('File exceeds 5MB limit');
+      toast.error("File exceeds 5MB limit");
       return;
     }
 
@@ -335,26 +396,33 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
     try {
       const keys = await uploadOgMutation.mutateAsync([file]);
       if (keys && keys.length > 0) {
-        setValue('og_image_key', keys[0], { shouldDirty: true });
-        toast.success('OG image uploaded successfully');
+        setValue("og_image_key", keys[0], { shouldDirty: true });
+        toast.success("OG image uploaded successfully");
       }
     } catch (error) {
-      toast.error('Failed to upload OG image');
+      toast.error("Failed to upload OG image");
       if (fetchedProduct?.og_image_url) {
         setOgPreviewUrl(fetchedProduct.og_image_url);
       } else if (ogImageKey) {
         setOgPreviewUrl(resolveProductImageUrl(ogImageKey));
       } else {
-        setOgPreviewUrl('');
+        setOgPreviewUrl("");
       }
     }
   };
 
-  const handleRemoveGalleryImage = (idToRemove: string, keyToRemove?: string) => {
-    setLocalPreviews(prev => prev.filter(p => p.id !== idToRemove));
+  const handleRemoveGalleryImage = (
+    idToRemove: string,
+    keyToRemove?: string,
+  ) => {
+    setLocalPreviews((prev) => prev.filter((p) => p.id !== idToRemove));
     if (keyToRemove) {
-      const currentKeys = watch('gallery_image_keys') || [];
-      setValue('gallery_image_keys', currentKeys.filter(k => k !== keyToRemove), { shouldDirty: true });
+      const currentKeys = watch("gallery_image_keys") || [];
+      setValue(
+        "gallery_image_keys",
+        currentKeys.filter((k) => k !== keyToRemove),
+        { shouldDirty: true },
+      );
     }
   };
 
@@ -362,7 +430,7 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
     return (
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[1, 2, 3, 4].map(i => (
+          {[1, 2, 3, 4].map((i) => (
             <div key={i} className="space-y-2">
               <div className="h-4 w-20 bg-slate-100 animate-pulse rounded" />
               <div className="h-10 w-full bg-slate-50 animate-pulse rounded-lg" />
@@ -381,145 +449,182 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="name">Product Name <span className="text-rose-500">*</span></Label>
-          <Input 
-            id="name" 
-            placeholder="Product Name" 
-            {...register('name')} 
+          <Label htmlFor="name">
+            Product Name <span className="text-rose-500">*</span>
+          </Label>
+          <Input
+            id="name"
+            placeholder="Product Name"
+            {...register("name")}
             disabled={readOnly}
-            className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}
+            className={
+              readOnly
+                ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0"
+                : ""
+            }
           />
-          {errors.name && <p className="text-sm text-rose-500">{errors.name.message}</p>}
+          {errors.name && (
+            <p className="text-sm text-rose-500">{errors.name.message}</p>
+          )}
         </div>
-        
+
         <div className="space-y-2">
           <Label htmlFor="price">
-            {hasVariants ? 'Display price (₹)' : 'Price (₹)'}
+            {hasVariants ? "Display price (₹)" : "Price (₹)"}
           </Label>
-          <Input 
-            id="price" 
-            type="number" 
-            step="0.01" 
-            placeholder="99.99" 
-            {...register('price')} 
+          <Input
+            id="price"
+            type="number"
+            step="0.01"
+            placeholder="99.99"
+            {...register("price")}
             disabled={readOnly || hasVariants}
             min={0}
-            className={(readOnly || hasVariants) ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}
+            className={
+              readOnly || hasVariants
+                ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0"
+                : ""
+            }
           />
-          {hasVariants ? (
-            <p className="text-xs text-slate-500">
-              Charged price is set per variant below{variantPriceHint ? ` · shop shows ${variantPriceHint}` : ''}.
-            </p>
-          ) : (
-            errors.price && <p className="text-sm text-rose-500">{errors.price.message}</p>
+          {errors.price && (
+            <p className="text-sm text-rose-500">{errors.price.message}</p>
           )}
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="sku">
-            {hasVariants ? 'Base SKU' : <>SKU <span className="text-rose-500">*</span></>}
+            {hasVariants ? (
+              "Base SKU"
+            ) : (
+              <>
+                SKU <span className="text-rose-500">*</span>
+              </>
+            )}
           </Label>
-          <Input 
-            id="sku" 
-            placeholder="PROD-123" 
-            {...register('sku')} 
+          <Input
+            id="sku"
+            placeholder="PROD-123"
+            {...register("sku")}
             disabled={readOnly || hasVariants}
-            className={(readOnly || hasVariants) ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}
+            className={
+              readOnly || hasVariants
+                ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0"
+                : ""
+            }
           />
-          {hasVariants ? (
-            <p className="text-xs text-slate-500">Sellable SKUs are on each variant.</p>
-          ) : (
-            errors.sku && <p className="text-sm text-rose-500">{errors.sku.message}</p>
+          {errors.sku && (
+            <p className="text-sm text-rose-500">{errors.sku.message}</p>
           )}
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="stock_quantity">
-            {hasVariants ? 'Parent stock' : 'Stock Quantity'}
+            {hasVariants ? "Parent stock" : "Stock Quantity"}
           </Label>
-          <Input 
-            id="stock_quantity" 
-            type="number" 
-            placeholder="100" 
-            {...register('stock_quantity')} 
+          <Input
+            id="stock_quantity"
+            type="number"
+            placeholder="100"
+            {...register("stock_quantity")}
             disabled={readOnly || hasVariants}
             min={0}
-            className={(readOnly || hasVariants) ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}
+            className={
+              readOnly || hasVariants
+                ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0"
+                : ""
+            }
           />
-          {hasVariants ? (
-            <p className="text-xs text-slate-500">Inventory is tracked per variant.</p>
-          ) : (
-            errors.stock_quantity && <p className="text-sm text-rose-500">{errors.stock_quantity.message}</p>
+          {errors.stock_quantity && errors.stock_quantity && (
+            <p className="text-sm text-rose-500">
+              {errors.stock_quantity.message}
+            </p>
           )}
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="categoryId">Category</Label>
-          <Select 
+          <Select
             value={categoryId || ""}
-            onValueChange={(val) => setValue('categoryId', (val as string) || '')} 
+            onValueChange={(val) =>
+              setValue("categoryId", (val as string) || "")
+            }
             disabled={readOnly}
           >
-            <SelectTrigger id="categoryId" className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default" : "bg-white"}>
+            <SelectTrigger
+              id="categoryId"
+              className={
+                readOnly
+                  ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default"
+                  : "bg-white"
+              }
+            >
               <SelectValue placeholder="Select a category">
-                {categoryId 
-                  ? (categories?.find(c => c.id === categoryId)?.name || categoryId) 
-                  : 'Select a category'
-                }
+                {categoryId
+                  ? categories?.find((c) => c.id === categoryId)?.name ||
+                    categoryId
+                  : "Select a category"}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {categories
-                ?.filter(category => {
+                ?.filter((category) => {
                   const active = category.isActive ?? category.is_active;
                   return active !== false || category.id === categoryId;
                 })
-                ?.map(category => (
+                ?.map((category) => (
                   <SelectItem key={category.id} value={category.id}>
                     {category.name}
                   </SelectItem>
                 ))}
             </SelectContent>
           </Select>
-          {errors.categoryId && <p className="text-sm text-rose-500">{errors.categoryId.message}</p>}
+          {errors.categoryId && (
+            <p className="text-sm text-rose-500">{errors.categoryId.message}</p>
+          )}
         </div>
 
         <div className="flex gap-8 items-center pt-4">
           <div className="flex items-center gap-2">
-            <Switch 
-              id="is_active" 
-              checked={is_active} 
-              onCheckedChange={(val) => setValue('is_active', val)}
+            <Switch
+              id="is_active"
+              checked={is_active}
+              onCheckedChange={(val) => setValue("is_active", val)}
               disabled={readOnly}
             />
-            <Label htmlFor="is_active" className="cursor-pointer">Active</Label>
+            <Label htmlFor="is_active" className="cursor-pointer">
+              Active
+            </Label>
           </div>
           <div className="flex items-center gap-2">
-            <Switch 
-              id="is_published" 
-              checked={isPublished} 
-              onCheckedChange={(val) => setValue('is_published', val)}
+            <Switch
+              id="is_published"
+              checked={isPublished}
+              onCheckedChange={(val) => setValue("is_published", val)}
               disabled={readOnly}
             />
-            <Label htmlFor="is_published" className="cursor-pointer">Published</Label>
+            <Label htmlFor="is_published" className="cursor-pointer">
+              Published
+            </Label>
           </div>
         </div>
       </div>
 
       <div className="space-y-2 pb-4">
-        <Label htmlFor="description">Description <span className="text-rose-500">*</span></Label>
+        <Label htmlFor="description">
+          Description <span className="text-rose-500">*</span>
+        </Label>
         <div className="bg-white rounded-md pb-6">
           {readOnly ? (
-            <div 
+            <div
               className="p-4 bg-slate-50 border border-slate-200 rounded-md min-h-[200px] max-h-[400px] overflow-y-auto prose prose-sm max-w-none text-slate-700"
-              dangerouslySetInnerHTML={{ __html: watch('description') || '' }}
+              dangerouslySetInnerHTML={{ __html: watch("description") || "" }}
             />
           ) : (
             <Controller
               name="description"
               control={control}
               render={({ field }) => (
-                <ReactQuill 
+                <ReactQuill
                   theme="snow"
                   value={field.value}
                   onChange={field.onChange}
@@ -529,7 +634,9 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
             />
           )}
         </div>
-        {errors.description && <p className="text-sm text-rose-500">{errors.description.message}</p>}
+        {errors.description && (
+          <p className="text-sm text-rose-500">{errors.description.message}</p>
+        )}
       </div>
 
       {productId && (
@@ -544,15 +651,23 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="slug">Slug <span className="text-rose-500">*</span></Label>
+            <Label htmlFor="slug">
+              Slug <span className="text-rose-500">*</span>
+            </Label>
             <Input
               id="slug"
               placeholder="product-url-slug"
-              {...register('slug')}
+              {...register("slug")}
               disabled={readOnly}
-              className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}
+              className={
+                readOnly
+                  ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0"
+                  : ""
+              }
             />
-            {errors.slug && <p className="text-sm text-rose-500">{errors.slug.message}</p>}
+            {errors.slug && (
+              <p className="text-sm text-rose-500">{errors.slug.message}</p>
+            )}
           </div>
 
           <div className="space-y-2 md:col-span-2">
@@ -561,11 +676,19 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
               id="meta_title"
               placeholder="Leave empty to use product name"
               maxLength={70}
-              {...register('meta_title')}
+              {...register("meta_title")}
               disabled={readOnly}
-              className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}
+              className={
+                readOnly
+                  ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0"
+                  : ""
+              }
             />
-            {errors.meta_title && <p className="text-sm text-rose-500">{errors.meta_title.message}</p>}
+            {errors.meta_title && (
+              <p className="text-sm text-rose-500">
+                {errors.meta_title.message}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2 md:col-span-2">
@@ -575,11 +698,19 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
               placeholder="Leave empty to use product description"
               maxLength={160}
               rows={3}
-              {...register('meta_description')}
+              {...register("meta_description")}
               disabled={readOnly}
-              className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}
+              className={
+                readOnly
+                  ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0"
+                  : ""
+              }
             />
-            {errors.meta_description && <p className="text-sm text-rose-500">{errors.meta_description.message}</p>}
+            {errors.meta_description && (
+              <p className="text-sm text-rose-500">
+                {errors.meta_description.message}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2 md:col-span-2">
@@ -588,18 +719,26 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
               id="meta_keywords"
               placeholder="Comma-separated keywords"
               maxLength={255}
-              {...register('meta_keywords')}
+              {...register("meta_keywords")}
               disabled={readOnly}
-              className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}
+              className={
+                readOnly
+                  ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0"
+                  : ""
+              }
             />
-            {errors.meta_keywords && <p className="text-sm text-rose-500">{errors.meta_keywords.message}</p>}
+            {errors.meta_keywords && (
+              <p className="text-sm text-rose-500">
+                {errors.meta_keywords.message}
+              </p>
+            )}
           </div>
 
           <div className="flex items-center gap-2 pt-1 md:col-span-2">
             <Switch
               id="is_indexable"
               checked={isIndexable}
-              onCheckedChange={(val) => setValue('is_indexable', val)}
+              onCheckedChange={(val) => setValue("is_indexable", val)}
               disabled={readOnly}
             />
             <Label htmlFor="is_indexable" className="cursor-pointer">
@@ -613,19 +752,24 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
           <div
             className={cn(
               "border-2 border-dashed rounded-xl p-8 transition-all flex flex-col items-center justify-center gap-4 text-center",
-              isOgDragging ? "border-indigo-500 bg-indigo-50/50" : "border-slate-200",
-              !readOnly && "hover:border-indigo-400 hover:bg-slate-50/50 cursor-pointer",
-              readOnly && "opacity-75 cursor-default bg-slate-50"
+              isOgDragging
+                ? "border-indigo-500 bg-indigo-50/50"
+                : "border-slate-200",
+              !readOnly &&
+                "hover:border-indigo-400 hover:bg-slate-50/50 cursor-pointer",
+              readOnly && "opacity-75 cursor-default bg-slate-50",
             )}
             onDragOver={handleOgDragOver}
             onDragLeave={handleOgDragLeave}
             onDrop={handleOgDrop}
-            onClick={() => !readOnly && document.getElementById('og-image-upload')?.click()}
+            onClick={() =>
+              !readOnly && document.getElementById("og-image-upload")?.click()
+            }
           >
             {ogPreviewUrl || ogImageKey ? (
               <div className="relative group w-full max-w-[240px] aspect-video rounded-lg overflow-hidden border border-slate-200">
                 <img
-                  src={ogPreviewUrl || resolveProductImageUrl(ogImageKey || '')}
+                  src={ogPreviewUrl || resolveProductImageUrl(ogImageKey || "")}
                   alt="OG preview"
                   className="w-full h-full object-cover"
                 />
@@ -634,8 +778,8 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setValue('og_image_key', '', { shouldDirty: true });
-                      setOgPreviewUrl('');
+                      setValue("og_image_key", "", { shouldDirty: true });
+                      setOgPreviewUrl("");
                     }}
                     className="absolute top-2 right-2 p-1.5 bg-rose-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
                   >
@@ -654,7 +798,9 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
                 </div>
                 <div>
                   <p className="font-medium text-slate-700">
-                    {uploadOgMutation.isPending ? 'Uploading...' : 'Click or drag to upload OG image'}
+                    {uploadOgMutation.isPending
+                      ? "Uploading..."
+                      : "Click or drag to upload OG image"}
                   </p>
                   <p className="text-sm">PNG, JPG or WEBP (max. 5MB)</p>
                 </div>
@@ -671,35 +817,42 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
           </div>
         </div>
       </div>
-      
+
       <div className="space-y-2">
-        <Label>Product Image <span className="text-rose-500">*</span></Label>
-        <div 
+        <Label>
+          Product Image <span className="text-rose-500">*</span>
+        </Label>
+        <div
           className={cn(
             "border-2 border-dashed rounded-xl p-8 transition-all flex flex-col items-center justify-center gap-4 text-center",
-            isDragging ? "border-indigo-500 bg-indigo-50/50" : "border-slate-200",
-            !readOnly && "hover:border-indigo-400 hover:bg-slate-50/50 cursor-pointer",
-            readOnly && "opacity-75 cursor-default bg-slate-50"
+            isDragging
+              ? "border-indigo-500 bg-indigo-50/50"
+              : "border-slate-200",
+            !readOnly &&
+              "hover:border-indigo-400 hover:bg-slate-50/50 cursor-pointer",
+            readOnly && "opacity-75 cursor-default bg-slate-50",
           )}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          onClick={() => !readOnly && document.getElementById('file-upload')?.click()}
+          onClick={() =>
+            !readOnly && document.getElementById("file-upload")?.click()
+          }
         >
           {imageKey ? (
             <div className="relative group w-full max-w-[200px] aspect-square rounded-lg overflow-hidden border border-slate-200">
-              <img 
-                src={primaryPreviewUrl || resolveProductImageUrl(imageKey)} 
-                alt="Preview" 
+              <img
+                src={primaryPreviewUrl || resolveProductImageUrl(imageKey)}
+                alt="Preview"
                 className="w-full h-full object-cover"
               />
               {!readOnly && (
-                <button 
+                <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setValue('image', '');
-                    setPrimaryPreviewUrl('');
+                    setValue("image", "");
+                    setPrimaryPreviewUrl("");
                   }}
                   className="absolute top-2 right-2 p-1.5 bg-rose-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
                 >
@@ -718,33 +871,45 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
               </div>
               <div>
                 <p className="font-medium text-slate-700">
-                  {uploadPrimaryMutation.isPending ? 'Uploading...' : 'Click or drag to upload'}
+                  {uploadPrimaryMutation.isPending
+                    ? "Uploading..."
+                    : "Click or drag to upload"}
                 </p>
                 <p className="text-sm">PNG, JPG or WEBP (max. 5MB)</p>
               </div>
             </div>
           )}
-          <input 
-            id="file-upload" 
-            type="file" 
-            className="hidden" 
+          <input
+            id="file-upload"
+            type="file"
+            className="hidden"
             accept="image/*"
             onChange={handleFileSelect}
             disabled={readOnly || uploadPrimaryMutation.isPending}
           />
         </div>
-        {errors.image && <p className="text-sm text-rose-500">{errors.image.message}</p>}
+        {errors.image && (
+          <p className="text-sm text-rose-500">{errors.image.message}</p>
+        )}
       </div>
 
       <div className="space-y-2">
-        <Label>Product Gallery <span className="text-rose-500">*</span></Label>
+        <Label>
+          Product Gallery <span className="text-rose-500">*</span>
+        </Label>
         <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-4">
           {localPreviews.map((item) => (
-            <div key={item.id} className="relative group aspect-square rounded-lg overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center">
-              <img 
-                src={item.url} 
-                alt="Gallery Item" 
-                className={cn("w-full h-full object-cover", item.isUploading && "opacity-40")}
+            <div
+              key={item.id}
+              className="relative group aspect-square rounded-lg overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center"
+            >
+              <img
+                src={item.url}
+                alt="Gallery Item"
+                className={cn(
+                  "w-full h-full object-cover",
+                  item.isUploading && "opacity-40",
+                )}
               />
               {item.isUploading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/10">
@@ -752,7 +917,7 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
                 </div>
               )}
               {!readOnly && !item.isUploading && (
-                <button 
+                <button
                   type="button"
                   onClick={() => handleRemoveGalleryImage(item.id, item.key)}
                   className="absolute top-2 right-2 p-1.5 bg-rose-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
@@ -762,28 +927,32 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
               )}
             </div>
           ))}
-          
+
           {!readOnly && (
-            <div 
+            <div
               className={cn(
                 "border-2 border-dashed rounded-lg aspect-square flex flex-col items-center justify-center gap-2 text-center cursor-pointer transition-all hover:border-indigo-400 hover:bg-slate-50/50",
-                uploadGalleryMutation.isPending ? "opacity-50 pointer-events-none" : "border-slate-200"
+                uploadGalleryMutation.isPending
+                  ? "opacity-50 pointer-events-none"
+                  : "border-slate-200",
               )}
-              onClick={() => document.getElementById('gallery-upload')?.click()}
+              onClick={() => document.getElementById("gallery-upload")?.click()}
             >
               {uploadGalleryMutation.isPending ? (
                 <Loader2 className="h-5 w-5 animate-spin text-indigo-600" />
               ) : (
                 <>
                   <Upload className="h-5 w-5 text-slate-400" />
-                  <span className="text-xs text-slate-500 font-medium px-2">Upload Gallery</span>
+                  <span className="text-xs text-slate-500 font-medium px-2">
+                    Upload Gallery
+                  </span>
                 </>
               )}
-              <input 
-                id="gallery-upload" 
-                type="file" 
+              <input
+                id="gallery-upload"
+                type="file"
                 multiple
-                className="hidden" 
+                className="hidden"
                 accept="image/*"
                 onChange={handleGalleryFileSelect}
                 disabled={uploadGalleryMutation.isPending}
@@ -792,24 +961,39 @@ export function ProductForm({ productId, initialData: propsInitialData, categori
           )}
         </div>
         {errors.gallery_image_keys && (
-          <p className="text-sm text-rose-500 mt-2">{errors.gallery_image_keys.message}</p>
+          <p className="text-sm text-rose-500 mt-2">
+            {errors.gallery_image_keys.message}
+          </p>
         )}
       </div>
 
       <div className="pt-4 flex justify-end gap-2">
         <Link href="/products">
           <Button type="button" variant="outline">
-            {readOnly ? 'Back' : 'Cancel'}
+            {readOnly ? "Back" : "Cancel"}
           </Button>
         </Link>
         {!readOnly && (
-          <Button type="submit" disabled={isPending || uploadPrimaryMutation.isPending || uploadGalleryMutation.isPending || uploadOgMutation.isPending} className="bg-indigo-600 hover:bg-indigo-700 min-w-[120px]">
+          <Button
+            type="submit"
+            disabled={
+              isPending ||
+              uploadPrimaryMutation.isPending ||
+              uploadGalleryMutation.isPending ||
+              uploadOgMutation.isPending
+            }
+            className="bg-indigo-600 hover:bg-indigo-700 min-w-[120px]"
+          >
             {isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Processing...
               </>
-            ) : (initialData ? 'Edit Product' : 'Create Product')}
+            ) : initialData ? (
+              "Edit Product"
+            ) : (
+              "Create Product"
+            )}
           </Button>
         )}
       </div>

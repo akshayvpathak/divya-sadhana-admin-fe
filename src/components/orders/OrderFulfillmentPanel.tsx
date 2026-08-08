@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { cn } from '@/lib/utils';
 import { useUpdateOrderShippingMutation } from '@/hooks/queries/useOrdersQuery';
 import {
   courierPartnerOptions,
@@ -28,15 +29,32 @@ const PARTNER_LABEL: Record<string, string> = Object.fromEntries(
   courierPartnerOptions.map((o) => [o.value, o.label]),
 );
 
+/** Single source for the status dropdown, so options and trigger can't drift. */
+const SHIPPING_STATUS_OPTIONS: { value: ShippingStatusChoice; label: string }[] = [
+  { value: 'pending', label: 'Pending' },
+  { value: 'shipped', label: 'Dispatched' },
+  { value: 'delivered', label: 'Delivered' },
+  { value: 'rto', label: 'Returned to Sender' },
+  { value: 'cancelled', label: 'Shipment Cancelled' },
+];
+
+const SHIPPING_STATUS_LABEL: Record<string, string> = Object.fromEntries(
+  SHIPPING_STATUS_OPTIONS.map((o) => [o.value, o.label]),
+);
+
+const NO_COURIER_LABEL = 'No courier';
+
 function nowIso(): string {
   return new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
 }
 
 type Props = {
   order: Order;
+  /** Drop the card chrome when rendered as a section of a larger card. */
+  embedded?: boolean;
 };
 
-export default function OrderFulfillmentPanel({ order }: Props) {
+export default function OrderFulfillmentPanel({ order, embedded = false }: Props) {
   const { mutate: updateShipping, isPending } = useUpdateOrderShippingMutation();
 
   const [status, setStatus] = useState<ShippingStatusChoice>('pending');
@@ -178,7 +196,12 @@ export default function OrderFulfillmentPanel({ order }: Props) {
   };
 
   return (
-    <div className="space-y-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div
+      className={cn(
+        'space-y-5',
+        !embedded && 'rounded-2xl border border-slate-200 bg-white p-6 shadow-sm'
+      )}
+    >
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-slate-500">
@@ -209,10 +232,13 @@ export default function OrderFulfillmentPanel({ order }: Props) {
             onValueChange={(v) => setPartner(v && v !== 'none' ? (v as CourierPartner) : '')}
           >
             <SelectTrigger className="bg-white">
-              <SelectValue placeholder="Select courier" />
+              {/* Without children SelectValue prints the raw value ("other"). */}
+              <SelectValue placeholder="Select courier">
+                {partner ? PARTNER_LABEL[partner] ?? partner : NO_COURIER_LABEL}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">No courier</SelectItem>
+              <SelectItem value="none">{NO_COURIER_LABEL}</SelectItem>
               {courierPartnerOptions.map((o) => (
                 <SelectItem key={o.value} value={o.value}>
                   {o.label}
@@ -237,14 +263,16 @@ export default function OrderFulfillmentPanel({ order }: Props) {
           <Label>Shipping status</Label>
           <Select value={status} onValueChange={(v) => { if (v) setStatus(v as ShippingStatusChoice); }}>
             <SelectTrigger className="bg-white">
-              <SelectValue />
+              <SelectValue placeholder="Select status">
+                {SHIPPING_STATUS_LABEL[status] ?? status}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="shipped">Dispatched</SelectItem>
-              <SelectItem value="delivered">Delivered</SelectItem>
-              <SelectItem value="rto">Returned to Sender</SelectItem>
-              <SelectItem value="cancelled">Shipment Cancelled</SelectItem>
+              {SHIPPING_STATUS_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
