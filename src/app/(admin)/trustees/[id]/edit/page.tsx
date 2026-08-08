@@ -70,7 +70,6 @@ export default function EditTrusteePage() {
       userEmail: asText(meta.email) || asText(meta.user_email),
       role: toNetworkRole(meta.role ?? attribution.role ?? d.role),
       notes: asText(meta.notes) || asText(d.notes),
-      commissionPercent: asText(meta.commission_percent) || asText(d.commission_percent),
       isActive: meta.is_active !== false,
       assignments: rows.map((a) => ({
         id: a.id,

@@ -1,13 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { MultiSelect } from '@/components/common/MultiSelect';
 import { useDistrictsListQuery } from '@/hooks/queries/useTerritoryQuery';
 
 type Props = {
@@ -20,7 +14,7 @@ type Props = {
 
 /**
  * District dropdown — loads up to 50 districts in one request (`paginate=50`).
- * List is scrollable when taller than the panel.
+ * Searchable, since a state can carry dozens of districts.
  */
 export function DistrictInfiniteSelect({
   stateId,
@@ -31,38 +25,23 @@ export function DistrictInfiniteSelect({
 }: Props) {
   const { data: districts = [], isLoading } = useDistrictsListQuery(stateId || null);
 
-  const selectedName = useMemo(
-    () => districts.find((d) => d.id === value)?.name,
-    [districts, value]
+  const options = useMemo(
+    () => districts.map((d) => ({ value: d.id, label: d.name })),
+    [districts]
   );
 
-  const emptyLabel = !stateId
-    ? 'Select state first'
-    : isLoading
-      ? 'Loading…'
-      : placeholder;
+  const emptyLabel = !stateId ? 'Select state first' : isLoading ? 'Loading…' : placeholder;
 
   return (
-    <Select
-      value={value}
-      onValueChange={(val) => onChange(val ?? '')}
+    <MultiSelect
+      multiple={false}
+      options={options}
+      value={value ? [value] : []}
+      onChange={(values) => onChange(values[0] ?? '')}
       disabled={disabled || !stateId || isLoading}
-    >
-      <SelectTrigger>
-        <SelectValue placeholder={emptyLabel}>
-          {selectedName || emptyLabel}
-        </SelectValue>
-      </SelectTrigger>
-      <SelectContent className="max-h-60 overflow-y-auto">
-        {districts.map((d) => (
-          <SelectItem key={d.id} value={d.id}>
-            {d.name}
-          </SelectItem>
-        ))}
-        {!isLoading && districts.length === 0 && (
-          <div className="px-3 py-2 text-sm text-slate-400">No districts found</div>
-        )}
-      </SelectContent>
-    </Select>
+      placeholder={emptyLabel}
+      searchPlaceholder="Search districts..."
+      emptyMessage="No districts found"
+    />
   );
 }

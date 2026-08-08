@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Select,
@@ -17,7 +17,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { Search, X, Check, Plus, Trash2 } from 'lucide-react';
+import { Search, X, Check } from 'lucide-react';
+import { MultiSelect } from '@/components/common/MultiSelect';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useUsersListQuery } from '@/hooks/queries/useUsersListQuery';
 import { useStatesListQuery } from '@/hooks/queries/useTerritoryQuery';
@@ -47,7 +48,6 @@ export interface TrusteeFormInitial {
   userEmail: string;
   role: NetworkRole;
   notes: string;
-  commissionPercent: string;
   isActive: boolean;
   /** Current seats, carrying the assignment id so the save can diff them. */
   assignments: { id: string; state_id: string; district_id: string | null }[];
@@ -91,8 +91,7 @@ export function PromoteTrusteeForm({
   const [selectedUser, setSelectedUser] = useState<SelectedUser | null>(null);
   const [showResults, setShowResults] = useState(false);
 
-  // Not part of the create payload, so these stay outside the zod-resolved form.
-  const [commissionPercent, setCommissionPercent] = useState(initial?.commissionPercent ?? '');
+  // Not part of the create payload, so this stays outside the zod-resolved form.
   const [isActive, setIsActive] = useState(initial?.isActive ?? true);
 
   const { data: usersData, isLoading: usersLoading } = useUsersListQuery({
@@ -116,7 +115,6 @@ export function PromoteTrusteeForm({
     setError,
     clearErrors,
     watch,
-    control,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(promoteTrusteeWithTerritorySchema),
@@ -138,25 +136,51 @@ export function PromoteTrusteeForm({
     reValidateMode: 'onSubmit',
   });
 
-  const { fields, append, remove, replace } = useFieldArray({
-    control,
-    name: 'assignments',
-  });
-
   const role = watch('role');
   const assignments = watch('assignments');
   const isDistrictPresident = role === 'district_president';
-  const canAddState = role === 'trustee' && fields.length < 3;
 
-  // Only wipe the territory rows when the role genuinely changes — a mount-time
+  const stateOptions = useMemo(
+    () => states.map((s) => ({ value: s.id, label: s.name, hint: s.code ?? undefined })),
+    [states]
+  );
+
+  const selectedStateIds = useMemo(
+    () => (assignments ?? []).map((a) => a?.state_id).filter(Boolean) as string[],
+    [assignments]
+  );
+
+  const writeAssignments = (
+    rows: { state_id: string; district_id: string | null }[]
+  ) => {
+    setValue('assignments', rows, { shouldValidate: false });
+    clearErrors('assignments');
+  };
+
+  /** Trustee: any of up to three states, order-insensitive. */
+  const setStates = (ids: string[]) =>
+    writeAssignments(ids.map((id) => ({ state_id: id, district_id: null })));
+
+  /** Single-seat roles. Re-picking the state also drops a stale district. */
+  const setSingleState = (ids: string[]) =>
+    writeAssignments([{ state_id: ids[0] ?? '', district_id: null }]);
+
+  const setDistrict = (districtId: string) =>
+    writeAssignments([
+      { state_id: selectedStateIds[0] ?? '', district_id: districtId || null },
+    ]);
+
+  // Only wipe the territory when the role genuinely changes — a mount-time
   // reset would clear the seats prefilled in edit mode.
   const prevRole = useRef(role);
   useEffect(() => {
     if (prevRole.current === role) return;
     prevRole.current = role;
     clearErrors('assignments');
-    replace([{ state_id: '', district_id: null }]);
-  }, [role, replace, clearErrors]);
+    setValue('assignments', [{ state_id: '', district_id: null }], {
+      shouldValidate: false,
+    });
+  }, [role, setValue, clearErrors]);
 
   const pickUser = (u: { id: string; email: string; first_name: string; last_name: string }) => {
     setSelectedUser({
@@ -218,7 +242,6 @@ export function PromoteTrusteeForm({
         {
           id: trusteeId,
           payload: {
-            commission_percent: commissionPercent.trim() || undefined,
             is_active: isActive,
             notes: values.notes ?? '',
           },
@@ -250,6 +273,14 @@ export function PromoteTrusteeForm({
   };
 
   const roleLabel = ROLE_OPTIONS.find((r) => r.value === role)?.label ?? 'Member';
+
+  // A single control now stands in for the whole assignments array, so the
+  // first row's field errors are the ones to surface against it.
+  const rowError = errors.assignments?.[0];
+  const stateError = rowError?.state_id?.message;
+  const districtError = rowError?.district_id?.message
+    ? String(rowError.district_id.message)
+    : undefined;
 
   return (
     <form onSubmit={handleSubmit(onValid)} className="space-y-6">
@@ -340,7 +371,6 @@ export function PromoteTrusteeForm({
               <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
                 {roleLabel}
               </div>
-              <p className="text-xs text-slate-400">Fixed after appointment.</p>
             </>
           ) : (
             <Select
@@ -367,152 +397,84 @@ export function PromoteTrusteeForm({
 
       {/* Territory */}
       <div className="space-y-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <Label>
-              Territory <span className="text-rose-500">*</span>
-            </Label>
-            <p className="mt-1 text-sm text-slate-500">
-              {role === 'district_president'
-                ? 'Assign one state and its district.'
-                : role === 'state_executive'
-                  ? 'Assign exactly one state.'
-                  : 'Assign one to three states.'}
-            </p>
+        <div>
+          <Label>
+            Territory <span className="text-rose-500">*</span>
+          </Label>
+        </div>
+
+        {/* One control per role: a capped multi-select for trustees, a single
+            searchable select otherwise (plus a district for a DP). */}
+        {isDistrictPresident ? (
+          <div className="grid grid-cols-1 items-start gap-6 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="promote-state">State</Label>
+              <MultiSelect
+                id="promote-state"
+                multiple={false}
+                options={stateOptions}
+                value={selectedStateIds}
+                onChange={setSingleState}
+                placeholder="Select state"
+                searchPlaceholder="Search states..."
+                emptyMessage="No states found"
+              />
+              {stateError && <p className="text-sm text-rose-500">{stateError}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="promote-district">District</Label>
+              <DistrictInfiniteSelect
+                stateId={selectedStateIds[0] ?? ''}
+                value={assignments?.[0]?.district_id || ''}
+                onChange={setDistrict}
+                disabled={!selectedStateIds[0]}
+              />
+              {districtError && <p className="text-sm text-rose-500">{districtError}</p>}
+            </div>
           </div>
-          {canAddState && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="shrink-0"
-              onClick={() => append({ state_id: '', district_id: null })}
-            >
-              <Plus className="h-4 w-4" /> Add state
-            </Button>
-          )}
-        </div>
+        ) : (
+          <div className="max-w-2xl space-y-2">
+            <Label htmlFor="promote-state">{role === 'trustee' ? 'States' : 'State'}</Label>
+            {role === 'trustee' ? (
+              <MultiSelect
+                id="promote-state"
+                options={stateOptions}
+                value={selectedStateIds}
+                onChange={setStates}
+                max={3}
+                placeholder="Select states"
+                searchPlaceholder="Search states..."
+                emptyMessage="No states found"
+              />
+            ) : (
+              <MultiSelect
+                id="promote-state"
+                multiple={false}
+                options={stateOptions}
+                value={selectedStateIds}
+                onChange={setSingleState}
+                placeholder="Select state"
+                searchPlaceholder="Search states..."
+                emptyMessage="No states found"
+              />
+            )}
+            {stateError && <p className="text-sm text-rose-500">{stateError}</p>}
+          </div>
+        )}
 
-        {/* District President needs a state + district pair, so that row runs full width. */}
-        <div className={`space-y-3 ${isDistrictPresident ? '' : 'max-w-2xl'}`}>
-          {fields.map((field, index) => {
-            const currentId = assignments?.[index]?.state_id ?? '';
-            const takenIds = (assignments ?? [])
-              .map((r, i) => (i === index ? '' : r?.state_id))
-              .filter(Boolean) as string[];
-            const rowErr = errors.assignments?.[index];
-            return (
-              <div
-                key={field.id}
-                className={`grid grid-cols-1 rounded-lg sm:items-start ${
-                  role === 'trustee' ? 'gap-3 sm:grid-cols-[1fr_auto]' : ''
-                }`}
-              >
-                <div
-                  className={
-                    isDistrictPresident
-                      ? 'grid grid-cols-1 items-start gap-6 sm:grid-cols-2'
-                      : 'space-y-3'
-                  }
-                >
-                  <div className="space-y-2">
-                    <Label>State</Label>
-                    <Select
-                      value={currentId}
-                      onValueChange={(val) => {
-                        setValue(`assignments.${index}.state_id`, val ?? '', {
-                          shouldValidate: false,
-                        });
-                        if (isDistrictPresident) {
-                          setValue(`assignments.${index}.district_id`, null, {
-                            shouldValidate: false,
-                          });
-                          clearErrors(`assignments.${index}.district_id`);
-                        }
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select state">
-                          {states.find((s) => s.id === currentId)?.name || 'Select state'}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent className="max-h-60 overflow-y-auto">
-                        {states.map((s) => (
-                          <SelectItem key={s.id} value={s.id} disabled={takenIds.includes(s.id)}>
-                            {s.name} {s.code ? `(${s.code})` : ''}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {rowErr?.state_id && (
-                      <p className="text-sm text-rose-500">{rowErr.state_id.message}</p>
-                    )}
-                  </div>
-
-                  {isDistrictPresident && (
-                    <div className="space-y-2">
-                      <Label>District</Label>
-                      <DistrictInfiniteSelect
-                        stateId={currentId}
-                        value={assignments?.[index]?.district_id || ''}
-                        onChange={(val) => {
-                          setValue(`assignments.${index}.district_id`, val || null, {
-                            shouldValidate: false,
-                            shouldDirty: true,
-                          });
-                          clearErrors(`assignments.${index}.district_id`);
-                        }}
-                        disabled={!currentId}
-                      />
-                      {rowErr?.district_id && (
-                        <p className="text-sm text-rose-500">{String(rowErr.district_id.message)}</p>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {role === 'trustee' && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => remove(index)}
-                    disabled={fields.length === 1}
-                    className="justify-self-end text-slate-400 hover:text-rose-600 disabled:opacity-40 sm:mt-8"
-                    title="Remove state"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            );
-          })}
-        </div>
         {typeof errors.assignments?.message === 'string' && (
           <p className="text-sm text-rose-500">{errors.assignments.message}</p>
         )}
       </div>
 
-      {/* Commission and activation — editable on an existing seat only */}
+      {/* Activation — only meaningful on an existing seat */}
       {isEdit && (
-        <div className="grid grid-cols-1 items-start gap-6 md:grid-cols-2 max-w-2xl">
-          <div className="space-y-2">
-            <Label htmlFor="promote-percent">Commission %</Label>
-            <Input
-              id="promote-percent"
-              type="number"
-              step="0.01"
-              min={0}
-              value={commissionPercent}
-              onChange={(e) => setCommissionPercent(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="promote-active">Status</Label>
-            <div className="flex h-10 items-center gap-2">
-              <Switch id="promote-active" checked={isActive} onCheckedChange={setIsActive} />
-              <span className="text-sm text-slate-600">{isActive ? 'Active' : 'Inactive'}</span>
-            </div>
+        <div className="max-w-2xl space-y-2">
+          <Label htmlFor="promote-active">Status</Label>
+          <div className="flex items-center gap-2">
+            <Switch id="promote-active" checked={isActive} onCheckedChange={setIsActive} />
+            <span className="text-sm text-slate-600">{isActive ? 'Active' : 'Inactive'}</span>
           </div>
         </div>
       )}
