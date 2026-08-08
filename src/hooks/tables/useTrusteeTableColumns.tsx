@@ -15,13 +15,32 @@ export function trusteeDisplayName(row: Trustee): string {
   return row.user_email || row.email || '—';
 }
 
+const ROLE_LABEL: Record<string, string> = {
+  trustee: 'Trustee',
+  state_executive: 'State Executive',
+  district_president: 'District President',
+};
+
+const ROLE_BADGE: Record<string, string> = {
+  trustee: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+  state_executive: 'bg-violet-50 text-violet-700 border-violet-200',
+  district_president: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+};
+
+export function networkRoleLabel(row: Pick<Trustee, 'role' | 'role_display'>): string {
+  if (row.role_display) return row.role_display;
+  if (row.role && ROLE_LABEL[row.role]) return ROLE_LABEL[row.role];
+  if (row.role) return row.role.replace(/_/g, ' ');
+  return 'Trustee';
+}
+
 interface UseTrusteeTableColumnsProps {
-  /** Resolves the state names attributed to a trustee (from active assignments). */
-  getStates: (row: Trustee) => string[];
+  /** Territory labels attributed to this member (state, or state · district). */
+  getTerritory: (row: Trustee) => string[];
 }
 
 export const useTrusteeTableColumns = ({
-  getStates,
+  getTerritory,
 }: UseTrusteeTableColumnsProps): ColumnConfig<Trustee>[] => {
   return [
     {
@@ -36,8 +55,25 @@ export const useTrusteeTableColumns = ({
       id: 'email',
       accessorKey: 'email',
       header: 'Email',
-      cellClassName: 'text-slate-500 max-w-[220px] truncate',
+      cellClassName: 'text-slate-500 max-w-[200px] truncate',
       renderCell: (row) => row.user_email || row.email || '—',
+    },
+    {
+      id: 'role',
+      header: 'Role',
+      renderCell: (row) => {
+        const role = row.role || 'trustee';
+        const label = networkRoleLabel(row);
+        const badge = ROLE_BADGE[role] ?? 'bg-slate-50 text-slate-700 border-slate-200';
+        return (
+          <span
+            className={`inline-flex max-w-[180px] truncate rounded-full border px-2 py-0.5 text-[11px] font-semibold ${badge}`}
+            title={label}
+          >
+            {label}
+          </span>
+        );
+      },
     },
     {
       id: 'referral_code',
@@ -59,14 +95,14 @@ export const useTrusteeTableColumns = ({
           : '—',
     },
     {
-      id: 'states',
-      header: 'State(s)',
+      id: 'territory',
+      header: 'Territory',
       renderCell: (row) => {
-        const states = getStates(row);
-        if (!states.length) {
+        const labels = getTerritory(row);
+        if (!labels.length) {
           return <span className="text-amber-600 text-xs font-medium">(none)</span>;
         }
-        return <span className="text-slate-700 text-sm">{states.join(', ')}</span>;
+        return <span className="text-slate-700 text-sm">{labels.join(', ')}</span>;
       },
     },
     {

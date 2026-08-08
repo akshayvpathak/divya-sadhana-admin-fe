@@ -18,6 +18,8 @@ export const trusteeSchema = z
     first_name: z.string().nullish(),
     last_name: z.string().nullish(),
     referral_code: z.string().nullish(),
+    role: z.string().nullish(),
+    role_display: z.string().nullish(),
     commission_percent: moneyLoose,
     state: z.string().nullish(),
     district: z.string().nullish(),
@@ -52,28 +54,68 @@ export const promoteTrusteeSchema = z.object({
   notes: z.string().optional(),
 });
 
-/* ------------ Atomic promote-with-territory (multi-state) ---------- */
+/* ------------ Atomic promote-with-territory (role-aware v2) ---------- */
 // POST /api/trustee/promote-with-territory/ — all-or-nothing: creates the
-// trustee AND every territory assignment in one transaction.
+// member seat AND every territory assignment in one transaction.
 
-const stateAssignmentSchema = z.object({
+export const networkRoleSchema = z.enum([
+  "trustee",
+  "state_executive",
+  "district_president",
+]);
+
+const territoryAssignmentSchema = z.object({
   state_id: z.string().min(1, "State is required"),
-  // number input yields a string; a bare number is also accepted per contract.
-  area_commission_percent: z.union([
-    z.string().min(1, "Area commission % is required"),
-    z.number(),
-  ]),
+  district_id: z.string().nullable().optional(),
 });
 
-export const promoteTrusteeWithTerritorySchema = z.object({
-  email: z.string().trim().email("Select a valid user"),
-  commission_percent: z.string().min(1, "Commission % is required"),
-  district: z.string().min(1, "District is required"),
-  notes: z.string().optional(),
-  state_assignments: z
-    .array(stateAssignmentSchema)
-    .min(1, "Add at least one state"),
-});
+export const promoteTrusteeWithTerritorySchema = z
+  .object({
+    email: z.string().trim().email("Select a valid user"),
+    role: networkRoleSchema,
+    notes: z.string().optional(),
+    assignments: z
+      .array(territoryAssignmentSchema)
+      .min(1, "Add at least one territory assignment"),
+  })
+  .superRefine((values, ctx) => {
+    const role = values.role;
+    const assignments = values.assignments;
+
+    if (role === "state_executive" && assignments.length !== 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "A State Executive holds exactly one state.",
+        path: ["assignments"],
+      });
+    }
+
+    if (role === "trustee" && assignments.length > 3) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "A trustee may hold at most 3 states.",
+        path: ["assignments"],
+      });
+    }
+
+    assignments.forEach((a, index) => {
+      if (role === "district_president") {
+        if (!a.district_id) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "District is required for a District President.",
+            path: ["assignments", index, "district_id"],
+          });
+        }
+      } else if (a.district_id) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "District may only be set for a District President.",
+          path: ["assignments", index, "district_id"],
+        });
+      }
+    });
+  });
 
 // response.data shape wrapped in the `{ message, data }` envelope.
 export const promoteTrusteeWithTerritoryResponseSchema = z
@@ -116,13 +158,7 @@ const walletSchema = z
   .partial()
   .passthrough();
 
-const byKindSchema = z
-  .object({
-    area: moneyLoose,
-    referral: moneyLoose,
-  })
-  .partial()
-  .passthrough();
+const byKindSchema = z.record(z.string(), moneyLoose);
 
 const commissionsBlockSchema = z
   .object({
@@ -160,6 +196,8 @@ export const commissionEntrySchema = z
     id: z.string(),
     order: z.any().optional(),
     order_number: z.string().nullish(),
+    source_kind: z.string().nullish(),
+    source_reference: z.string().nullish(),
     kind: z.string().nullish(),
     amount: moneyLoose,
     base_amount: moneyLoose,

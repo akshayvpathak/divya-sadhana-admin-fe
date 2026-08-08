@@ -20,39 +20,49 @@ export const useAssignmentTableColumns = ({
 }: UseAssignmentTableColumnsProps = {}): ColumnConfig<Assignment>[] => {
   const columns: ColumnConfig<Assignment>[] = [
     {
-      id: 'trustee_email',
-      accessorKey: 'trustee_email',
-      header: 'Trustee',
+      id: 'member_email',
+      header: 'Member',
       cellClassName: 'font-medium text-slate-900',
-      renderCell: (row) => row.trustee_email || '—',
+      renderCell: (row) => row.member_email || row.trustee_email || '—',
     },
     {
-      id: 'trustee_referral_code',
-      accessorKey: 'trustee_referral_code',
+      id: 'member_referral_code',
       header: 'Code',
       cellClassName: 'font-mono text-xs text-slate-500',
-      renderCell: (row) => row.trustee_referral_code || '—',
+      renderCell: (row) => row.member_referral_code || row.trustee_referral_code || '—',
+    },
+    {
+      id: 'role',
+      header: 'Role',
+      renderCell: (row) => (
+        <span className="text-sm text-slate-700">
+          {row.role_display || (row.role ? row.role.replace(/_/g, ' ') : '—')}
+        </span>
+      ),
     },
     {
       id: 'state_name',
       accessorKey: 'state_name',
-      header: 'State',
+      header: 'Territory',
       cellClassName: 'text-slate-700',
-      renderCell: (row) => row.state_name || '—',
+      renderCell: (row) => {
+        const state = row.state_name || '—';
+        return row.district_name ? `${state} · ${row.district_name}` : state;
+      },
     },
     {
       id: 'area_commission_percent',
       accessorKey: 'area_commission_percent',
-      header: 'Area %',
+      header: 'Rate override',
       headerAlign: 'right',
       cellAlign: 'right',
       cellClassName: 'font-medium text-slate-900',
-      renderCell: (row) =>
-        row.area_commission_percent !== null &&
-        row.area_commission_percent !== undefined &&
-        row.area_commission_percent !== ''
-          ? formatPercent(row.area_commission_percent)
-          : 'Default',
+      renderCell: (row) => {
+        const pct = row.commission_percent_override ?? row.area_commission_percent;
+        return pct !== null && pct !== undefined && pct !== ''
+          ? formatPercent(pct)
+          : 'Default';
+      },
     },
     {
       id: 'is_active',

@@ -78,7 +78,7 @@ export default function TrusteeDetailPage() {
   const { mutate: deleteTrustee, isPending: isDeleting } = useDeleteTrusteeMutation();
 
   const { data: dashboard, isLoading: dashboardLoading } = useTrusteeDashboardQuery(id);
-  const { data: assignmentsData } = useAssignmentsListQuery({ trustee: id, page_size: 100 });
+  const { data: assignmentsData } = useAssignmentsListQuery({ member: id, page_size: 100 });
   const { data: commissionsData, isLoading: ledgerLoading } = useTrusteeCommissionsQuery(id, {
     status: statusFilter === 'all' ? undefined : statusFilter,
     kind: kindFilter === 'all' ? undefined : kindFilter,
@@ -95,18 +95,41 @@ export default function TrusteeDetailPage() {
 
   const name =
     meta.name ||
+    meta.user_full_name ||
     [meta.first_name, meta.last_name].filter(Boolean).join(' ').trim() ||
     meta.email ||
-    'Trustee';
+    meta.user_email ||
+    'Member';
   const code = meta.referral_code ?? d.referral_code;
   const isActive = meta.is_active;
   const commissionPercent = String(meta.commission_percent ?? d.commission_percent ?? '');
+  const attribution = (d.attribution ?? {}) as Record<string, any>;
+  const role =
+    (typeof meta.role === 'string' && meta.role) ||
+    (typeof attribution.role === 'string' && attribution.role) ||
+    (typeof d.role === 'string' && d.role) ||
+    'trustee';
+  const roleDisplay =
+    meta.role_display ||
+    attribution.role_display ||
+    d.role_display ||
+    role.replace(/_/g, ' ');
+  const isTrusteeRole = role === 'trustee';
 
   const handleDelete = () => {
     deleteTrustee(id, { onSuccess: () => router.push('/trustees') });
   };
 
-  const assignments = useMemo(() => assignmentsData?.data?.results ?? [], [assignmentsData]);
+  // Prefer server filter (`member=`). Also drop any leaked rows that aren't this member.
+  const assignments = useMemo(() => {
+    const rows = assignmentsData?.data?.results ?? [];
+    return rows.filter((a) => {
+      const holder = a.member || a.trustee || '';
+      const codeMatch = a.member_referral_code || a.trustee_referral_code || '';
+      if (!holder && !codeMatch) return true; // already filtered by API
+      return holder === id || (!!code && codeMatch === code);
+    });
+  }, [assignmentsData, id, code]);
 
   const ledgerColumns = useCommissionLedgerColumns();
   const ledgerRows = commissionsData?.data?.results ?? [];
@@ -138,6 +161,9 @@ export default function TrusteeDetailPage() {
           ) : (
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-2xl font-bold text-slate-900 truncate">{name}</h1>
+              <span className="inline-flex max-w-[240px] truncate rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-700">
+                {roleDisplay}
+              </span>
               {code && (
                 <span className="font-mono text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
                   {code}
@@ -146,7 +172,9 @@ export default function TrusteeDetailPage() {
               {isActive !== undefined && <StatusBadge status={isActive} type="active" />}
             </div>
           )}
-          {meta.email && <p className="text-slate-500 text-sm mt-0.5 truncate">{meta.email}</p>}
+          {(meta.email || meta.user_email) && (
+            <p className="text-slate-500 text-sm mt-0.5 truncate">{meta.email || meta.user_email}</p>
+          )}
         </div>
         {!dashboardLoading && (
           <div className="flex shrink-0 items-center gap-2">
@@ -212,14 +240,23 @@ export default function TrusteeDetailPage() {
             <Skeleton className="h-24 rounded-2xl" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <StatCard
-              label="Area"
-              value={formatINR(byKind.area)}
-              icon={<TrendingUp className="h-3.5 w-3.5" />}
-              tone="indigo"
-            />
-            <StatCard label="Referral" value={formatINR(byKind.referral)} tone="indigo" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {Object.keys(byKind).length === 0 ? (
+              <>
+                <StatCard label="Area" value={formatINR(0)} tone="indigo" />
+                <StatCard label="Referral" value={formatINR(0)} tone="indigo" />
+              </>
+            ) : (
+              Object.entries(byKind).map(([kind, amount]) => (
+                <StatCard
+                  key={kind}
+                  label={String(kind).replace(/_/g, ' ')}
+                  value={formatINR(amount)}
+                  icon={kind === 'referral' ? undefined : <TrendingUp className="h-3.5 w-3.5" />}
+                  tone="indigo"
+                />
+              ))
+            )}
             <StatCard label="Reversed (returns)" value={formatINR(commissions.reversed_lifetime)} tone="rose" />
           </div>
         )}
@@ -256,38 +293,61 @@ export default function TrusteeDetailPage() {
 
       {/* Territory */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-bold text-slate-900">Territory</h2>
-          <Button size="sm" variant="outline" onClick={openAssign}>
-            <Plus className="h-4 w-4" /> Assign state
-          </Button>
+        <div className="flex items-center justify-between mb-4 gap-3">
+          <div>
+            <h2 className="text-sm font-bold text-slate-900">Territory</h2>
+            <p className="mt-0.5 text-xs text-slate-500">
+              {role === 'district_president'
+                ? 'District President seat (state + district).'
+                : role === 'state_executive'
+                  ? 'State Executive seat (one state).'
+                  : 'Trustee seats (up to 3 states).'}
+            </p>
+          </div>
+          {isTrusteeRole && (
+            <Button size="sm" variant="outline" onClick={openAssign}>
+              <Plus className="h-4 w-4" /> Assign state
+            </Button>
+          )}
         </div>
         {assignments.length === 0 ? (
           <p className="text-sm text-amber-600">
-            No states assigned — this trustee earns no area (15%) commission yet.
+            No territory assigned — vacant layers are retained by Admin.
           </p>
         ) : (
           <div className="flex flex-wrap gap-2">
-            {assignments.map((a) => (
-              <div
-                key={a.id}
-                className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5"
-              >
-                <span className="text-sm font-medium text-slate-800">{a.state_name || '—'}</span>
-                <span className="text-xs text-slate-500">
-                  {a.area_commission_percent ? formatPercent(a.area_commission_percent) : 'default'}
-                </span>
-                {!a.is_active && <StatusBadge status={a.is_active} type="active" />}
-                <button
-                  type="button"
-                  onClick={() => openEdit(a)}
-                  className="text-slate-400 hover:text-indigo-600"
-                  title="Edit"
+            {assignments.map((a) => {
+              const seatRole = a.role_display || a.role || roleDisplay;
+              const override = a.commission_percent_override ?? a.area_commission_percent;
+              return (
+                <div
+                  key={a.id}
+                  className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5"
                 >
-                  <Pencil className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ))}
+                  <span className="text-sm font-medium text-slate-800">
+                    {a.state_name || '—'}
+                    {a.district_name ? ` · ${a.district_name}` : ''}
+                  </span>
+                  <span className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+                    {String(seatRole).replace(/_/g, ' ')}
+                  </span>
+                  {override != null && override !== '' ? (
+                    <span className="text-xs text-slate-500">{formatPercent(override)}</span>
+                  ) : null}
+                  {!a.is_active && <StatusBadge status={a.is_active} type="active" />}
+                  {isTrusteeRole && (
+                    <button
+                      type="button"
+                      onClick={() => openEdit(a)}
+                      className="text-slate-400 hover:text-indigo-600"
+                      title="Edit"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -375,7 +435,7 @@ export default function TrusteeDetailPage() {
         isOpen={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
         title="Remove trustee?"
-        description={`This removes ${name}'s trustee role and wallet access. This cannot be undone.`}
+        description={`This removes ${name}'s network role and wallet access. This cannot be undone.`}
         confirmText={isDeleting ? 'Removing...' : 'Remove'}
         cancelText="Cancel"
         variant="destructive"

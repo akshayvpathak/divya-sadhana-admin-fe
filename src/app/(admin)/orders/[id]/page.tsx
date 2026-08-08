@@ -9,11 +9,40 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DataTable } from '@/components/common/DataTable/DataTable';
 import { formatINR } from '@/lib/currency';
+import OrderFulfillmentPanel from '@/components/orders/OrderFulfillmentPanel';
+import OrderTrackingPreview from '@/components/orders/OrderTrackingPreview';
+
+function formatAddress(order: {
+  shipping_name?: string | null;
+  shipping_phone?: string | null;
+  shipping_email?: string | null;
+  shipping_line1?: string | null;
+  shipping_line2?: string | null;
+  shipping_locality?: string | null;
+  shipping_city?: string | null;
+  shipping_state?: string | null;
+  shipping_pincode?: string | null;
+  shipping_country?: string | null;
+}): string {
+  const lines = [
+    order.shipping_name,
+    order.shipping_phone,
+    order.shipping_email,
+    order.shipping_line1,
+    order.shipping_line2,
+    order.shipping_locality,
+    [order.shipping_city, order.shipping_state, order.shipping_pincode]
+      .filter(Boolean)
+      .join(', '),
+    order.shipping_country,
+  ].filter((x) => x && String(x).trim());
+  return lines.length ? lines.join('\n') : 'No shipping address on file';
+}
 
 export default function ViewOrderPage() {
   const params = useParams();
   const id = params.id as string;
-  
+
   const { data, isLoading } = useOrderQuery(id);
   const order = data;
 
@@ -59,7 +88,7 @@ export default function ViewOrderPage() {
           <h1 className="text-3xl font-bold text-slate-900">
             {isLoading ? <Skeleton className="h-9 w-48" /> : `Order #${order?.order_number}`}
           </h1>
-          <p className="text-slate-500 mt-1">Detailed order information and summary</p>
+          <p className="text-slate-500 mt-1">Detailed order information and fulfillment</p>
         </div>
       </div>
 
@@ -71,31 +100,41 @@ export default function ViewOrderPage() {
           </div>
           <Skeleton className="h-64 w-full rounded-2xl" />
         </div>
-      ) : order && (
+      ) : order ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Left Column: Customer & Status */}
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <div className="space-y-6">
               <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Customer Details</h3>
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
+                  Customer Details
+                </h3>
                 <div className="space-y-4">
                   <div>
                     <p className="text-sm font-bold text-slate-900">
-                      {typeof order.user === 'string' ? order.user : `${order.user?.first_name} ${order.user?.last_name}`}
+                      {typeof order.user === 'string'
+                        ? order.user
+                        : `${order.user?.first_name ?? ''} ${order.user?.last_name ?? ''}`.trim() ||
+                          '—'}
                     </p>
-                    <p className="text-sm text-slate-500">{typeof order.user === 'object' && order.user?.email}</p>
+                    <p className="text-sm text-slate-500">
+                      {typeof order.user === 'object' && order.user?.email}
+                    </p>
                   </div>
                   <div className="pt-4 border-t border-slate-100">
-                    <p className="text-[10px] text-slate-400 font-bold uppercase mb-2">Shipping Address</p>
-                    <p className="text-sm text-slate-600 leading-relaxed capitalize">
-                      {order.shipping_status || 'Pending Delivery'}
+                    <p className="text-[10px] text-slate-400 font-bold uppercase mb-2">
+                      Shipping Address
+                    </p>
+                    <p className="whitespace-pre-line text-sm text-slate-600 leading-relaxed">
+                      {formatAddress(order)}
                     </p>
                   </div>
                 </div>
               </div>
 
               <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Order Status</h3>
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
+                  Order Status
+                </h3>
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <p className="text-[10px] text-slate-400 font-bold uppercase">Payment Status</p>
@@ -107,36 +146,47 @@ export default function ViewOrderPage() {
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Right Column: Financial Summary */}
-            <div className="bg-indigo-600 p-8 rounded-3xl shadow-xl shadow-indigo-100 text-white flex flex-col justify-between">
-              <h3 className="text-xs font-bold text-indigo-200 uppercase tracking-widest mb-6">Financial Summary</h3>
-              <div className="space-y-4">
-                <div className="flex justify-between text-sm">
-                  <span className="text-indigo-200">Subtotal</span>
-                  <span className="font-bold">{formatINR(order.subtotal_amount)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-indigo-200">Shipping</span>
-                  <span className="font-bold">{formatINR(order.shipping_amount)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-indigo-200">Tax</span>
-                  <span className="font-bold">{formatINR(order.tax_amount)}</span>
-                </div>
-                <div className="pt-6 mt-6 border-t border-indigo-500/50 flex justify-between items-center">
-                  <span className="font-black text-indigo-100 uppercase tracking-tighter text-lg">Total Amount</span>
-                  <span className="font-black text-white text-4xl tracking-tighter">{formatINR(order.total_amount)}</span>
+              <div className="bg-indigo-600 p-8 rounded-3xl shadow-xl shadow-indigo-100 text-white flex flex-col justify-between">
+                <h3 className="text-xs font-bold text-indigo-200 uppercase tracking-widest mb-6">
+                  Financial Summary
+                </h3>
+                <div className="space-y-4">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-indigo-200">Subtotal</span>
+                    <span className="font-bold">{formatINR(order.subtotal_amount)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-indigo-200">Shipping</span>
+                    <span className="font-bold">{formatINR(order.shipping_amount)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-indigo-200">Tax</span>
+                    <span className="font-bold">{formatINR(order.tax_amount)}</span>
+                  </div>
+                  <div className="pt-6 mt-6 border-t border-indigo-500/50 flex justify-between items-center">
+                    <span className="font-black text-indigo-100 uppercase tracking-tighter text-lg">
+                      Total Amount
+                    </span>
+                    <span className="font-black text-white text-4xl tracking-tighter">
+                      {formatINR(order.total_amount)}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
+
+            <div className="space-y-6">
+              <OrderFulfillmentPanel order={order} />
+              <OrderTrackingPreview orderId={order.id} />
+            </div>
           </div>
 
-          {/* Bottom Section: Line Items */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="p-6 border-b border-slate-100">
-              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Order Items ({order.items?.length || 0})</h3>
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                Order Items ({order.items?.length || 0})
+              </h3>
             </div>
             <DataTable
               columns={itemColumns}
@@ -146,7 +196,7 @@ export default function ViewOrderPage() {
             />
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

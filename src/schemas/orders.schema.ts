@@ -35,11 +35,70 @@ export const orderSchema = z.object({
   shiprocket_order_id: z.string().nullable().optional(),
   shiprocket_shipment_id: z.string().nullable().optional(),
   awb_code: z.string().nullable().optional(),
+  courier_partner: z.string().nullable().optional(),
   courier_name: z.string().nullable().optional(),
+  tracking_number: z.string().nullable().optional(),
   tracking_url: z.string().nullable().optional(),
   shipping_status: z.string().optional(),
+  dispatched_at: z.string().nullable().optional(),
+  delivered_at: z.string().nullable().optional(),
+  returned_at: z.string().nullable().optional(),
+  is_returned: z.boolean().optional(),
+  shipping_name: z.string().nullable().optional(),
+  shipping_phone: z.string().nullable().optional(),
+  shipping_email: z.string().nullable().optional(),
+  shipping_line1: z.string().nullable().optional(),
+  shipping_line2: z.string().nullable().optional(),
+  shipping_locality: z.string().nullable().optional(),
+  shipping_city: z.string().nullable().optional(),
+  shipping_state: z.string().nullable().optional(),
+  shipping_pincode: z.string().nullable().optional(),
+  shipping_country: z.string().nullable().optional(),
+  tracking_summary: z
+    .object({
+      shipping_status: z.string().nullable().optional(),
+      shipping_status_label: z.string().nullable().optional(),
+      is_dispatched: z.boolean().optional(),
+      is_delivered: z.boolean().optional(),
+      courier_name: z.string().nullable().optional(),
+      tracking_number: z.string().nullable().optional(),
+      estimated_delivery_max: z.string().nullable().optional(),
+    })
+    .nullable()
+    .optional(),
   user: z.union([z.string(), userSchema]).nullable().optional(),
 });
+
+export const courierPartnerOptions = [
+  { value: "india_post", label: "India Post" },
+  { value: "anjani", label: "Shree Anjani Courier" },
+  { value: "other", label: "Other Courier" },
+] as const;
+
+export type CourierPartner = (typeof courierPartnerOptions)[number]["value"];
+
+export const shippingStatusChoices = [
+  "pending",
+  "shipped",
+  "delivered",
+  "rto",
+  "cancelled",
+] as const;
+
+export type ShippingStatusChoice = (typeof shippingStatusChoices)[number];
+
+export const updateOrderShippingSchema = z.object({
+  shipping_status: z.enum(shippingStatusChoices).optional(),
+  courier_partner: z.enum(["india_post", "anjani", "other", ""]).optional(),
+  courier_name: z.string().nullable().optional(),
+  tracking_number: z.string().optional(),
+  dispatched_at: z.string().nullable().optional(),
+  delivered_at: z.string().nullable().optional(),
+  returned_at: z.string().nullable().optional(),
+  is_returned: z.boolean().optional(),
+});
+
+export type UpdateOrderShippingPayload = z.infer<typeof updateOrderShippingSchema>;
 
 export const ordersListSchema = z.object({
   message: z.string().optional(),

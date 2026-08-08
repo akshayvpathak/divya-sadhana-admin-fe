@@ -20,9 +20,10 @@ import { useTrusteesListQuery } from '@/hooks/queries/useTrusteesQuery';
 import { useAssignmentsListQuery, useStatesListQuery } from '@/hooks/queries/useTerritoryQuery';
 import { useTrusteeTableColumns } from '@/hooks/tables/useTrusteeTableColumns';
 import { Trustee } from '@/schemas/trustees.schema';
-import { CoverageAssignments } from '@/components/trustees/CoverageAssignments';
+import { CoverageTerritory } from '@/components/trustees/CoverageTerritory';
+import { RetentionReport } from '@/components/trustees/RetentionReport';
 
-type TrusteesTab = 'trustees' | 'coverage';
+type TrusteesTab = 'trustees' | 'coverage' | 'retention';
 
 export default function TrusteesPage() {
   const [page, setPage] = useState(1);
@@ -49,15 +50,17 @@ export default function TrusteesPage() {
   // Deep-link support: /trustees?tab=coverage (used by the old /territory route).
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (new URLSearchParams(window.location.search).get('tab') === 'coverage') {
-      setTab('coverage');
+    const tabParam = new URLSearchParams(window.location.search).get('tab');
+    if (tabParam === 'coverage' || tabParam === 'retention') {
+      setTab(tabParam);
     }
   }, []);
 
   const selectTab = (next: TrusteesTab) => {
     setTab(next);
     if (typeof window !== 'undefined') {
-      const url = next === 'coverage' ? '/trustees?tab=coverage' : '/trustees';
+      const url =
+        next === 'trustees' ? '/trustees' : `/trustees?tab=${next}`;
       window.history.replaceState(window.history.state, '', url);
     }
   };
@@ -82,38 +85,49 @@ export default function TrusteesPage() {
   const { data: assignmentsData } = useAssignmentsListQuery({ is_active: 'true', page_size: 200 });
   const { data: statesData } = useStatesListQuery({ is_active: 'true' });
 
-  const statesByTrustee = useMemo(() => {
+  const territoryByMember = useMemo(() => {
     const map = new Map<string, string[]>();
     const rows = assignmentsData?.data?.results ?? [];
     for (const a of rows) {
-      if (!a.state_name) continue;
-      const keys = [a.trustee, a.trustee_referral_code].filter(Boolean) as string[];
+      const state = a.state_name || '';
+      if (!state) continue;
+      const label =
+        a.role === 'district_president' && a.district_name
+          ? `${state} · ${a.district_name}`
+          : state;
+      const keys = [
+        a.member,
+        a.member_referral_code,
+        a.trustee,
+        a.trustee_referral_code,
+      ].filter(Boolean) as string[];
       for (const key of keys) {
         const arr = map.get(key) ?? [];
-        if (!arr.includes(a.state_name)) arr.push(a.state_name);
+        if (!arr.includes(label)) arr.push(label);
         map.set(key, arr);
       }
     }
     return map;
   }, [assignmentsData]);
 
-  const getStates = useMemo(
+  const getTerritory = useMemo(
     () => (row: Trustee): string[] => {
       if (Array.isArray(row.states) && row.states.length) {
         return row.states
           .map((s) => (typeof s === 'string' ? s : s?.state_name || s?.name))
           .filter(Boolean) as string[];
       }
-      const byId = statesByTrustee.get(row.id);
+      const byId = territoryByMember.get(row.id);
       if (byId?.length) return byId;
-      const byCode = row.referral_code ? statesByTrustee.get(row.referral_code) : undefined;
+      const byCode = row.referral_code ? territoryByMember.get(row.referral_code) : undefined;
       if (byCode?.length) return byCode;
+      if (row.state && row.district) return [`${row.state} · ${row.district}`];
       return row.state ? [row.state] : [];
     },
-    [statesByTrustee]
+    [territoryByMember]
   );
 
-  const columns = useTrusteeTableColumns({ getStates });
+  const columns = useTrusteeTableColumns({ getTerritory });
 
   const rows = data?.data?.results ?? [];
   const totalItems = data?.data?.count ?? rows.length;
@@ -130,12 +144,12 @@ export default function TrusteesPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Trustees</h1>
-          <p className="text-slate-500 mt-1">Promote users and monitor commission earnings</p>
+          <p className="text-slate-500 mt-1">Appoint trustees, state executives, and district presidents</p>
         </div>
         {tab === 'trustees' && (
           <Link href="/trustees/create">
             <Button className="bg-indigo-600 hover:bg-indigo-700">
-              <Plus className="h-4 w-4" /> Promote Trustee
+              <Plus className="h-4 w-4" /> Appoint member
             </Button>
           </Link>
         )}
@@ -146,6 +160,7 @@ export default function TrusteesPage() {
         {([
           { key: 'trustees' as const, label: 'Trustees' },
           { key: 'coverage' as const, label: 'Coverage' },
+          { key: 'retention' as const, label: 'Retention' },
         ]).map((t) => (
           <button
             key={t.key}
@@ -163,7 +178,9 @@ export default function TrusteesPage() {
       </div>
 
       {tab === 'coverage' ? (
-        <CoverageAssignments />
+        <CoverageTerritory />
+      ) : tab === 'retention' ? (
+        <RetentionReport />
       ) : (
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
         <div className="p-4 border-b border-slate-200 bg-slate-50 flex flex-col md:flex-row gap-4 items-center justify-between">

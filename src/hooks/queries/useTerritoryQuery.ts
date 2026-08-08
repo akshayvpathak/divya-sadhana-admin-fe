@@ -8,6 +8,12 @@ import {
   deleteAssignment,
   getAssignmentsList,
   getStatesList,
+  getDistrictsList,
+  getTerritoryCoverageList,
+  getTerritoryCoverageDetail,
+  getCommissionRetentionSummary,
+  getCommissionRetentionEntries,
+  RetentionFilters,
   updateAssignment,
 } from "@/services/territory.service";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -44,6 +50,7 @@ export const useAssignmentsListQuery = (filters: {
   search?: string;
   state?: string;
   trustee?: string;
+  member?: string;
   is_active?: string;
   sort?: string;
 } = {}) => {
@@ -58,7 +65,7 @@ export const useAssignmentsListQuery = (filters: {
         page_size: filters.page_size ?? 10,
         search: filters.search,
         state: filters.state,
-        trustee: filters.trustee,
+        member: filters.member ?? filters.trustee,
         is_active: filters.is_active,
         sort: filters.sort,
       });
@@ -127,5 +134,82 @@ export const useDeleteAssignmentMutation = () => {
     onError: (error: Error) => {
       toast.error(error.message);
     },
+  });
+};
+
+
+export const useDistrictsListQuery = (stateId: string | undefined | null) => {
+  const { accessToken } = useAuth();
+  const id = stateId?.trim() || "";
+
+  return useQuery({
+    queryKey: ["territory-districts", id],
+    queryFn: async () => {
+      if (!accessToken) throw new Error("No access token");
+      return getDistrictsList(accessToken, id);
+    },
+    enabled: !!accessToken && !!id,
+  });
+};
+
+export const useTerritoryCoverageListQuery = () => {
+  const { accessToken } = useAuth();
+
+  return useQuery({
+    queryKey: ["territory-coverage"],
+    queryFn: async () => {
+      if (!accessToken) throw new Error("No access token");
+      return getTerritoryCoverageList(accessToken);
+    },
+    enabled: !!accessToken,
+  });
+};
+
+export const useTerritoryCoverageDetailQuery = (
+  stateId: string | undefined | null,
+  enabled = true
+) => {
+  const { accessToken } = useAuth();
+  const id = stateId?.trim() || "";
+
+  return useQuery({
+    queryKey: ["territory-coverage-detail", id],
+    queryFn: async () => {
+      if (!accessToken) throw new Error("No access token");
+      return getTerritoryCoverageDetail(accessToken, id);
+    },
+    enabled: !!accessToken && !!id && enabled,
+  });
+};
+
+export const useCommissionRetentionSummaryQuery = (
+  filters: RetentionFilters = {},
+  enabled = true
+) => {
+  const { accessToken } = useAuth();
+
+  return useQuery({
+    queryKey: ["commission-retention-summary", filters],
+    queryFn: async () => {
+      if (!accessToken) throw new Error("No access token");
+      return getCommissionRetentionSummary(accessToken, filters);
+    },
+    enabled: !!accessToken && enabled,
+  });
+};
+
+export const useCommissionRetentionEntriesQuery = (
+  filters: RetentionFilters = {},
+  enabled = true
+) => {
+  const { accessToken } = useAuth();
+
+  return useQuery({
+    queryKey: ["commission-retention-entries", filters],
+    queryFn: async () => {
+      if (!accessToken) throw new Error("No access token");
+      return getCommissionRetentionEntries(accessToken, filters);
+    },
+    enabled: !!accessToken && enabled,
   });
 };

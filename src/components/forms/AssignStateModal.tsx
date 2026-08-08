@@ -254,7 +254,7 @@ export function AssignStateModal({
                 id="assign-percent"
                 type="number"
                 step="0.01"
-                placeholder="Leave blank for global default (15%)"
+                placeholder="Leave blank for global commission rate"
                 value={percent}
                 onChange={(e) => setValue('area_commission_percent', e.target.value)}
                 min={0}

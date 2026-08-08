@@ -6,6 +6,11 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { ColumnConfig } from '@/components/common/DataTable/types';
 import { formatINR } from '@/lib/currency';
 import dayjs from 'dayjs';
+import { courierPartnerOptions } from '@/schemas/orders.schema';
+
+const PARTNER_LABEL: Record<string, string> = Object.fromEntries(
+  courierPartnerOptions.map((o) => [o.value, o.label]),
+);
 
 export interface OrderRow {
   id: string;
@@ -14,6 +19,9 @@ export interface OrderRow {
   status?: string;
   payment_status?: string;
   shipping_status?: string;
+  courier_partner?: string | null;
+  courier_name?: string | null;
+  tracking_number?: string | null;
   total_amount?: number;
   created_at?: string;
 }
@@ -32,7 +40,12 @@ export const useOrderTableColumns = (): ColumnConfig<OrderRow>[] => {
       accessorKey: 'user',
       header: 'User',
       sortable: true,
-      renderCell: (row) => typeof row.user === 'string' ? row.user : row.user?.first_name ? `${row.user.first_name} ${row.user.last_name}` : 'Unknown',
+      renderCell: (row) =>
+        typeof row.user === 'string'
+          ? row.user
+          : row.user?.first_name
+            ? `${row.user.first_name} ${row.user.last_name}`
+            : 'Unknown',
     },
     {
       id: 'status',
@@ -46,14 +59,40 @@ export const useOrderTableColumns = (): ColumnConfig<OrderRow>[] => {
       accessorKey: 'payment_status',
       header: 'Payment Status',
       sortable: true,
-      renderCell: (row) => <StatusBadge status={row.payment_status || ''} type="payment_status" />,
+      renderCell: (row) => (
+        <StatusBadge status={row.payment_status || ''} type="payment_status" />
+      ),
     },
     {
       id: 'shipping_status',
       accessorKey: 'shipping_status',
-      header: 'Shipping Status',
+      header: 'Shipping',
       sortable: true,
-      renderCell: (row) => <StatusBadge status={row.shipping_status || ''} type="shipping_status" />,
+      renderCell: (row) => (
+        <StatusBadge status={row.shipping_status || ''} type="shipping_status" />
+      ),
+    },
+    {
+      id: 'courier',
+      header: 'Courier',
+      renderCell: (row) => {
+        const label =
+          row.courier_name ||
+          PARTNER_LABEL[row.courier_partner || ''] ||
+          row.courier_partner ||
+          '—';
+        return <span className="text-sm text-slate-600">{label}</span>;
+      },
+    },
+    {
+      id: 'tracking_number',
+      header: 'Tracking',
+      renderCell: (row) =>
+        row.tracking_number ? (
+          <span className="font-mono text-xs text-slate-800">{row.tracking_number}</span>
+        ) : (
+          <span className="text-slate-400">—</span>
+        ),
     },
     {
       id: 'total_amount',
@@ -61,15 +100,17 @@ export const useOrderTableColumns = (): ColumnConfig<OrderRow>[] => {
       header: 'Total Amount',
       sortable: true,
       cellClassName: 'font-medium',
-      renderCell: (row) => row.total_amount !== undefined ? formatINR(row.total_amount) : '-',
+      renderCell: (row) =>
+        row.total_amount !== undefined ? formatINR(row.total_amount) : '-',
     },
     {
       id: 'created_at',
       accessorKey: 'created_at',
-      header: 'Order Date', // Renamed "Created" to "Order Date"
+      header: 'Order Date',
       sortable: true,
       cellClassName: 'text-slate-500',
-      renderCell: (row) => row.created_at ? dayjs(row.created_at).format('MMM D, YYYY') : '-',
+      renderCell: (row) =>
+        row.created_at ? dayjs(row.created_at).format('MMM D, YYYY') : '-',
     },
     {
       id: 'actions',

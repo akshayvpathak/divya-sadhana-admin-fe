@@ -1,8 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { useOrdersListQuery } from '@/hooks/queries/useOrdersQuery';
-import { Search, Filter } from 'lucide-react';
+import {
+  useOrdersListQuery,
+  useExportOrdersCsvMutation,
+  useShippingInfoQuery,
+} from '@/hooks/queries/useOrdersQuery';
+import { Search, Filter, Download, Truck } from 'lucide-react';
 import { ClearFiltersButton } from '@/components/common/ClearFiltersButton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,7 +27,6 @@ export default function OrdersPage() {
   const [paymentStatus, setPaymentStatus] = useState('all');
   const [shippingStatus, setShippingStatus] = useState('all');
 
-  // Determine if any filter is active (ignores default sort)
   const hasActiveFilters =
     search !== '' ||
     status !== 'all' ||
@@ -39,16 +42,14 @@ export default function OrdersPage() {
     setSort('');
   };
 
-  const { data, isLoading } = useOrdersListQuery(
-    page,
-    debouncedSearch,
-    sort,
-    {
-      status: status === 'all' ? undefined : status,
-      payment_status: paymentStatus === 'all' ? undefined : paymentStatus,
-      shipping_status: shippingStatus === 'all' ? undefined : shippingStatus,
-    }
-  );
+  const { data, isLoading } = useOrdersListQuery(page, debouncedSearch, sort, {
+    status: status === 'all' ? undefined : status,
+    payment_status: paymentStatus === 'all' ? undefined : paymentStatus,
+    shipping_status: shippingStatus === 'all' ? undefined : shippingStatus,
+  });
+
+  const { data: shippingInfo } = useShippingInfoQuery();
+  const { mutate: exportCsv, isPending: exporting } = useExportOrdersCsvMutation();
 
   const handleSort = (field: string) => {
     setSort(field);
@@ -60,20 +61,49 @@ export default function OrdersPage() {
 
   return (
     <div className="space-y-6 pb-8">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Orders</h1>
-          <p className="text-slate-500 mt-1">Manage platform orders</p>
+          <p className="mt-1 text-slate-500">Manage platform orders and manual fulfillment</p>
         </div>
+        <Button
+          variant="outline"
+          disabled={exporting}
+          onClick={() => exportCsv()}
+          className="gap-2"
+        >
+          <Download className="h-4 w-4" />
+          {exporting ? 'Exporting…' : 'Export CSV'}
+        </Button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-        <div className="p-4 border-b border-slate-200 bg-slate-50 flex flex-col md:flex-row gap-4 items-center justify-between">
-          <div className="relative max-w-sm flex-1 w-full">
+      {shippingInfo ? (
+        <div className="flex items-start gap-3 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm text-indigo-950">
+          <Truck className="mt-0.5 h-4 w-4 shrink-0 text-indigo-600" />
+          <div>
+            <p className="font-semibold">Customer delivery estimate</p>
+            <p className="mt-0.5 text-indigo-900/80">
+              {shippingInfo.delivery_estimate_text}
+              {shippingInfo.measured_from === 'order_date'
+                ? ' (measured from order date, not dispatch).'
+                : ''}
+            </p>
+            <p className="mt-1 text-xs text-indigo-800/70">
+              Carriers: {shippingInfo.carriers.map((c) => c.name).join(' · ') || '—'}
+              {' · '}
+              Edit estimate copy in Django admin (API is read-only).
+            </p>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="flex flex-col items-center justify-between gap-4 border-b border-slate-200 bg-slate-50 p-4 md:flex-row">
+          <div className="relative w-full max-w-sm flex-1">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <Input
               placeholder="Search Orders..."
-              className="pl-9 bg-white w-full"
+              className="w-full bg-white pl-9"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -82,9 +112,8 @@ export default function OrdersPage() {
             />
           </div>
 
-          <div className="flex flex-wrap sm:flex-nowrap gap-2 items-center w-full md:w-auto">
-            <Filter className="h-4 w-4 text-slate-400 shrink-0" />
-            {/* Order Status */}
+          <div className="flex w-full flex-wrap items-center gap-2 sm:flex-nowrap md:w-auto">
+            <Filter className="h-4 w-4 shrink-0 text-slate-400" />
             <Select
               value={status}
               onValueChange={(val) => {
@@ -92,9 +121,9 @@ export default function OrdersPage() {
                 setPage(1);
               }}
             >
-              <SelectTrigger className="bg-white w-[150px]">
+              <SelectTrigger className="w-[150px] bg-white">
                 <SelectValue placeholder="All Statuses">
-                  {orderStatusOptions.find(o => o.value === status)?.label || 'All Statuses'}
+                  {orderStatusOptions.find((o) => o.value === status)?.label || 'All Statuses'}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -106,7 +135,6 @@ export default function OrdersPage() {
               </SelectContent>
             </Select>
 
-            {/* Payment Status */}
             <Select
               value={paymentStatus}
               onValueChange={(val) => {
@@ -114,9 +142,10 @@ export default function OrdersPage() {
                 setPage(1);
               }}
             >
-              <SelectTrigger className="bg-white w-[155px]">
+              <SelectTrigger className="w-[155px] bg-white">
                 <SelectValue placeholder="All Payment">
-                  {orderPaymentOptions.find(o => o.value === paymentStatus)?.label || 'All Payment'}
+                  {orderPaymentOptions.find((o) => o.value === paymentStatus)?.label ||
+                    'All Payment'}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -128,7 +157,6 @@ export default function OrdersPage() {
               </SelectContent>
             </Select>
 
-            {/* Shipping Status */}
             <Select
               value={shippingStatus}
               onValueChange={(val) => {
@@ -136,9 +164,10 @@ export default function OrdersPage() {
                 setPage(1);
               }}
             >
-              <SelectTrigger className="bg-white w-[200px]">
+              <SelectTrigger className="w-[200px] bg-white">
                 <SelectValue placeholder="All Shipping">
-                  {orderShippingOptions.find(o => o.value === shippingStatus)?.label || 'All Shipping'}
+                  {orderShippingOptions.find((o) => o.value === shippingStatus)?.label ||
+                    'All Shipping'}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>

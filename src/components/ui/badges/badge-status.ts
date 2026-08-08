@@ -78,10 +78,13 @@ export const paymentStatusMap: Record<string, StatusConfig> = {
 
 // Orders Shipping Status
 export const shippingStatusMap: Record<string, StatusConfig> = {
-  order_generated: badge("Order Generated", "indigo"), // distinct bg color
-  pending: badge("Pending", "info"), // sky-blue bg
-  shipped: badge("Shipped", "indigo"),
+  order_generated: badge("Order Generated", "indigo"), // legacy Shiprocket
+  awb_generated: badge("AWB Generated", "indigo"), // legacy Shiprocket
+  pending: badge("Pending", "info"),
+  shipped: badge("Dispatched", "indigo"),
   delivered: badge("Delivered", "success"),
+  rto: badge("Returned to Sender", "danger"),
+  cancelled: badge("Shipment Cancelled", "danger"),
 };
 
 // Donation Campaigns Status (Uppercase badges in tables)
@@ -169,7 +172,7 @@ export const productStatusOptions = getOptionsFromMap(activeStatusMap, ["active"
 export const productPublishedOptions = getOptionsFromMap(publishedStatusMap, ["published", "draft"], "All Published");
 export const orderStatusOptions = getOptionsFromMap(orderStatusMap, ["paid", "payment_pending"], "All Statuses");
 export const orderPaymentOptions = getOptionsFromMap(paymentStatusMap, ["paid", "pending"], "All Payment");
-export const orderShippingOptions = getOptionsFromMap(shippingStatusMap, ["order_generated", "pending"], "All Shipping");
+export const orderShippingOptions = getOptionsFromMap(shippingStatusMap, ["pending", "shipped", "delivered", "rto", "cancelled"], "All Shipping");
 export const donationStatusOptions = getOptionsFromMap(paymentStatusMap, ["paid", "pending"], "All Status");
 export const campaignStatusOptions = getOptionsFromMap(campaignStatusMap, ["draft", "active"], "All Statuses", true); // forceTitleCase=true -> "Draft", "Active"
 export const paymentPageStatusOptions = getOptionsFromMap(paymentStatusMap, ["paid", "pending"], "All Statuses");

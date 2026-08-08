@@ -7,6 +7,17 @@ import {
   Assignment,
   CreateAssignmentPayload,
   UpdateAssignmentPayload,
+  District,
+  districtSchema,
+  districtsListSchema,
+  CoverageList,
+  coverageListSchema,
+  CoverageDetail,
+  coverageDetailSchema,
+  RetentionSummary,
+  retentionSummarySchema,
+  RetentionEntries,
+  retentionEntriesSchema,
 } from "@/schemas/territory.schema";
 import { apiErrorFrom } from "@/services/auth.service";
 
@@ -90,7 +101,10 @@ interface AssignmentsListOptions {
   page_size?: number;
   search?: string;
   state?: string;
+  /** @deprecated v2 uses `member` — trustee filter is ignored/unreliable on current API */
   trustee?: string;
+  /** Network member / trustee id (v2). */
+  member?: string;
   is_active?: string;
   sort?: string;
 }
@@ -104,7 +118,9 @@ export const getAssignmentsList = async (
   if (options.page_size) params.append("page_size", String(options.page_size));
   if (options.search) params.append("search", options.search);
   if (options.state) params.append("state", options.state);
-  if (options.trustee) params.append("trustee", options.trustee);
+  // Prefer `member` — `trustee=` currently returns unfiltered rows on the live API.
+  if (options.member) params.append("member", options.member);
+  else if (options.trustee) params.append("member", options.trustee);
   if (options.is_active) params.append("is_active", options.is_active);
   if (options.sort) params.append("sort", options.sort);
 
@@ -188,4 +204,232 @@ export const deleteAssignment = async (id: string, accessToken: string) => {
     const error = await response.json().catch(() => ({ message: "" }));
     throw new Error(error.message || "Failed to delete assignment");
   }
+};
+
+
+/* ---------------------------- Districts --------------------------- */
+
+export type DistrictsPage = {
+  results: District[];
+  next: string | null;
+  count: number;
+  page: number;
+};
+
+function normalizeDistrictRows(rows: District[]): District[] {
+  return rows.filter((d) => d.is_active !== false);
+}
+
+/** One page of districts for a state. Prefer `paginate` — backend honors it (unlike page_size). */
+export const getDistrictsPage = async (
+  accessToken: string,
+  stateId: string,
+  page = 1,
+  pageSize = 50
+): Promise<DistrictsPage> => {
+  if (!stateId) return { results: [], next: null, count: 0, page };
+  const headers = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${accessToken}`,
+  };
+  const params = new URLSearchParams({
+    state_id: stateId,
+    page: String(page),
+    paginate: String(pageSize),
+  });
+  const response = await fetch(
+    `${API_BASE_URL}/territory/districts/?${params.toString()}`,
+    { method: "GET", headers }
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: "" }));
+    throw new Error(error.message || "Failed to fetch districts");
+  }
+
+  const json = await response.json();
+  const parsed = districtsListSchema.parse(json);
+  const data = parsed.data;
+
+  if (Array.isArray(data)) {
+    return {
+      results: normalizeDistrictRows(data),
+      next: null,
+      count: data.length,
+      page,
+    };
+  }
+  if (data && typeof data === "object" && "results" in data) {
+    return {
+      results: normalizeDistrictRows(data.results ?? []),
+      next: data.next ?? null,
+      count: data.count ?? (data.results?.length ?? 0),
+      page,
+    };
+  }
+  const top = json as {
+    results?: unknown;
+    next?: string | null;
+    count?: number;
+  };
+  if (Array.isArray(top.results)) {
+    const results = normalizeDistrictRows(
+      top.results.map((r) => districtSchema.parse(r))
+    );
+    return {
+      results,
+      next: top.next ?? null,
+      count: top.count ?? results.length,
+      page,
+    };
+  }
+  return { results: [], next: null, count: 0, page };
+};
+
+/** District list for a state — one request, up to 50 rows (`paginate=50`). */
+export const getDistrictsList = async (
+  accessToken: string,
+  stateId: string
+): Promise<District[]> => {
+  if (!stateId) return [];
+  const chunk = await getDistrictsPage(accessToken, stateId, 1, 50);
+  return chunk.results;
+};
+
+/* ----------------------------- Coverage --------------------------- */
+
+export const getTerritoryCoverageList = async (
+  accessToken: string
+): Promise<CoverageList> => {
+  const response = await fetch(`${API_BASE_URL}/admin/territory/coverage/`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: "" }));
+    throw new Error(error.message || "Failed to fetch territory coverage");
+  }
+
+  const json = await response.json();
+  // Accept either { data: { results } } or { results } at top level
+  if (json?.data?.results) return coverageListSchema.parse(json);
+  if (Array.isArray(json?.results)) {
+    return coverageListSchema.parse({ data: { results: json.results, count: json.count } });
+  }
+  if (Array.isArray(json?.data)) {
+    return coverageListSchema.parse({ data: { results: json.data, count: json.data.length } });
+  }
+  return coverageListSchema.parse(json);
+};
+
+export const getTerritoryCoverageDetail = async (
+  accessToken: string,
+  stateId: string
+): Promise<CoverageDetail> => {
+  const params = new URLSearchParams({ state_id: stateId, detail: "1" });
+  const response = await fetch(
+    `${API_BASE_URL}/admin/territory/coverage/?${params.toString()}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: "" }));
+    throw new Error(error.message || "Failed to fetch coverage detail");
+  }
+
+  const json = await response.json();
+  if (json?.data) return coverageDetailSchema.parse(json).data;
+  return coverageDetailSchema.parse({ data: json }).data;
+};
+
+/* ----------------------------- Retention -------------------------- */
+
+export interface RetentionFilters {
+  date_from?: string;
+  date_to?: string;
+  state_id?: string;
+  district_id?: string;
+  source_kind?: string;
+  view?: "summary" | "entries";
+}
+
+export const getCommissionRetentionSummary = async (
+  accessToken: string,
+  filters: RetentionFilters = {}
+): Promise<RetentionSummary> => {
+  const params = new URLSearchParams();
+  params.set("view", "summary");
+  if (filters.date_from) params.set("date_from", filters.date_from);
+  if (filters.date_to) params.set("date_to", filters.date_to);
+  if (filters.state_id) params.set("state_id", filters.state_id);
+  if (filters.district_id) params.set("district_id", filters.district_id);
+  if (filters.source_kind) params.set("source_kind", filters.source_kind);
+
+  const response = await fetch(
+    `${API_BASE_URL}/admin/commission/retention/?${params.toString()}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: "" }));
+    throw new Error(error.message || "Failed to fetch retention summary");
+  }
+
+  const json = await response.json();
+  if (json?.data) return retentionSummarySchema.parse(json).data;
+  return retentionSummarySchema.parse({ data: json }).data;
+};
+
+export const getCommissionRetentionEntries = async (
+  accessToken: string,
+  filters: RetentionFilters = {}
+): Promise<RetentionEntries> => {
+  const params = new URLSearchParams();
+  params.set("view", "entries");
+  if (filters.date_from) params.set("date_from", filters.date_from);
+  if (filters.date_to) params.set("date_to", filters.date_to);
+  if (filters.state_id) params.set("state_id", filters.state_id);
+  if (filters.district_id) params.set("district_id", filters.district_id);
+  if (filters.source_kind) params.set("source_kind", filters.source_kind);
+
+  const response = await fetch(
+    `${API_BASE_URL}/admin/commission/retention/?${params.toString()}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: "" }));
+    throw new Error(error.message || "Failed to fetch retention entries");
+  }
+
+  const json = await response.json();
+  if (json?.data?.results) return retentionEntriesSchema.parse(json);
+  if (Array.isArray(json?.results)) {
+    return retentionEntriesSchema.parse({
+      data: { results: json.results, count: json.count },
+    });
+  }
+  return retentionEntriesSchema.parse(json);
 };

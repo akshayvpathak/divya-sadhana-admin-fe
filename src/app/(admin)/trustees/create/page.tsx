@@ -15,9 +15,9 @@ export default function CreateTrusteePage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Promote User to Trustee</h1>
+          <h1 className="text-3xl font-bold text-slate-900">Appoint network member</h1>
           <p className="text-slate-500 mt-1">
-            A referral code and wallet are auto-created. Assign states in one step.
+            Select a user, role, and territory. Referral code and wallet are created automatically.
           </p>
         </div>
       </div>

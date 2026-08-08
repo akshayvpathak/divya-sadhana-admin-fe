@@ -1,6 +1,8 @@
 import { useAuth } from "@/context/AuthContext";
-import { getOrder, getOrdersList } from "@/services/orders.service";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getOrder, getOrdersList, updateOrderShipping, getOrderTracking, getShippingInfo, exportOrdersCsv } from "@/services/orders.service";
+import { UpdateOrderShippingPayload } from "@/schemas/orders.schema";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-toastify";
 
 export const useOrdersListQuery = (
   page: number = 1,
@@ -56,5 +58,77 @@ export const useOrderQuery = (orderId: string | null) => {
       return getOrder(orderId, accessToken);
     },
     enabled: !!accessToken && !!orderId,
+  });
+};
+
+
+export const useUpdateOrderShippingMutation = () => {
+  const { accessToken } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      orderId,
+      payload,
+    }: {
+      orderId: string;
+      payload: UpdateOrderShippingPayload;
+    }) => {
+      if (!accessToken) throw new Error("No access token");
+      return updateOrderShipping(orderId, payload, accessToken);
+    },
+    onSuccess: (order) => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["order", order.id] });
+      queryClient.invalidateQueries({ queryKey: ["order-tracking", order.id] });
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "Failed to update shipping");
+    },
+  });
+};
+
+
+export const useOrderTrackingQuery = (orderId: string | null) => {
+  const { accessToken } = useAuth();
+
+  return useQuery({
+    queryKey: ["order-tracking", orderId],
+    queryFn: async () => {
+      if (!accessToken || !orderId) throw new Error("Missing required data");
+      return getOrderTracking(orderId, accessToken);
+    },
+    enabled: !!accessToken && !!orderId,
+  });
+};
+
+export const useShippingInfoQuery = () => {
+  const { accessToken } = useAuth();
+
+  return useQuery({
+    queryKey: ["shipping-info"],
+    queryFn: async () => getShippingInfo(accessToken || undefined),
+    staleTime: 60 * 60 * 1000,
+  });
+};
+
+export const useExportOrdersCsvMutation = () => {
+  const { accessToken } = useAuth();
+
+  return useMutation({
+    mutationFn: async () => {
+      if (!accessToken) throw new Error("No access token");
+      const blob = await exportOrdersCsv(accessToken);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `orders-export-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    },
+    onSuccess: () => toast.success("Orders CSV downloaded"),
+    onError: (err: Error) => toast.error(err.message || "Export failed"),
   });
 };

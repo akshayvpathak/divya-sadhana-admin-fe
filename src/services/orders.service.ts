@@ -1,4 +1,5 @@
-import { OrdersList, ordersListSchema, Order } from "@/schemas/orders.schema";
+import { OrdersList, ordersListSchema, Order, UpdateOrderShippingPayload } from "@/schemas/orders.schema";
+import { ApiError, formatApiError } from "@/services/auth.service";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://api.divyasadhana.org/api";
@@ -80,4 +81,122 @@ export const getOrder = async (id: string, accessToken: string): Promise<Order> 
 
   const json = await response.json();
   return (json.data || json) as Order;
+};
+
+
+export const updateOrderShipping = async (
+  id: string,
+  payload: UpdateOrderShippingPayload,
+  accessToken: string
+): Promise<Order> => {
+  const response = await fetch(`${API_BASE_URL}/orders/${id}/`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+      "X-CSRFTOKEN": getCsrfToken(),
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const json = await response.json().catch(() => ({}));
+    throw new ApiError(formatApiError(json, "Failed to update order shipping"), response.status);
+  }
+
+  const json = await response.json();
+  return (json.data || json) as Order;
+};
+
+
+export type AdminOrderTracking = {
+  order_number?: string | null;
+  shipping_status: string;
+  shipping_status_label: string;
+  is_dispatched: boolean;
+  is_delivered: boolean;
+  courier: {
+    code: string | null;
+    name: string;
+    tracking_page_url: string | null;
+    tracking_mode: string;
+    instructions: string;
+    sms_tracking_hint: string;
+  } | null;
+  tracking_number: string | null;
+  tracking_url: string | null;
+  dispatched_at: string | null;
+  delivered_at: string | null;
+  estimated_delivery: { min_date: string | null; max_date: string | null; text: string } | null;
+  timeline: { key: string; label: string; at: string | null; done: boolean }[];
+  message?: string | null;
+};
+
+export const getOrderTracking = async (
+  id: string,
+  accessToken: string
+): Promise<AdminOrderTracking> => {
+  const response = await fetch(`${API_BASE_URL}/orders/${id}/tracking/`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const json = await response.json().catch(() => ({}));
+    throw new ApiError(formatApiError(json, "Failed to fetch tracking"), response.status);
+  }
+
+  const json = await response.json();
+  return (json.data || json) as AdminOrderTracking;
+};
+
+export type ShippingInfo = {
+  delivery_days_min: number | null;
+  delivery_days_max: number | null;
+  delivery_estimate_text: string;
+  delivery_estimate_short: string;
+  measured_from: string | null;
+  carriers: { code: string; name: string }[];
+};
+
+export const getShippingInfo = async (accessToken?: string): Promise<ShippingInfo> => {
+  const headers: Record<string, string> = { accept: "application/json" };
+  if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+
+  const response = await fetch(`${API_BASE_URL}/shipping/info`, {
+    method: "GET",
+    headers,
+  });
+
+  if (!response.ok) {
+    const json = await response.json().catch(() => ({}));
+    throw new Error(json.message || "Failed to fetch shipping info");
+  }
+
+  const json = await response.json();
+  return (json.data || json) as ShippingInfo;
+};
+
+/** Download orders CSV from GET /api/admin/exports/orders.csv */
+export const exportOrdersCsv = async (accessToken: string): Promise<Blob> => {
+  const response = await fetch(`${API_BASE_URL}/admin/exports/orders.csv`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      accept: "text/csv",
+    },
+  });
+
+  if (!response.ok) {
+    const json = await response.json().catch(() => ({}));
+    throw new ApiError(
+      formatApiError(json, "Failed to export orders"),
+      response.status
+    );
+  }
+
+  return response.blob();
 };

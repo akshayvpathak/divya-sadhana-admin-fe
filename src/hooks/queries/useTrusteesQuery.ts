@@ -147,7 +147,8 @@ export const usePromoteTrusteeWithTerritoryMutation = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["trustees"] });
       queryClient.invalidateQueries({ queryKey: ["territory-assignments"] });
-      toast.success("Trustee promoted");
+      queryClient.invalidateQueries({ queryKey: ["territory-coverage"] });
+      toast.success("Member appointed");
     },
     onError: (error: Error) => {
       toast.error(error.message);

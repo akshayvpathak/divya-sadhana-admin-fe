@@ -7,6 +7,11 @@ import { CommissionEntry } from '@/schemas/trustees.schema';
 import { formatINR } from '@/lib/currency';
 
 function resolveOrderLabel(row: CommissionEntry): string {
+  const anyRow = row as CommissionEntry & {
+    source_reference?: string | null;
+    source_kind?: string | null;
+  };
+  if (anyRow.source_reference) return anyRow.source_reference;
   if (row.order_number) return row.order_number;
   const order = row.order as unknown;
   if (typeof order === 'string') return order;
@@ -21,7 +26,7 @@ export const useCommissionLedgerColumns = (): ColumnConfig<CommissionEntry>[] =>
   return [
     {
       id: 'order',
-      header: 'Order',
+      header: 'Source',
       cellClassName: 'font-mono text-xs text-slate-700',
       renderCell: (row) => resolveOrderLabel(row),
     },

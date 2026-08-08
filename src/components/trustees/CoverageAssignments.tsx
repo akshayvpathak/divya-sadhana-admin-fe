@@ -50,7 +50,7 @@ export function CoverageAssignments() {
   return (
     <div className="space-y-4">
       <p className="text-sm text-slate-500">
-        Area-trustee assignments — who owns which state (15% layer). Manage
+        Area-trustee assignments — who owns which state (territory layer). Manage
         assignments from a trustee&apos;s detail page.
       </p>
 
