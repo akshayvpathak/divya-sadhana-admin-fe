@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { Eye, MapPin } from 'lucide-react';
+import { Eye, MapPin, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { ColumnConfig } from '@/components/common/DataTable/types';
@@ -97,13 +97,15 @@ export const useTrusteeTableColumns = ({
     {
       id: 'role',
       header: 'Role',
+      headerClassName: 'min-w-[240px]',
+      cellClassName: 'min-w-[240px]',
       renderCell: (row) => {
         const role = row.role || 'trustee';
         const label = networkRoleLabel(row);
         const badge = ROLE_BADGE[role] ?? 'bg-slate-50 text-slate-700 border-slate-200';
         return (
           <span
-            className={`inline-flex max-w-[180px] truncate rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${badge}`}
+            className={`inline-flex whitespace-nowrap rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${badge}`}
             title={label}
           >
             {label}
@@ -187,7 +189,7 @@ export const useTrusteeTableColumns = ({
       headerAlign: 'right',
       cellAlign: 'right',
       renderCell: (row) => (
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-2">
           <Link href={`/trustees/${row.id}`}>
             <Button
               variant="outline"
@@ -197,6 +199,17 @@ export const useTrusteeTableColumns = ({
             >
               <Eye className="h-3.5 w-3.5" />
               View
+            </Button>
+          </Link>
+          <Link href={`/trustees/${row.id}/edit`}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5 border-slate-200 text-slate-600 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+              title="Edit"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+              Edit
             </Button>
           </Link>
         </div>

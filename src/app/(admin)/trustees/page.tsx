@@ -165,7 +165,7 @@ export default function TrusteesPage() {
     <div className="space-y-6 pb-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Trustees</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Network Members</h1>
           <p className="text-slate-500 mt-1">
             Appoint trustees, state executives, and district presidents
           </p>
@@ -179,6 +179,7 @@ export default function TrusteesPage() {
         )}
       </div>
 
+      {/* Tabs: members vs cross-member coverage (former Territory page) */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="inline-flex rounded-xl bg-slate-100/90 p-1 ring-1 ring-slate-200/80">
           {TABS.map((t) => (

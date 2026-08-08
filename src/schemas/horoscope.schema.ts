@@ -119,6 +119,22 @@ export const SIGN_LABELS: Record<ZodiacSign, string> = {
   pisces: "Pisces",
 };
 
+/** Devanagari rashi names, shown alongside the English sign. */
+export const SIGN_LABELS_HI: Record<ZodiacSign, string> = {
+  aries: "मेष",
+  taurus: "वृषभ",
+  gemini: "मिथुन",
+  cancer: "कर्क",
+  leo: "सिंह",
+  virgo: "कन्या",
+  libra: "तुला",
+  scorpio: "वृश्चिक",
+  sagittarius: "धनु",
+  capricorn: "मकर",
+  aquarius: "कुम्भ",
+  pisces: "मीन",
+};
+
 export const PERIOD_LABELS: Record<HoroscopePeriod, string> = {
   daily: "Daily",
   weekly: "Weekly",
