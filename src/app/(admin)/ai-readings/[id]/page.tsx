@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronLeft, Sparkles, Image as ImageIcon, Lock, Unlock, Info, Download, Loader2 } from 'lucide-react';
+import { AlertTriangle, ChevronLeft, Sparkles, Image as ImageIcon, Lock, Unlock, Info, Download, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAiReadingQuery } from '@/hooks/queries/useAiReadingsQuery';
@@ -12,6 +12,7 @@ import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
 import { useMutation } from '@tanstack/react-query';
 import { previewService } from '@/services/preview.service';
+import { FAILURE_CLASS_META, describeFailure, durationLabel } from '@/lib/reading-failures';
 
 
 export default function AiReadingDetailPage() {
@@ -191,6 +192,78 @@ export default function AiReadingDetailPage() {
           
           {/* Main Area: Generated Report (2/3 width) */}
           <div className="lg:col-span-2 space-y-6">
+            {/*
+              Why it failed, in triage terms. Pre-check rejections are the
+              user's photo and are expected; provider errors are ours. The
+              duration tells them apart at a glance — a ~2s stop is the
+              pre-check, a ~15s one is generation falling over.
+            */}
+            {reading.status === 'failed' && (() => {
+              const meta = describeFailure(reading.failure_code);
+              const klass = FAILURE_CLASS_META[meta.klass];
+              const took = durationLabel(
+                reading.processing_started_at,
+                reading.processing_completed_at,
+              );
+              return (
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                  <div className="flex items-center gap-2 mb-4 text-slate-400">
+                    <AlertTriangle className="h-4 w-4 text-rose-500" />
+                    <span className="text-xs font-bold uppercase tracking-wider">
+                      Failure Diagnosis
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      className={`rounded-lg border px-2 py-1 text-xs font-bold ${klass.badgeClass}`}
+                    >
+                      {meta.label}
+                    </span>
+                    <span className="text-xs font-semibold text-slate-500">{klass.label}</span>
+                    <span className="text-slate-300">•</span>
+                    <span className="text-xs font-bold text-slate-700">{klass.blame}</span>
+                  </div>
+
+                  <p className="mt-3 text-sm text-slate-700">{meta.meaning}</p>
+
+                  <dl className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-150">
+                      <dt className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        Raw code
+                      </dt>
+                      <dd className="mt-0.5 font-mono text-xs text-slate-800 break-all">
+                        {reading.failure_code || '—'}
+                      </dd>
+                    </div>
+                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-150">
+                      <dt className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        Time to fail
+                      </dt>
+                      <dd className="mt-0.5 text-xs font-bold text-slate-800">
+                        {took ?? 'Not recorded'}
+                      </dd>
+                    </div>
+                  </dl>
+
+                  {reading.failure_reason && (
+                    <div className="mt-3 bg-slate-50 p-3 rounded-xl border border-slate-150">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        Reason shown to the user
+                      </p>
+                      <p className="mt-1 text-sm text-slate-700">{reading.failure_reason}</p>
+                    </div>
+                  )}
+
+                  {meta.klass === 'policy' && (
+                    <p className="mt-3 text-xs font-semibold text-slate-500">
+                      The storefront intentionally offers no retry for this code.
+                    </p>
+                  )}
+                </div>
+              );
+            })()}
+
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
               <div className="p-6 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="flex items-center gap-2">

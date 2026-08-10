@@ -7,12 +7,13 @@ export const useAiReadingsListQuery = (
   search: string = "",
   status: string = "all",
   serviceKind: string = "all",
-  sort: string = "-created_at"
+  sort: string = "-created_at",
+  failureCode: string = "all"
 ) => {
   const { accessToken } = useAuth();
 
   return useQuery({
-    queryKey: ["aiReadings", page, search, status, serviceKind, sort],
+    queryKey: ["aiReadings", page, search, status, serviceKind, sort, failureCode],
     queryFn: async () => {
       if (!accessToken) throw new Error("No access token");
       return getAiReadingsList(accessToken, {
@@ -22,6 +23,7 @@ export const useAiReadingsListQuery = (
         search_fields: "request_number,user__email",
         status,
         service__kind: serviceKind,
+        failure_code: failureCode,
         sort,
       });
     },

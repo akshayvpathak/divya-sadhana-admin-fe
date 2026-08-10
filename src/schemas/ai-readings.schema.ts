@@ -37,6 +37,9 @@ export const aiReadingUnlockSchema = z.object({
 export const aiReadingReportSchema = z.object({
   id: z.string(),
   summary: z.string().nullable().optional(),
+  /** Honest note about what the photograph did and did not allow. */
+  image_notes: z.string().nullable().optional(),
+  sections: z.array(z.record(z.string(), z.any())).nullable().optional(),
   teaser_payload: z.record(z.string(), z.any()).nullable().optional(),
   html_teaser: z.string().nullable().optional(),
   full_payload: z.record(z.string(), z.any()).nullable().optional(),

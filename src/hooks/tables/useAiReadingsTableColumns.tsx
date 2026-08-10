@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ColumnConfig } from '@/components/common/DataTable/types';
 import dayjs from 'dayjs';
 import { ModuleStatus } from '@/components/ui/badges/ModuleStatus';
+import { FAILURE_CLASS_META, describeFailure } from '@/lib/reading-failures';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export interface AiReadingRow {
@@ -69,7 +70,23 @@ export const useAiReadingsTableColumns = (): ColumnConfig<AiReadingRow>[] => {
       accessorKey: 'status',
       header: 'Status',
       sortable: true,
-      renderCell: (row) => <ReadingStatusBadge status={row.status} />,
+      // Why it failed, inline — so a run of pre-check rejections is visible
+      // without opening every row.
+      renderCell: (row) => {
+        if (row.status !== 'failed') return <ReadingStatusBadge status={row.status} />;
+        const meta = describeFailure(row.failure_code);
+        return (
+          <div className="flex flex-col items-start gap-1">
+            <ReadingStatusBadge status={row.status} />
+            <span
+              className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold ${FAILURE_CLASS_META[meta.klass].badgeClass}`}
+              title={meta.meaning}
+            >
+              {meta.label}
+            </span>
+          </div>
+        );
+      },
     },
     {
       id: 'created_at',

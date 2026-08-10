@@ -10,6 +10,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { DataTablePagination } from '@/components/common/DataTablePagination';
 import { FilterManager, useFilterManager } from '@/components/common/FilterManager';
 import { aiReadingStatusOptions } from '@/components/ui/badges/badge-status';
+import { failureCodeOptions } from '@/lib/reading-failures';
 
 export default function AiReadingsPage() {
   const [page, setPage] = useState(1);
@@ -20,6 +21,7 @@ export default function AiReadingsPage() {
   const { filters, handleFilterChange, resetFilters, hasActiveFilters: filterManagerActive } = useFilterManager({
     status: 'all',
     serviceKind: 'all',
+    failureCode: 'all',
   }, () => setPage(1));
 
   // Button visible when search or any filter is active
@@ -30,7 +32,8 @@ export default function AiReadingsPage() {
     debouncedSearch,
     filters.status,
     filters.serviceKind,
-    sort
+    sort,
+    filters.failureCode
   );
 
   const handleSort = (field: string) => {
@@ -57,6 +60,14 @@ export default function AiReadingsPage() {
       placeholder: 'All Status',
       options: aiReadingStatusOptions,
       widthClass: 'w-[140px]',
+    },
+    // Pre-check rejection rate is the metric that tells us whether the upload
+    // guidance is working, so it needs to be filterable, not just visible.
+    {
+      key: 'failureCode',
+      placeholder: 'Any failure',
+      options: failureCodeOptions,
+      widthClass: 'w-[190px]',
     },
   ];
 

@@ -15,6 +15,8 @@ interface FetchOptions {
   search_fields?: string;
   status?: string;
   service__kind?: string;
+  /** Verified supported by GET /api/admin/ai-readings/ — filters server-side. */
+  failure_code?: string;
   sort?: string;
 }
 
@@ -30,6 +32,9 @@ export const getAiReadingsList = async (
   if (options.status && options.status !== "all") params.append("status", options.status);
   if (options.service__kind && options.service__kind !== "all") {
     params.append("service__kind", options.service__kind);
+  }
+  if (options.failure_code && options.failure_code !== "all") {
+    params.append("failure_code", options.failure_code);
   }
   if (options.sort) params.append("sort", options.sort);
 
