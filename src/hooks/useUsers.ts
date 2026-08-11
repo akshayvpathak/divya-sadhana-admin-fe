@@ -33,7 +33,9 @@ export const useUsers = (page = 1, limit = 10, search = '', role = 'all', status
       return {
         data: response.data.results.map(u => ({
           id: u.id,
-          name: `${u.first_name} ${u.last_name}`,
+          // Trim: a user with no names would otherwise yield a lone space,
+          // which renders as a blank cell rather than as missing data.
+          name: `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim(),
           email: u.email,
           role: u.is_superuser ? 'admin' : 'user',
           is_active: u.is_active,
@@ -58,7 +60,7 @@ export const useUser = (id: string | null) => {
       const user = await getUser(id, accessToken);
       return {
         id: user.id,
-        name: `${user.first_name} ${user.last_name}`,
+        name: `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim(),
         first_name: user.first_name,
         last_name: user.last_name,
         email: user.email,

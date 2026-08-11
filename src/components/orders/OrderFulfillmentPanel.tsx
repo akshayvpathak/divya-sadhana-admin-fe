@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
-import { Truck } from 'lucide-react';
+import { CheckCircle2, RefreshCcw, RotateCcw, Save, Truck, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -278,49 +278,76 @@ export default function OrderFulfillmentPanel({ order, embedded = false }: Props
         </div>
       </div>
 
-      <div className="grid gap-2 sm:grid-cols-2">
-        <Button
-          className="bg-indigo-600 hover:bg-indigo-700"
-          disabled={isPending || !canDispatch}
-          onClick={handleDispatch}
-        >
-          Mark dispatched
-        </Button>
-        <Button
-          variant="outline"
-          className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-          disabled={isPending}
-          onClick={handleMarkDelivered}
-        >
-          Mark delivered
-        </Button>
-        <Button
-          variant="outline"
-          className="border-amber-300 text-amber-800 hover:bg-amber-50"
-          disabled={isPending}
-          onClick={handleMarkRto}
-        >
-          Mark RTO
-        </Button>
-        <Button
-          variant="outline"
-          className="border-rose-300 text-rose-700 hover:bg-rose-50"
-          disabled={isPending}
-          onClick={handleCancelShipment}
-        >
-          Cancel shipment
-        </Button>
-        <Button
-          variant="ghost"
-          className="sm:col-span-2 text-slate-600"
-          disabled={isPending}
-          onClick={handleResetPending}
-        >
-          Reset to pending
-        </Button>
+      {/* Quick actions sit in their own tray: progression on the left, the two
+          exception paths after a divider, and the rarely-wanted reset pushed to
+          the far end so it can't be hit by accident. */}
+      <div className="space-y-2.5 rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+        <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+          Quick actions
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            size="sm"
+            className="gap-1.5 bg-indigo-600 shadow-sm shadow-indigo-600/20 hover:bg-indigo-700"
+            disabled={isPending || !canDispatch}
+            onClick={handleDispatch}
+          >
+            <Truck className="h-3.5 w-3.5" />
+            Mark dispatched
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5 border-emerald-300 bg-white text-emerald-700 hover:bg-emerald-50"
+            disabled={isPending}
+            onClick={handleMarkDelivered}
+          >
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            Mark delivered
+          </Button>
+
+          <span aria-hidden className="mx-0.5 hidden h-6 w-px bg-slate-200 sm:block" />
+
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5 border-amber-300 bg-white text-amber-800 hover:bg-amber-50"
+            disabled={isPending}
+            onClick={handleMarkRto}
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            Mark RTO
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5 border-rose-300 bg-white text-rose-700 hover:bg-rose-50"
+            disabled={isPending}
+            onClick={handleCancelShipment}
+          >
+            <XCircle className="h-3.5 w-3.5" />
+            Cancel shipment
+          </Button>
+
+          <Button
+            size="sm"
+            variant="ghost"
+            className="gap-1.5 text-slate-500 hover:text-slate-800 sm:ml-auto"
+            disabled={isPending}
+            onClick={handleResetPending}
+          >
+            <RefreshCcw className="h-3.5 w-3.5" />
+            Reset to pending
+          </Button>
+        </div>
       </div>
 
-      <Button className="w-full" variant="secondary" disabled={isPending} onClick={handleSave}>
+      <Button
+        className="w-full gap-1.5 bg-slate-900 text-white hover:bg-slate-800"
+        disabled={isPending}
+        onClick={handleSave}
+      >
+        <Save className="h-4 w-4" />
         {isPending ? 'Saving…' : 'Save shipping details'}
       </Button>
 

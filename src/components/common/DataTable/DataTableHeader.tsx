@@ -12,9 +12,12 @@ interface DataTableHeaderProps<T> {
 }
 
 export function DataTableHeader<T>({ columns, sort, onSort }: DataTableHeaderProps<T>) {
+  const sortFieldOf = (column: ColumnConfig<T>) =>
+    column.sortKey || String(column.accessorKey || "");
+
   const handleSortClick = (column: ColumnConfig<T>) => {
     if (column.sortable && onSort) {
-      const field = column.sortKey || String(column.accessorKey || '');
+      const field = sortFieldOf(column);
       if (field) {
         if (sort === field) {
           onSort(`-${field}`);
@@ -27,42 +30,67 @@ export function DataTableHeader<T>({ columns, sort, onSort }: DataTableHeaderPro
     }
   };
 
+  const isSorted = (column: ColumnConfig<T>) => {
+    if (!column.sortable) return false;
+    const field = sortFieldOf(column);
+    return !!field && (sort === field || sort === `-${field}`);
+  };
+
   const getSortIcon = (column: ColumnConfig<T>) => {
     if (!column.sortable) return null;
-    const field = column.sortKey || String(column.accessorKey || '');
+    const field = sortFieldOf(column);
     if (!field) return null;
     if (sort === field) {
-      return <ArrowUp className="h-4 w-4 text-slate-700" />;
+      return <ArrowUp className="h-3.5 w-3.5 text-indigo-600" />;
     }
     if (sort === `-${field}`) {
-      return <ArrowDown className="h-4 w-4 text-slate-700" />;
+      return <ArrowDown className="h-3.5 w-3.5 text-indigo-600" />;
     }
-    return <ArrowUpDown className="h-4 w-4 text-slate-300 hover:text-slate-500" />;
+    // Faint until hovered, so unsorted columns don't shout for attention.
+    return (
+      <ArrowUpDown className="h-3.5 w-3.5 text-slate-300 transition-colors group-hover/th:text-slate-500" />
+    );
   };
 
   return (
-    <BaseTableHeader>
-      <TableRow className="bg-slate-50 hover:bg-slate-50">
+    // Sticky so the header survives long scrolls. A slate band separates it from
+    // the white filter bar most pages render directly above the table.
+    <BaseTableHeader className="sticky top-0 z-20 [&_tr]:border-0">
+      <TableRow className="bg-gradient-to-b from-slate-100 to-slate-50 shadow-[inset_0_-1px_0_0_rgb(203_213_225)] hover:bg-transparent">
         {columns.map((column) => {
           const alignmentClass = getAlignmentClass(column.headerAlign);
           const stickyClass = getStickyClass(column.sticky);
-          
+          const sorted = isSorted(column);
+
           return (
             <TableHead
               key={column.id}
+              aria-sort={
+                sorted
+                  ? sort?.startsWith("-")
+                    ? "descending"
+                    : "ascending"
+                  : undefined
+              }
               className={cn(
-                column.sortable ? "cursor-pointer select-none hover:bg-slate-100/50 transition-colors" : "",
+                "group/th h-auto px-5 py-3.5 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500",
+                column.sortable
+                  ? "cursor-pointer select-none transition-colors hover:bg-slate-200/60 hover:text-slate-800"
+                  : "",
+                sorted && "text-indigo-700",
                 alignmentClass,
                 stickyClass,
                 column.headerClassName
               )}
               onClick={() => handleSortClick(column)}
             >
-              <div className={cn(
-                "flex items-center gap-1",
-                column.headerAlign === "center" && "justify-center",
-                column.headerAlign === "right" && "justify-end"
-              )}>
+              <div
+                className={cn(
+                  "flex items-center gap-1.5",
+                  column.headerAlign === "center" && "justify-center",
+                  column.headerAlign === "right" && "justify-end"
+                )}
+              >
                 {column.renderHeader ? column.renderHeader() : column.header}
                 {getSortIcon(column)}
               </div>

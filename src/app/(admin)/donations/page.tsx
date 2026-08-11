@@ -20,8 +20,9 @@ export default function DonationsPage() {
 
   const { data: campaignsData } = useAllDonationCampaignsQuery();
 
+  // Paid is the default view — unpaid donations are mostly abandoned checkouts.
   const { filters, handleFilterChange, getApiParams, resetFilters, hasActiveFilters: filterManagerActive } = useFilterManager({
-    status: 'all',
+    status: 'paid',
     campaign: 'all',
   }, () => setPage(1));
 

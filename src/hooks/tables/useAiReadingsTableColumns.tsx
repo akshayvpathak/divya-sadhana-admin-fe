@@ -1,7 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { Eye } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { RowActions } from '@/components/common/RowActions';
 import { ColumnConfig } from '@/components/common/DataTable/types';
 import dayjs from 'dayjs';
 import { ModuleStatus } from '@/components/ui/badges/ModuleStatus';
@@ -99,14 +98,10 @@ export const useAiReadingsTableColumns = (): ColumnConfig<AiReadingRow>[] => {
     {
       id: 'actions',
       header: 'Actions',
+      headerAlign: 'right',
+      cellAlign: 'right',
       renderCell: (row) => (
-        <div>
-          <Link href={`/ai-readings/${row.id}`}>
-            <Button variant="ghost" size="icon" className="text-slate-400 hover:text-indigo-600">
-              <Eye className="h-4 w-4" />
-            </Button>
-          </Link>
-        </div>
+        <RowActions actions={[{ kind: 'view', href: `/ai-readings/${row.id}` }]} />
       ),
     },
   ];

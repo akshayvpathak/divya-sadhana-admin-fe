@@ -27,4 +27,6 @@ export interface DataTableProps<T> {
   onSort?: (field: string) => void;
   emptyMessage?: string;
   rowKey?: keyof T | ((row: T) => string | number);
+  /** Shown in any cell that resolves to no data. Defaults to an em dash. */
+  emptyValue?: ReactNode;
 }

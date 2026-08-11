@@ -1,9 +1,8 @@
 import React from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
-import { Eye, Edit2, Trash2, Image as ImageIcon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Image as ImageIcon } from 'lucide-react';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { RowActions } from '@/components/common/RowActions';
 import { ColumnConfig } from '@/components/common/DataTable/types';
 import { formatINR } from '@/lib/currency';
 import dayjs from 'dayjs';
@@ -104,27 +103,16 @@ export const useDonationCampaignTableColumns = ({
     {
       id: 'actions',
       header: 'Actions',
+      headerAlign: 'right',
+      cellAlign: 'right',
       renderCell: (row) => (
-        <div>
-          <Link href={`/donation-campaigns/${row.id}`}>
-            <Button variant="ghost" size="icon" className="text-slate-400 hover:text-indigo-600">
-              <Eye className="h-4 w-4" />
-            </Button>
-          </Link>
-          <Link href={`/donation-campaigns/${row.id}?mode=edit`}>
-            <Button variant="ghost" size="icon" className="text-slate-400 hover:text-indigo-600">
-              <Edit2 className="h-4 w-4" />
-            </Button>
-          </Link>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => openDeleteModal(row.id)} 
-            className="text-slate-400 hover:text-rose-600"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
+        <RowActions
+          actions={[
+            { kind: 'view', href: `/donation-campaigns/${row.id}` },
+            { kind: 'edit', href: `/donation-campaigns/${row.id}?mode=edit` },
+            { kind: 'delete', onClick: () => openDeleteModal(row.id) },
+          ]}
+        />
       ),
     },
   ];

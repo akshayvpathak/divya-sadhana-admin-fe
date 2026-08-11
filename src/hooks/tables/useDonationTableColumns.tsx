@@ -25,7 +25,8 @@ export const useDonationTableColumns = (): ColumnConfig<DonationRow>[] => {
       header: 'Reference',
       sortable: true,
       cellClassName: 'font-medium text-xs text-slate-500',
-      renderCell: (row) => row.donation_number || '-',
+      // null rather than '-' so the table's shared N/A chip stands in.
+      renderCell: (row) => row.donation_number || null,
     },
     {
       id: 'donor_name',
@@ -58,8 +59,8 @@ export const useDonationTableColumns = (): ColumnConfig<DonationRow>[] => {
       accessorKey: 'amount',
       header: 'Amount',
       sortable: true,
-      cellClassName: 'font-medium',
-      renderCell: (row) => row.amount !== undefined ? formatINR(row.amount) : '-',
+      cellClassName: 'font-semibold tabular-nums',
+      renderCell: (row) => (row.amount !== undefined ? formatINR(row.amount) : null),
     },
     {
       id: 'status',
@@ -73,8 +74,18 @@ export const useDonationTableColumns = (): ColumnConfig<DonationRow>[] => {
       accessorKey: 'paid_at',
       header: 'Date',
       sortable: true,
-      cellClassName: 'text-slate-500',
-      renderCell: (row) => row.paid_at ? dayjs(row.paid_at).format('MMM D, YYYY') : '-',
+      cellClassName: 'text-slate-500 whitespace-nowrap',
+      renderCell: (row) =>
+        row.paid_at ? (
+          <span className="flex flex-col leading-tight">
+            <span className="font-medium text-slate-700">
+              {dayjs(row.paid_at).format('MMM D, YYYY')}
+            </span>
+            <span className="text-xs text-slate-400">
+              {dayjs(row.paid_at).format('h:mm A')}
+            </span>
+          </span>
+        ) : null,
     },
   ];
 };

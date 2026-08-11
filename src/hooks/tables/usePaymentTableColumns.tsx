@@ -1,8 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
-import { Eye } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { RowActions } from '@/components/common/RowActions';
 import { ColumnConfig } from '@/components/common/DataTable/types';
 import { formatINR } from '@/lib/currency';
 import dayjs from 'dayjs';
@@ -99,14 +98,10 @@ export const usePaymentTableColumns = (): ColumnConfig<PaymentRow>[] => {
     {
       id: 'actions',
       header: 'Actions',
+      headerAlign: 'right',
+      cellAlign: 'right',
       renderCell: (row) => (
-        <div>
-          <Link href={`/payments/${row.id}`}>
-            <Button variant="ghost" size="icon" className="text-slate-400 hover:text-indigo-600">
-              <Eye className="h-4 w-4" />
-            </Button>
-          </Link>
-        </div>
+        <RowActions actions={[{ kind: 'view', href: `/payments/${row.id}` }]} />
       ),
     },
   ];

@@ -1,8 +1,8 @@
 import React from 'react';
-import Link from 'next/link';
-import { Eye, MapPin, Pencil } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { MapPin } from 'lucide-react';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { TableAvatar } from '@/components/common/TableAvatar';
+import { RowActions } from '@/components/common/RowActions';
 import { ColumnConfig } from '@/components/common/DataTable/types';
 import { Trustee } from '@/schemas/trustees.schema';
 import { formatPercent } from '@/lib/currency';
@@ -13,13 +13,6 @@ export function trusteeDisplayName(row: Trustee): string {
   const full = [row.first_name, row.last_name].filter(Boolean).join(' ').trim();
   if (full) return full;
   return row.user_email || row.email || '—';
-}
-
-function initialsFromName(name: string): string {
-  const parts = name.replace(/[^a-zA-Z\s]/g, ' ').trim().split(/\s+/).filter(Boolean);
-  if (!parts.length) return '?';
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
 }
 
 const ROLE_LABEL: Record<string, string> = {
@@ -33,23 +26,6 @@ const ROLE_BADGE: Record<string, string> = {
   state_executive: 'bg-violet-50 text-violet-700 border-violet-200',
   district_president: 'bg-emerald-50 text-emerald-700 border-emerald-200',
 };
-
-const AVATAR_TONES = [
-  'bg-indigo-100 text-indigo-700',
-  'bg-sky-100 text-sky-700',
-  'bg-emerald-100 text-emerald-700',
-  'bg-amber-100 text-amber-800',
-  'bg-rose-100 text-rose-700',
-  'bg-violet-100 text-violet-700',
-];
-
-function avatarTone(seed: string): string {
-  let hash = 0;
-  for (let i = 0; i < seed.length; i += 1) {
-    hash = (hash + seed.charCodeAt(i) * (i + 1)) % AVATAR_TONES.length;
-  }
-  return AVATAR_TONES[hash];
-}
 
 export function networkRoleLabel(row: Pick<Trustee, 'role' | 'role_display'>): string {
   if (row.role_display) return row.role_display;
@@ -78,12 +54,7 @@ export const useTrusteeTableColumns = ({
         const email = row.user_email || row.email || '';
         return (
           <div className="flex items-center gap-3 min-w-[180px]">
-            <div
-              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${avatarTone(name)}`}
-              aria-hidden
-            >
-              {initialsFromName(name)}
-            </div>
+            <TableAvatar name={name} />
             <div className="min-w-0">
               <p className="font-medium text-slate-900 truncate">{name}</p>
               {email ? (
@@ -189,30 +160,12 @@ export const useTrusteeTableColumns = ({
       headerAlign: 'right',
       cellAlign: 'right',
       renderCell: (row) => (
-        <div className="flex justify-end gap-2">
-          <Link href={`/trustees/${row.id}`}>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 gap-1.5 border-slate-200 text-slate-600 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
-              title="View"
-            >
-              <Eye className="h-3.5 w-3.5" />
-              View
-            </Button>
-          </Link>
-          <Link href={`/trustees/${row.id}/edit`}>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 gap-1.5 border-slate-200 text-slate-600 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
-              title="Edit"
-            >
-              <Pencil className="h-3.5 w-3.5" />
-              Edit
-            </Button>
-          </Link>
-        </div>
+        <RowActions
+          actions={[
+            { kind: 'view', href: `/trustees/${row.id}` },
+            { kind: 'edit', href: `/trustees/${row.id}/edit` },
+          ]}
+        />
       ),
     },
   ];

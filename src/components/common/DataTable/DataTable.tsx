@@ -12,6 +12,7 @@ export function DataTable<T>({
   onSort,
   emptyMessage,
   rowKey,
+  emptyValue,
 }: DataTableProps<T>) {
   return (
     <div className="overflow-x-auto flex-1">
@@ -23,6 +24,7 @@ export function DataTable<T>({
           isLoading={isLoading}
           emptyMessage={emptyMessage}
           rowKey={rowKey}
+          emptyValue={emptyValue}
         />
       </Table>
     </div>

@@ -1,7 +1,6 @@
 import React from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { RowActions } from '@/components/common/RowActions';
 import { ColumnConfig } from '@/components/common/DataTable/types';
 import { Assignment } from '@/schemas/territory.schema';
 import { formatPercent } from '@/lib/currency';
@@ -79,26 +78,12 @@ export const useAssignmentTableColumns = ({
       headerAlign: 'right',
       cellAlign: 'right',
       renderCell: (row) => (
-        <div className="flex justify-end">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => openEditModal(row)}
-            className="text-slate-400 hover:text-indigo-600"
-            title="Edit"
-          >
-            <Pencil className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => openDeleteModal(row.id)}
-            className="text-slate-400 hover:text-rose-600"
-            title="Remove"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
+        <RowActions
+          actions={[
+            { kind: 'edit', onClick: () => openEditModal(row) },
+            { kind: 'delete', label: 'Remove', onClick: () => openDeleteModal(row.id) },
+          ]}
+        />
       ),
     });
   }
