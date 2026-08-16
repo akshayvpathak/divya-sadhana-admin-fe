@@ -3,7 +3,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { RowActions } from '@/components/common/RowActions';
 import { ColumnConfig } from '@/components/common/DataTable/types';
 import { formatINR } from '@/lib/currency';
-import dayjs from 'dayjs';
+import { formatDate } from '@/lib/datetime';
 import { courierPartnerOptions } from '@/schemas/orders.schema';
 
 const PARTNER_LABEL: Record<string, string> = Object.fromEntries(
@@ -79,7 +79,7 @@ export const useOrderTableColumns = (): ColumnConfig<OrderRow>[] => {
           PARTNER_LABEL[row.courier_partner || ''] ||
           row.courier_partner ||
           '—';
-        return <span className="text-sm text-slate-600">{label}</span>;
+        return <span className="text-sm text-charcoal">{label}</span>;
       },
     },
     {
@@ -87,9 +87,9 @@ export const useOrderTableColumns = (): ColumnConfig<OrderRow>[] => {
       header: 'Tracking',
       renderCell: (row) =>
         row.tracking_number ? (
-          <span className="font-mono text-xs text-slate-800">{row.tracking_number}</span>
+          <span className="font-mono text-xs text-ink">{row.tracking_number}</span>
         ) : (
-          <span className="text-slate-400">—</span>
+          <span className="text-moon">—</span>
         ),
     },
     {
@@ -99,16 +99,16 @@ export const useOrderTableColumns = (): ColumnConfig<OrderRow>[] => {
       sortable: true,
       cellClassName: 'font-medium',
       renderCell: (row) =>
-        row.total_amount !== undefined ? formatINR(row.total_amount) : '-',
+        row.total_amount !== undefined ? formatINR(row.total_amount) : null,
     },
     {
       id: 'created_at',
       accessorKey: 'created_at',
       header: 'Order Date',
       sortable: true,
-      cellClassName: 'text-slate-500',
+      cellClassName: 'text-moon',
       renderCell: (row) =>
-        row.created_at ? dayjs(row.created_at).format('MMM D, YYYY') : '-',
+        formatDate(row.created_at),
     },
     {
       id: 'actions',

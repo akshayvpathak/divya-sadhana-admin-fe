@@ -94,25 +94,25 @@ export default function ProfilePage() {
     <div className="space-y-6  pb-8 max-w-4xl">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Profile</h1>
-          <p className="text-slate-500 mt-1">Manage your account settings</p>
+          <h1 className="text-3xl font-bold text-ink">Profile</h1>
+          <p className="text-moon mt-1">Manage your account settings</p>
         </div>
       </div>
 
       {/* Profile Info Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="p-8 border-b border-slate-200 flex items-center gap-6">
-          <div className="h-24 w-24 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
+      <div className="bg-surface rounded-xl shadow-sm border border-line overflow-hidden">
+        <div className="p-8 border-b border-line flex items-center gap-6">
+          <div className="h-24 w-24 rounded-full bg-tint flex items-center justify-center text-gold-press">
             <UserCircle className="h-16 w-16" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-slate-900">{user?.first_name} {user?.last_name}</h2>
-            <p className="text-slate-500">{user?.email}</p>
+            <h2 className="text-2xl font-bold text-ink">{user?.first_name} {user?.last_name}</h2>
+            <p className="text-moon">{user?.email}</p>
             <div className="mt-2 flex gap-2">
-              <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
+              <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-tint text-gold-press">
                 {user?.is_superuser ? 'Admin' : 'User'}
               </span>
-              <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${user?.is_active ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-700'
+              <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${user?.is_active ? 'bg-success-tint text-success-ink' : 'bg-cosmos text-charcoal'
                 }`}>
                 {user?.is_active ? 'Active' : 'Inactive'}
               </span>
@@ -121,7 +121,7 @@ export default function ProfilePage() {
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="p-8">
-          <h3 className="text-lg font-semibold text-slate-900 mb-6">Personal Information</h3>
+          <h3 className="text-lg font-semibold text-ink mb-6">Personal Information</h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-2">
@@ -131,12 +131,12 @@ export default function ProfilePage() {
                   <Input
                     id="firstName"
                     {...register('firstName', { required: 'First name is required' })}
-                    className="bg-white"
+                    className="bg-surface"
                   />
-                  {errors.firstName && <p className="text-sm text-rose-500">{errors.firstName.message}</p>}
+                  {errors.firstName && <p className="text-sm text-danger">{errors.firstName.message}</p>}
                 </>
               ) : (
-                <p className="text-base text-slate-900 py-2 border-b border-transparent">{user?.first_name || '-'}</p>
+                <p className="text-base text-ink py-2 border-b border-transparent">{user?.first_name || '-'}</p>
               )}
             </div>
 
@@ -147,27 +147,27 @@ export default function ProfilePage() {
                   <Input
                     id="lastName"
                     {...register('lastName', { required: 'Last name is required' })}
-                    className="bg-white"
+                    className="bg-surface"
                   />
-                  {errors.lastName && <p className="text-sm text-rose-500">{errors.lastName.message}</p>}
+                  {errors.lastName && <p className="text-sm text-danger">{errors.lastName.message}</p>}
                 </>
               ) : (
-                <p className="text-base text-slate-900 py-2 border-b border-transparent">{user?.last_name || '-'}</p>
+                <p className="text-base text-ink py-2 border-b border-transparent">{user?.last_name || '-'}</p>
               )}
             </div>
 
             <div className="space-y-2">
               <Label>Email Address</Label>
-              <p className="text-base text-slate-500 py-2 border-b border-transparent bg-slate-50 px-3 rounded-lg border border-slate-200 cursor-default">{user?.email}</p>
+              <p className="text-base text-moon py-2 border-b border-transparent bg-cream px-3 rounded-lg border border-line cursor-default">{user?.email}</p>
             </div>
 
             <div className="space-y-2">
               <Label>Phone Number</Label>
-              <p className="text-base text-slate-500 py-2 border-b border-transparent bg-slate-50 px-3 rounded-lg border border-slate-200 cursor-default">{user?.phone_number || '-'}</p>
+              <p className="text-base text-moon py-2 border-b border-transparent bg-cream px-3 rounded-lg border border-line cursor-default">{user?.phone_number || '-'}</p>
             </div>
           </div>
 
-          <div className="mt-8 pt-8 border-t border-slate-200 flex justify-end gap-2">
+          <div className="mt-8 pt-8 border-t border-line flex justify-end gap-2">
             {isEditing ? (
               <>
                 <Button
@@ -183,7 +183,6 @@ export default function ProfilePage() {
                 </Button>
                 <Button
                   type="submit"
-                  className="bg-indigo-600 hover:bg-indigo-700"
                   disabled={isPending}
                 >
                   {isPending ? (
@@ -200,7 +199,6 @@ export default function ProfilePage() {
               <Button
                 type="button"
                 onClick={() => setIsEditing(true)}
-                className="bg-indigo-600 hover:bg-indigo-700"
               >
                 Edit Profile
               </Button>
@@ -210,9 +208,9 @@ export default function ProfilePage() {
       </div>
 
       {/* Change Password Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-surface rounded-xl shadow-sm border border-line overflow-hidden">
         <form onSubmit={handleSubmitPassword(onSubmitPassword)} className="p-8">
-          <h3 className="text-lg font-semibold text-slate-900 mb-6">Change Password</h3>
+          <h3 className="text-lg font-semibold text-ink mb-6">Change Password</h3>
 
           <div className="max-w-xl space-y-6">
             <div className="space-y-2">
@@ -222,20 +220,20 @@ export default function ProfilePage() {
                   id="old_password"
                   type={showOldPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="bg-white pr-10"
+                  className="bg-surface pr-10"
                   {...registerPassword("old_password")}
                 />
                 <button
                   type="button"
                   onClick={() => setShowOldPassword(!showOldPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-moon hover:text-charcoal focus:outline-none transition-colors"
                   title={showOldPassword ? "Hide password" : "Show password"}
                 >
                   {showOldPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
               {passwordErrors.old_password && (
-                <p className="text-sm text-rose-500">{passwordErrors.old_password.message}</p>
+                <p className="text-sm text-danger">{passwordErrors.old_password.message}</p>
               )}
             </div>
 
@@ -246,20 +244,20 @@ export default function ProfilePage() {
                   id="new_password"
                   type={showNewPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="bg-white pr-10"
+                  className="bg-surface pr-10"
                   {...registerPassword("new_password")}
                 />
                 <button
                   type="button"
                   onClick={() => setShowNewPassword(!showNewPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-moon hover:text-charcoal focus:outline-none transition-colors"
                   title={showNewPassword ? "Hide password" : "Show password"}
                 >
                   {showNewPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
               {passwordErrors.new_password && (
-                <p className="text-sm text-rose-500">{passwordErrors.new_password.message}</p>
+                <p className="text-sm text-danger">{passwordErrors.new_password.message}</p>
               )}
             </div>
 
@@ -270,28 +268,27 @@ export default function ProfilePage() {
                   id="confirm_password"
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="bg-white pr-10"
+                  className="bg-surface pr-10"
                   {...registerPassword("confirm_password")}
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-moon hover:text-charcoal focus:outline-none transition-colors"
                   title={showConfirmPassword ? "Hide password" : "Show password"}
                 >
                   {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
               {passwordErrors.confirm_password && (
-                <p className="text-sm text-rose-500">{passwordErrors.confirm_password.message}</p>
+                <p className="text-sm text-danger">{passwordErrors.confirm_password.message}</p>
               )}
             </div>
           </div>
 
-          <div className="mt-8 pt-8 border-t border-slate-200 flex justify-end">
+          <div className="mt-8 pt-8 border-t border-line flex justify-end">
             <Button
               type="submit"
-              className="bg-indigo-600 hover:bg-indigo-700"
               disabled={changePasswordMutation.isPending}
             >
               {changePasswordMutation.isPending ? (

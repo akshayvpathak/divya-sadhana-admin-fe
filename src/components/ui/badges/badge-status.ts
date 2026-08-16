@@ -1,6 +1,8 @@
 import { StatusConfig } from "./types";
 
-const STATUS_CLASS = "uppercase tracking-wider text-[10px]";
+// Exported so ModuleStatus can apply it to its unmapped-status fallback too;
+// without it those badges render a size larger than the ones beside them.
+export const STATUS_CLASS = "uppercase tracking-wider text-[10px]";
 
 // ============================================================================
 // HELPERS (Makes status mapping clean and removes code duplicacy)

@@ -6,6 +6,8 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { formatINR } from '@/lib/currency';
 import OrderFulfillmentPanel from '@/components/orders/OrderFulfillmentPanel';
 import OrderTrackingPreview from '@/components/orders/OrderTrackingPreview';
+import { SectionHeading } from '@/components/common/DetailCard';
+import { Card } from '@/components/ui/card';
 import type { Order } from '@/schemas/orders.schema';
 
 type OrderItem = NonNullable<Order['items']>[number];
@@ -36,10 +38,10 @@ const ITEM_COLUMNS = [
   {
     id: 'product',
     header: 'Product',
-    headerClassName: 'px-6 py-3 text-xs font-bold uppercase text-slate-500',
+    headerClassName: 'px-6 py-3 text-xs font-bold uppercase text-moon',
     cellClassName: 'px-6 py-3',
     renderCell: (row: OrderItem) => (
-      <p className="text-sm font-bold text-slate-900">{row.product_name_snapshot}</p>
+      <p className="text-sm font-bold text-ink">{row.product_name_snapshot}</p>
     ),
   },
   {
@@ -47,8 +49,8 @@ const ITEM_COLUMNS = [
     header: 'Quantity',
     headerAlign: 'center' as const,
     cellAlign: 'center' as const,
-    headerClassName: 'px-6 py-3 text-xs font-bold uppercase text-slate-500 text-center',
-    cellClassName: 'px-6 py-3 text-sm text-slate-600 text-center font-medium',
+    headerClassName: 'px-6 py-3 text-xs font-bold uppercase text-moon text-center',
+    cellClassName: 'px-6 py-3 text-sm text-charcoal text-center font-medium',
     accessorKey: 'quantity',
   },
   {
@@ -56,26 +58,11 @@ const ITEM_COLUMNS = [
     header: 'Line Total',
     headerAlign: 'right' as const,
     cellAlign: 'right' as const,
-    headerClassName: 'px-6 py-3 text-xs font-bold uppercase text-slate-500 text-right',
-    cellClassName: 'px-6 py-3 text-sm font-black text-slate-900 text-right',
+    headerClassName: 'px-6 py-3 text-xs font-bold uppercase text-moon text-right',
+    cellClassName: 'px-6 py-3 text-sm font-black text-ink text-right',
     renderCell: (row: OrderItem) => formatINR(row.line_total),
   },
 ];
-
-function SectionHeading({
-  icon,
-  children,
-}: {
-  icon: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400">
-      {icon}
-      {children}
-    </h3>
-  );
-}
 
 /**
  * The whole order detail view as one card. Previously six separate cards across
@@ -84,26 +71,26 @@ function SectionHeading({
  */
 export default function OrderDetailCard({ order }: { order: Order }) {
   return (
-    <div className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <Card divided>
       {/* At-a-glance: the two statuses and the headline total */}
-      <div className="flex flex-wrap items-center gap-x-10 gap-y-4 bg-slate-50/70 px-6 py-4">
+      <div className="flex flex-wrap items-center gap-x-10 gap-y-4 bg-cream px-6 py-4">
         <div className="space-y-1.5">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-moon">
             Payment Status
           </p>
           <StatusBadge status={order.payment_status} type="payment_status" />
         </div>
         <div className="space-y-1.5">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-moon">
             Shipping Status
           </p>
           <StatusBadge status={order.shipping_status} type="shipping_status" />
         </div>
         <div className="ml-auto text-right">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-moon">
             Total Amount
           </p>
-          <p className="text-2xl font-black tracking-tight text-indigo-600">
+          <p className="text-2xl font-black tracking-tight text-gold-press">
             {formatINR(order.total_amount)}
           </p>
         </div>
@@ -130,16 +117,16 @@ export default function OrderDetailCard({ order }: { order: Order }) {
             Customer Details
           </SectionHeading>
           <div>
-            <p className="text-sm font-bold text-slate-900">{customerName(order)}</p>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm font-bold text-ink">{customerName(order)}</p>
+            <p className="text-sm text-moon">
               {typeof order.user === 'object' && order.user?.email}
             </p>
           </div>
-          <div className="border-t border-slate-100 pt-3">
-            <p className="mb-2 text-[10px] font-bold uppercase text-slate-400">
+          <div className="border-t border-line/60 pt-3">
+            <p className="mb-2 text-[10px] font-bold uppercase text-moon">
               Shipping Address
             </p>
-            <p className="whitespace-pre-line text-sm leading-relaxed text-slate-600">
+            <p className="whitespace-pre-line text-sm leading-relaxed text-charcoal">
               {formatAddress(order)}
             </p>
           </div>
@@ -151,26 +138,26 @@ export default function OrderDetailCard({ order }: { order: Order }) {
           </SectionHeading>
           <dl className="space-y-2.5">
             <div className="flex justify-between text-sm">
-              <dt className="text-slate-500">Subtotal</dt>
-              <dd className="font-semibold text-slate-900">
+              <dt className="text-moon">Subtotal</dt>
+              <dd className="font-semibold text-ink">
                 {formatINR(order.subtotal_amount)}
               </dd>
             </div>
             <div className="flex justify-between text-sm">
-              <dt className="text-slate-500">Shipping</dt>
-              <dd className="font-semibold text-slate-900">
+              <dt className="text-moon">Shipping</dt>
+              <dd className="font-semibold text-ink">
                 {formatINR(order.shipping_amount)}
               </dd>
             </div>
             <div className="flex justify-between text-sm">
-              <dt className="text-slate-500">Tax</dt>
-              <dd className="font-semibold text-slate-900">{formatINR(order.tax_amount)}</dd>
+              <dt className="text-moon">Tax</dt>
+              <dd className="font-semibold text-ink">{formatINR(order.tax_amount)}</dd>
             </div>
-            <div className="flex items-center justify-between border-t border-slate-200 pt-3">
-              <dt className="text-sm font-bold uppercase tracking-tight text-slate-700">
+            <div className="flex items-center justify-between border-t border-line pt-3">
+              <dt className="text-sm font-bold uppercase tracking-tight text-charcoal">
                 Total Amount
               </dt>
-              <dd className="text-xl font-black tracking-tight text-indigo-600">
+              <dd className="text-xl font-black tracking-tight text-gold-press">
                 {formatINR(order.total_amount)}
               </dd>
             </div>
@@ -185,9 +172,9 @@ export default function OrderDetailCard({ order }: { order: Order }) {
       </div>
 
       {/* Then confirm what the customer will see */}
-      <div className="bg-slate-50/70 px-6 py-5">
+      <div className="bg-cream px-6 py-5">
         <OrderTrackingPreview orderId={order.id} embedded />
       </div>
-    </div>
+    </Card>
   );
 }

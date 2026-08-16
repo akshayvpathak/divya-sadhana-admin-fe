@@ -5,7 +5,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { RowActions } from '@/components/common/RowActions';
 import { ColumnConfig } from '@/components/common/DataTable/types';
 import { formatINR } from '@/lib/currency';
-import dayjs from 'dayjs';
+import { formatDate } from '@/lib/datetime';
 
 export interface DonationCampaignRow {
   id: string;
@@ -34,7 +34,7 @@ export const useDonationCampaignTableColumns = ({
       sortable: true,
       renderCell: (row) => (
         <div className="flex items-center gap-3">
-          <div className="relative h-10 w-10 rounded-md overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
+          <div className="relative h-10 w-10 rounded-md overflow-hidden bg-cosmos shrink-0 border border-line">
             {row.cover_image_url ? (
               <Image 
                 src={row.cover_image_url} 
@@ -45,14 +45,14 @@ export const useDonationCampaignTableColumns = ({
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
-                <ImageIcon className="h-5 w-5 text-slate-300" />
+                <ImageIcon className="h-5 w-5 text-line" />
               </div>
             )}
           </div>
           <div className="flex flex-col max-w-[250px]">
             <span className="font-medium truncate">{row.title}</span>
             <span 
-              className="text-xs text-slate-500 overflow-hidden whitespace-nowrap text-ellipsis [&>*]:inline"
+              className="text-xs text-moon overflow-hidden whitespace-nowrap text-ellipsis [&>*]:inline"
               dangerouslySetInnerHTML={{ __html: row.description || '' }}
             />
           </div>
@@ -64,7 +64,7 @@ export const useDonationCampaignTableColumns = ({
       accessorKey: 'target_amount',
       header: 'Target',
       sortable: true,
-      cellClassName: 'font-medium text-slate-900',
+      cellClassName: 'font-medium text-ink',
       renderCell: (row) => formatINR(row.target_amount),
     },
     {
@@ -76,9 +76,9 @@ export const useDonationCampaignTableColumns = ({
             <span>{formatINR(row.raised_amount)}</span>
             <span>{row.progress_percent}%</span>
           </div>
-          <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+          <div className="h-1.5 w-full bg-cosmos rounded-full overflow-hidden">
             <div 
-              className="h-full bg-indigo-600 transition-all duration-500" 
+              className="h-full bg-gold-deep transition-all duration-500" 
               style={{ width: `${Math.min(Number(row.progress_percent), 100)}%` }}
             />
           </div>
@@ -97,8 +97,8 @@ export const useDonationCampaignTableColumns = ({
       accessorKey: 'ends_at',
       header: 'Ends At',
       sortable: true,
-      cellClassName: 'text-slate-500',
-      renderCell: (row) => row.ends_at ? dayjs(row.ends_at).format('MMM D, YYYY') : '-',
+      cellClassName: 'text-moon',
+      renderCell: (row) => formatDate(row.ends_at),
     },
     {
       id: 'actions',

@@ -1,5 +1,5 @@
 import React from 'react';
-import dayjs from 'dayjs';
+import { formatDate } from '@/lib/datetime';
 import { ColumnConfig } from '@/components/common/DataTable/types';
 import { Withdrawal } from '@/schemas/withdrawals.schema';
 import { formatINR } from '@/lib/currency';
@@ -18,6 +18,7 @@ export function withdrawalTrusteeName(row: Withdrawal): string {
     if (full) return full;
     if (typeof t.email === 'string') return t.email;
   }
+  // Composed cell (name over email), so a string is required here.
   return row.trustee_email || '—';
 }
 
@@ -52,7 +53,7 @@ export const useWithdrawalTableColumns = (): ColumnConfig<Withdrawal>[] => {
     {
       id: 'trustee',
       header: 'Trustee',
-      cellClassName: 'font-medium text-slate-900',
+      cellClassName: 'font-medium text-ink',
       renderCell: (row) => {
         const name = withdrawalTrusteeName(row);
         const email = row.trustee_email;
@@ -60,7 +61,7 @@ export const useWithdrawalTableColumns = (): ColumnConfig<Withdrawal>[] => {
           <div className="flex flex-col">
             <span>{name}</span>
             {email && email !== name && (
-              <span className="text-xs text-slate-400">{email}</span>
+              <span className="text-xs text-moon">{email}</span>
             )}
           </div>
         );
@@ -72,7 +73,7 @@ export const useWithdrawalTableColumns = (): ColumnConfig<Withdrawal>[] => {
       header: 'Amount',
       headerAlign: 'right',
       cellAlign: 'right',
-      cellClassName: 'font-medium text-slate-900',
+      cellClassName: 'font-medium text-ink',
       renderCell: (row) =>
         row.amount !== null && row.amount !== undefined
           ? formatINR(row.amount)
@@ -85,9 +86,9 @@ export const useWithdrawalTableColumns = (): ColumnConfig<Withdrawal>[] => {
         const detail = payoutDetail(row);
         return (
           <div className="flex flex-col">
-            <span className="text-slate-700 text-sm">{methodLabel(row.method)}</span>
+            <span className="text-charcoal text-sm">{methodLabel(row.method)}</span>
             {detail && (
-              <span className="font-mono text-xs text-slate-400 max-w-[240px] truncate">
+              <span className="font-mono text-xs text-moon max-w-[240px] truncate">
                 {detail}
               </span>
             )}
@@ -105,9 +106,9 @@ export const useWithdrawalTableColumns = (): ColumnConfig<Withdrawal>[] => {
       id: 'created_at',
       accessorKey: 'created_at',
       header: 'Requested',
-      cellClassName: 'text-slate-500',
+      cellClassName: 'text-moon',
       renderCell: (row) =>
-        row.created_at ? dayjs(row.created_at).format('MMM D, YYYY') : '—',
+        formatDate(row.created_at),
     },
     {
       id: 'actions',

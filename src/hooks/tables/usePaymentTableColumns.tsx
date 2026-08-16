@@ -4,7 +4,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { RowActions } from '@/components/common/RowActions';
 import { ColumnConfig } from '@/components/common/DataTable/types';
 import { formatINR } from '@/lib/currency';
-import dayjs from 'dayjs';
+import { formatDate } from '@/lib/datetime';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export interface PaymentRow {
@@ -28,7 +28,7 @@ export const usePaymentTableColumns = (): ColumnConfig<PaymentRow>[] => {
       accessorKey: 'internal_payment_ref',
       header: 'Reference',
       sortable: true,
-      cellClassName: 'font-medium text-slate-500 text-xs',
+      cellClassName: 'font-medium text-moon text-xs',
     },
     {
       id: 'user',
@@ -45,7 +45,7 @@ export const usePaymentTableColumns = (): ColumnConfig<PaymentRow>[] => {
           const orderId = typeof row.order === 'object' ? row.order.id : row.order;
           const orderNum = typeof row.order === 'object' ? row.order.order_number : null;
           return (
-            <Link href={`/orders/${orderId}`} className="text-indigo-600 hover:text-indigo-900 font-medium hover:underline">
+            <Link href={`/orders/${orderId}`} className="text-gold-press hover:text-ink font-medium hover:underline">
               Order {orderNum ? `#${orderNum}` : ''}
             </Link>
           );
@@ -53,12 +53,12 @@ export const usePaymentTableColumns = (): ColumnConfig<PaymentRow>[] => {
         if (row.donation) {
           const donationNum = typeof row.donation === 'object' ? row.donation.donation_number : null;
           return (
-            <span className="text-slate-600 font-medium">
+            <span className="text-charcoal font-medium">
               Donation {donationNum ? `#${donationNum}` : ''}
             </span>
           );
         }
-        return <span className="text-slate-400 italic">None</span>;
+        return <span className="text-moon italic">None</span>;
       }
     },
     {
@@ -67,7 +67,7 @@ export const usePaymentTableColumns = (): ColumnConfig<PaymentRow>[] => {
       header: 'Provider',
       sortable: true,
       renderCell: (row) => (
-        <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-bold uppercase">
+        <span className="px-2 py-0.5 rounded bg-cosmos text-charcoal text-[10px] font-bold uppercase">
           {row.provider || 'N/A'}
         </span>
       ),
@@ -78,7 +78,7 @@ export const usePaymentTableColumns = (): ColumnConfig<PaymentRow>[] => {
       header: 'Amount',
       sortable: true,
       cellClassName: 'font-medium',
-      renderCell: (row) => row.amount !== undefined ? formatINR(row.amount) : '-',
+      renderCell: (row) => (row.amount !== undefined ? formatINR(row.amount) : null),
     },
     {
       id: 'status',
@@ -92,8 +92,8 @@ export const usePaymentTableColumns = (): ColumnConfig<PaymentRow>[] => {
       accessorKey: 'created_at',
       header: 'Date',
       sortable: true,
-      cellClassName: 'text-slate-500',
-      renderCell: (row) => row.created_at ? dayjs(row.created_at).format('MMM D, YYYY') : '-',
+      cellClassName: 'text-moon',
+      renderCell: (row) => formatDate(row.created_at),
     },
     {
       id: 'actions',

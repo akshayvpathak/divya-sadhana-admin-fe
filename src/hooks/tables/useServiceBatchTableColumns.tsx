@@ -1,7 +1,7 @@
 import { StatusBadge } from '@/components/ui/status-badge';
 import { RowActions } from '@/components/common/RowActions';
 import { ColumnConfig } from '@/components/common/DataTable/types';
-import dayjs from 'dayjs';
+import { formatDate, formatDateTime } from '@/lib/datetime';
 
 export interface ServiceBatchRow {
   id: string;
@@ -27,7 +27,7 @@ export const useServiceBatchTableColumns = ({ openDeleteModal }: Props): ColumnC
       renderCell: (row) => (
         <div className="flex flex-col">
           <span className="font-medium">{row.title}</span>
-          <span className="text-xs text-slate-500">{row.service_name ?? '—'}</span>
+          <span className="text-xs text-moon">{row.service_name ?? '—'}</span>
         </div>
       ),
     },
@@ -36,15 +36,15 @@ export const useServiceBatchTableColumns = ({ openDeleteModal }: Props): ColumnC
       accessorKey: 'starts_at',
       header: 'Starts',
       sortable: true,
-      cellClassName: 'text-slate-500',
-      renderCell: (row) => (row.starts_at ? dayjs(row.starts_at).format('MMM D, YYYY h:mm A') : '-'),
+      cellClassName: 'text-moon',
+      renderCell: (row) => (formatDateTime(row.starts_at)),
     },
     {
       id: 'ends_at',
       accessorKey: 'ends_at',
       header: 'Ends',
-      cellClassName: 'text-slate-500',
-      renderCell: (row) => (row.ends_at ? dayjs(row.ends_at).format('MMM D, YYYY') : '-'),
+      cellClassName: 'text-moon',
+      renderCell: (row) => (formatDate(row.ends_at)),
     },
     {
       id: 'capacity',

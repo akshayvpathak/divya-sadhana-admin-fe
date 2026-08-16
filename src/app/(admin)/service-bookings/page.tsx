@@ -11,6 +11,8 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { DataTablePagination } from '@/components/common/DataTablePagination';
 import { FilterManager, useFilterManager } from '@/components/common/FilterManager';
 import { serviceBookingStatusOptions } from '@/components/ui/badges/badge-status';
+import { Card, CardBand } from '@/components/ui/card';
+import { PageHeader } from '@/components/common/PageHeader';
 
 export default function ServiceBookingsPage() {
   const [page, setPage] = useState(1);
@@ -59,18 +61,18 @@ export default function ServiceBookingsPage() {
 
   return (
     <div className="space-y-6 pb-8">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900">Service Bookings</h1>
-        <p className="mt-1 text-slate-500">Manage seva / anushthan bookings and scheduling</p>
-      </div>
+      <PageHeader
+        title="Service Bookings"
+        description="Manage seva / anushthan bookings and scheduling"
+      />
 
-      <div className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex flex-col items-center justify-between gap-4 border-b border-slate-200 bg-slate-50 p-4 md:flex-row">
+      <Card>
+        <CardBand className="flex flex-col items-center justify-between gap-4 border-b border-line md:flex-row">
           <div className="relative w-full max-w-sm flex-1">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-moon" />
             <Input
               placeholder="Search bookings..."
-              className="bg-white pl-9 w-full"
+              className="bg-surface pl-9 w-full"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -85,7 +87,7 @@ export default function ServiceBookingsPage() {
             onClear={() => { resetFilters(); setSearch(''); setPage(1); }}
             hasActiveFilters={hasActiveFilters}
           />
-        </div>
+        </CardBand>
 
         <DataTable
           columns={columns}
@@ -104,7 +106,7 @@ export default function ServiceBookingsPage() {
             onPageChange={setPage}
           />
         )}
-      </div>
+      </Card>
     </div>
   );
 }

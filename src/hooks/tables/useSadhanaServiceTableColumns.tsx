@@ -38,12 +38,12 @@ export const useSadhanaServiceTableColumns = ({
       sortable: true,
       renderCell: (row) => (
         <div className="flex items-center gap-3">
-          <div className="relative h-10 w-10 rounded-md overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
+          <div className="relative h-10 w-10 rounded-md overflow-hidden bg-cosmos shrink-0 border border-line">
             {row.cover_image_url ? (
               <Image src={row.cover_image_url} alt={row.name} fill className="object-cover" unoptimized />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
-                <ImageIcon className="h-5 w-5 text-slate-300" />
+                <ImageIcon className="h-5 w-5 text-line" />
               </div>
             )}
           </div>
@@ -61,7 +61,7 @@ export const useSadhanaServiceTableColumns = ({
     {
       id: 'pricing',
       header: 'Pricing',
-      cellClassName: 'font-medium text-slate-900',
+      cellClassName: 'font-medium text-ink',
       renderCell: (row) => priceCell(row),
     },
     {
@@ -76,7 +76,7 @@ export const useSadhanaServiceTableColumns = ({
       accessorKey: 'display_order',
       header: 'Order',
       sortable: true,
-      cellClassName: 'text-slate-500',
+      cellClassName: 'text-moon',
       renderCell: (row) => row.display_order ?? 0,
     },
     {

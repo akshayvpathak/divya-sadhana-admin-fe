@@ -52,7 +52,7 @@ export function WithdrawalActionsCell({ withdrawal }: WithdrawalActionsCellProps
   const isApproved = status === 'approved';
 
   if (!isPending && !isApproved) {
-    return <span className="text-slate-400">—</span>;
+    return <span className="text-moon">—</span>;
   }
 
   return (
@@ -62,7 +62,7 @@ export function WithdrawalActionsCell({ withdrawal }: WithdrawalActionsCellProps
           <Button
             size="sm"
             variant="outline"
-            className="text-emerald-700 hover:text-emerald-800"
+            className="text-success-ink hover:text-success-ink"
             onClick={() => setApproveOpen(true)}
             disabled={approve.isPending}
           >
@@ -84,7 +84,7 @@ export function WithdrawalActionsCell({ withdrawal }: WithdrawalActionsCellProps
           <Button
             size="sm"
             variant="outline"
-            className="text-emerald-700 hover:text-emerald-800"
+            className="text-success-ink hover:text-success-ink"
             onClick={() => setPaidOpen(true)}
             disabled={markPaid.isPending}
           >

@@ -16,6 +16,8 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { DataTablePagination } from '@/components/common/DataTablePagination';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { orderStatusOptions, orderPaymentOptions, orderShippingOptions } from '@/components/ui/badges/badge-status';
+import { PageHeader } from '@/components/common/PageHeader';
+import { Card, CardBand } from '@/components/ui/card';
 
 export default function OrdersPage() {
   const [page, setPage] = useState(1);
@@ -61,34 +63,34 @@ export default function OrdersPage() {
 
   return (
     <div className="space-y-6 pb-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Orders</h1>
-          <p className="mt-1 text-slate-500">Manage platform orders and manual fulfillment</p>
-        </div>
-        <Button
-          variant="outline"
-          disabled={exporting}
-          onClick={() => exportCsv()}
-          className="gap-2"
-        >
-          <Download className="h-4 w-4" />
-          {exporting ? 'Exporting…' : 'Export CSV'}
-        </Button>
-      </div>
+      <PageHeader
+        title="Orders"
+        description="Manage platform orders and manual fulfillment"
+        actions={
+          <Button
+            variant="outline"
+            disabled={exporting}
+            onClick={() => exportCsv()}
+            className="gap-2"
+          >
+            <Download className="h-4 w-4" />
+            {exporting ? 'Exporting…' : 'Export CSV'}
+          </Button>
+        }
+      />
 
       {shippingInfo ? (
-        <div className="flex items-start gap-3 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm text-indigo-950">
-          <Truck className="mt-0.5 h-4 w-4 shrink-0 text-indigo-600" />
+        <div className="flex items-start gap-3 rounded-xl border border-gold/25 bg-tint px-4 py-3 text-sm text-ink">
+          <Truck className="mt-0.5 h-4 w-4 shrink-0 text-gold-press" />
           <div>
             <p className="font-semibold">Customer delivery estimate</p>
-            <p className="mt-0.5 text-indigo-900/80">
+            <p className="mt-0.5 text-ink/80">
               {shippingInfo.delivery_estimate_text}
               {shippingInfo.measured_from === 'order_date'
                 ? ' (measured from order date, not dispatch).'
                 : ''}
             </p>
-            <p className="mt-1 text-xs text-indigo-800/70">
+            <p className="mt-1 text-xs text-gold-press/70">
               Carriers: {shippingInfo.carriers.map((c) => c.name).join(' · ') || '—'}
               {' · '}
               Edit estimate copy in Django admin (API is read-only).
@@ -97,13 +99,13 @@ export default function OrdersPage() {
         </div>
       ) : null}
 
-      <div className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex flex-col items-center justify-between gap-4 border-b border-slate-200 bg-slate-50 p-4 md:flex-row">
+      <Card>
+        <CardBand className="flex flex-col items-center justify-between gap-4 border-b border-line md:flex-row">
           <div className="relative w-full max-w-sm flex-1">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-moon" />
             <Input
               placeholder="Search Orders..."
-              className="w-full bg-white pl-9"
+              className="w-full bg-surface pl-9"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -113,7 +115,7 @@ export default function OrdersPage() {
           </div>
 
           <div className="flex w-full flex-wrap items-center gap-2 sm:flex-nowrap md:w-auto">
-            <Filter className="h-4 w-4 shrink-0 text-slate-400" />
+            <Filter className="h-4 w-4 shrink-0 text-moon" />
             <Select
               value={status}
               onValueChange={(val) => {
@@ -121,7 +123,7 @@ export default function OrdersPage() {
                 setPage(1);
               }}
             >
-              <SelectTrigger className="w-[150px] bg-white">
+              <SelectTrigger className="w-[150px] bg-surface">
                 <SelectValue placeholder="All Statuses">
                   {orderStatusOptions.find((o) => o.value === status)?.label || 'All Statuses'}
                 </SelectValue>
@@ -142,7 +144,7 @@ export default function OrdersPage() {
                 setPage(1);
               }}
             >
-              <SelectTrigger className="w-[155px] bg-white">
+              <SelectTrigger className="w-[155px] bg-surface">
                 <SelectValue placeholder="All Payment">
                   {orderPaymentOptions.find((o) => o.value === paymentStatus)?.label ||
                     'All Payment'}
@@ -164,7 +166,7 @@ export default function OrdersPage() {
                 setPage(1);
               }}
             >
-              <SelectTrigger className="w-[200px] bg-white">
+              <SelectTrigger className="w-[200px] bg-surface">
                 <SelectValue placeholder="All Shipping">
                   {orderShippingOptions.find((o) => o.value === shippingStatus)?.label ||
                     'All Shipping'}
@@ -182,7 +184,7 @@ export default function OrdersPage() {
               <ClearFiltersButton onClear={clearAllFilters} className="ml-auto" />
             )}
           </div>
-        </div>
+        </CardBand>
 
         <DataTable
           columns={columns}
@@ -201,7 +203,7 @@ export default function OrdersPage() {
             onPageChange={setPage}
           />
         )}
-      </div>
+      </Card>
     </div>
   );
 }

@@ -88,7 +88,7 @@ export function FilterManager({
 
   return (
     <div className={`flex flex-wrap sm:flex-nowrap gap-2 items-center w-full md:w-auto justify-end ${className}`}>
-      <Filter className="h-4 w-4 text-slate-400 shrink-0" />
+      <Filter className="h-4 w-4 text-moon shrink-0" />
       {configs.map((config) => (
         <TableFilter
           key={config.key}

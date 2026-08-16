@@ -13,16 +13,16 @@ const badgeVariants = cva(
           "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
         destructive:
           "border-transparent bg-destructive text-destructive-foreground shadow hover:bg-destructive/80",
-        outline: "text-foreground",
-        // Premium status variants
-        success: "border-transparent bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 font-medium",
-        warning: "border-transparent bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 font-medium",
-        danger: "border-transparent bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400 font-medium",
-        info: "border-transparent bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400 font-medium",
-        indigo: "border-transparent bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400 font-medium",
-        slate: "border-transparent bg-slate-100 text-slate-800 dark:bg-slate-800/50 dark:text-slate-300 font-medium",
-        purple: "border-transparent bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 font-medium",
-        orange: "border-transparent bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 font-medium",
+        outline: "border-line text-charcoal",
+        // Status tones: tint fill, AA-passing ink, hairline ring.
+        success: "border-success/20 bg-success-tint text-success-ink font-medium",
+        warning: "border-warning/25 bg-warning-tint text-warning-ink font-medium",
+        danger: "border-danger/20 bg-danger-tint text-danger-ink font-medium",
+        info: "border-info/20 bg-info-tint text-info-ink font-medium",
+        indigo: "border-royal/15 bg-royal-tint text-royal-ink font-medium",
+        slate: "border-line bg-neutral-tint text-neutral-ink font-medium",
+        purple: "border-plum/20 bg-plum-tint text-plum-ink font-medium",
+        orange: "border-copper/20 bg-copper-tint text-copper-ink font-medium",
       },
     },
     defaultVariants: {

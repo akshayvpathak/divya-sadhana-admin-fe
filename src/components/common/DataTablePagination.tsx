@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 interface DataTablePaginationProps {
@@ -71,11 +72,11 @@ export function DataTablePagination({
   if (totalItems <= 0) return null;
 
   return (
-    <div className="p-4 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-4">
-      <p className="text-sm text-slate-500">
-        Showing <span className="font-medium text-slate-700">{startItem}</span> to{' '}
-        <span className="font-medium text-slate-700">{endItem}</span> of{' '}
-        <span className="font-medium text-slate-700">{totalItems}</span> results
+    <div className="flex flex-col items-center justify-between gap-4 border-t border-line bg-cream px-5 py-3.5 sm:flex-row">
+      <p className="text-sm text-moon">
+        Showing <span className="font-semibold tabular-nums text-ink">{startItem}</span> to{' '}
+        <span className="font-semibold tabular-nums text-ink">{endItem}</span> of{' '}
+        <span className="font-semibold tabular-nums text-ink">{totalItems}</span> results
       </p>
       
       {showControls ? (
@@ -84,7 +85,7 @@ export function DataTablePagination({
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 hidden sm:flex"
+          className="hidden h-8 w-8 border-line bg-surface text-charcoal hover:border-gold/40 hover:bg-tint hover:text-gold-press disabled:opacity-40 sm:flex"
           onClick={() => onPageChange(1)}
           disabled={currentPage === 1}
           title="First Page"
@@ -96,7 +97,7 @@ export function DataTablePagination({
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8"
+          className="h-8 w-8 border-line bg-surface text-charcoal hover:border-gold/40 hover:bg-tint hover:text-gold-press disabled:opacity-40"
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
           disabled={currentPage === 1}
           title="Previous Page"
@@ -111,7 +112,7 @@ export function DataTablePagination({
               return (
                 <span
                   key={`ellipsis-${index}`}
-                  className="px-2 py-1 text-sm text-slate-400 select-none"
+                  className="select-none px-2 py-1 text-sm text-moon/60"
                 >
                   ...
                 </span>
@@ -124,11 +125,11 @@ export function DataTablePagination({
                 key={`page-${pageNum}`}
                 variant={currentPage === pageNum ? 'default' : 'outline'}
                 size="sm"
-                className={`h-8 min-w-[32px] px-2 ${
-                  currentPage === pageNum
-                    ? 'bg-indigo-600 hover:bg-indigo-700 text-white font-semibold border-indigo-600'
-                    : 'text-slate-600 hover:text-indigo-600 hover:border-indigo-600'
-                }`}
+                className={cn(
+                  'h-8 min-w-8 px-2 font-semibold tabular-nums',
+                  currentPage !== pageNum &&
+                    'border-line bg-surface text-charcoal hover:border-gold/40 hover:bg-tint hover:text-gold-press'
+                )}
                 onClick={() => onPageChange(pageNum)}
               >
                 {pageNum}
@@ -141,7 +142,7 @@ export function DataTablePagination({
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8"
+          className="h-8 w-8 border-line bg-surface text-charcoal hover:border-gold/40 hover:bg-tint hover:text-gold-press disabled:opacity-40"
           onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
           disabled={currentPage === totalPages}
           title="Next Page"
@@ -153,7 +154,7 @@ export function DataTablePagination({
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8 hidden sm:flex"
+          className="hidden h-8 w-8 border-line bg-surface text-charcoal hover:border-gold/40 hover:bg-tint hover:text-gold-press disabled:opacity-40 sm:flex"
           onClick={() => onPageChange(totalPages)}
           disabled={currentPage === totalPages}
           title="Last Page"

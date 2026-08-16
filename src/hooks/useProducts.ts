@@ -198,6 +198,9 @@ export const useProduct = (id: string) => {
         max_price: p.max_price ?? null,
         option_groups: p.option_groups || [],
         variants: p.variants || [],
+        // Surfaced for the read-only detail view; the edit form ignores them.
+        created_at: p.created_at ?? null,
+        updated_at: p.updated_at ?? null,
       };
     },
     enabled: !!id && !!accessToken,

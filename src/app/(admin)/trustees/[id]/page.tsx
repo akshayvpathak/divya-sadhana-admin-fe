@@ -23,38 +23,8 @@ import {
 import { useAssignmentsListQuery } from '@/hooks/queries/useTerritoryQuery';
 import { useCommissionLedgerColumns } from '@/hooks/tables/useCommissionLedgerColumns';
 import { formatINR, formatPercent } from '@/lib/currency';
-
-function StatCard({
-  label,
-  value,
-  icon,
-  hint,
-  tone = 'default',
-}: {
-  label: string;
-  value: string;
-  icon?: ReactNode;
-  hint?: ReactNode;
-  tone?: 'default' | 'amber' | 'green' | 'rose' | 'indigo';
-}) {
-  const tones: Record<string, string> = {
-    default: 'bg-white border-slate-200',
-    amber: 'bg-amber-50 border-amber-200',
-    green: 'bg-green-50 border-green-200',
-    rose: 'bg-rose-50 border-rose-200',
-    indigo: 'bg-indigo-50 border-indigo-200',
-  };
-  return (
-    <div className={`rounded-2xl border p-4 ${tones[tone]}`}>
-      <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-        {icon}
-        {label}
-      </div>
-      <p className="mt-2 text-2xl font-black tracking-tight text-slate-900">{value}</p>
-      {hint && <p className="mt-1 text-xs text-slate-400">{hint}</p>}
-    </div>
-  );
-}
+import { PageHeader, MetaChip } from '@/components/common/PageHeader';
+import { StatCard } from '@/components/common/StatCard';
 
 export default function TrusteeDetailPage() {
   const params = useParams();
@@ -119,39 +89,26 @@ export default function TrusteeDetailPage() {
 
   return (
     <div className="space-y-6 pb-10">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href="/trustees">
-          <Button variant="outline" size="icon">
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div className="flex-1 min-w-0">
-          {dashboardLoading ? (
-            <Skeleton className="h-8 w-64" />
-          ) : (
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-2xl font-bold text-slate-900 truncate">{name}</h1>
-              <span className="inline-flex max-w-[240px] truncate rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-700">
-                {roleDisplay}
-              </span>
-              {code && (
-                <span className="font-mono text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
-                  {code}
-                </span>
-              )}
+      <PageHeader
+        backHref="/trustees"
+        title={dashboardLoading ? <Skeleton className="h-8 w-64" /> : name}
+        description={meta.email || meta.user_email || undefined}
+        identifier={name}
+        loading={dashboardLoading}
+        meta={
+          !dashboardLoading && (
+            <>
+              <MetaChip tone="gold">{roleDisplay}</MetaChip>
+              {code && <MetaChip tone="mono">{code}</MetaChip>}
               {isActive !== undefined && <StatusBadge status={isActive} type="active" />}
-            </div>
-          )}
-          {(meta.email || meta.user_email) && (
-            <p className="text-slate-500 text-sm mt-0.5 truncate">{meta.email || meta.user_email}</p>
-          )}
-        </div>
-      </div>
+            </>
+          )
+        }
+      />
 
       {/* Wallet */}
       <div>
-        <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Wallet</h2>
+        <h2 className="text-xs font-bold uppercase tracking-widest text-moon mb-2">Wallet</h2>
         {dashboardLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Skeleton className="h-24 rounded-2xl" />
@@ -164,20 +121,20 @@ export default function TrusteeDetailPage() {
               label="Available"
               value={formatINR(wallet.available_balance ?? wallet.balance)}
               icon={<Wallet className="h-3.5 w-3.5" />}
-              tone="green"
+              tone="success"
               hint="Withdrawable"
             />
             <StatCard
               label="Pending"
               value={formatINR(wallet.pending_balance)}
               icon={<Lock className="h-3.5 w-3.5" />}
-              tone="amber"
+              tone="warning"
               hint="Locked until maturity"
             />
             <StatCard
               label="Held"
               value={formatINR(wallet.held_amount)}
-              tone="default"
+              tone="gold"
               hint="Reserved for withdrawals"
             />
           </div>
@@ -186,7 +143,7 @@ export default function TrusteeDetailPage() {
 
       {/* Commissions (lifetime) */}
       <div>
-        <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">
+        <h2 className="text-xs font-bold uppercase tracking-widest text-moon mb-2">
           Commissions (lifetime)
         </h2>
         {dashboardLoading ? (
@@ -199,8 +156,8 @@ export default function TrusteeDetailPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {Object.keys(byKind).length === 0 ? (
               <>
-                <StatCard label="Area" value={formatINR(0)} tone="indigo" />
-                <StatCard label="Referral" value={formatINR(0)} tone="indigo" />
+                <StatCard label="Area" value={formatINR(0)} tone="royal" />
+                <StatCard label="Referral" value={formatINR(0)} tone="royal" />
               </>
             ) : (
               Object.entries(byKind).map(([kind, amount]) => (
@@ -209,11 +166,11 @@ export default function TrusteeDetailPage() {
                   label={String(kind).replace(/_/g, ' ')}
                   value={formatINR(amount)}
                   icon={kind === 'referral' ? undefined : <TrendingUp className="h-3.5 w-3.5" />}
-                  tone="indigo"
+                  tone="royal"
                 />
               ))
             )}
-            <StatCard label="Reversed (returns)" value={formatINR(commissions.reversed_lifetime)} tone="rose" />
+            <StatCard label="Reversed (returns)" value={formatINR(commissions.reversed_lifetime)} tone="danger" />
           </div>
         )}
       </div>
@@ -221,38 +178,38 @@ export default function TrusteeDetailPage() {
       {/* Referral / sales impact */}
       {!dashboardLoading && (
         <div>
-          <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Impact</h2>
+          <h2 className="text-xs font-bold uppercase tracking-widest text-moon mb-2">Impact</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <StatCard
               label="Orders referred"
               value={String(totals.orders ?? 0)}
               icon={<ShoppingBag className="h-3.5 w-3.5" />}
               hint={`${formatINR(totals.orders_revenue)} revenue`}
-              tone="green"
+              tone="success"
             />
             <StatCard
               label="Donations referred"
               value={String(totals.donations ?? 0)}
               icon={<Heart className="h-3.5 w-3.5" />}
               hint={`${formatINR(totals.donations_amount)} raised`}
-              tone="rose"
+              tone="danger"
             />
             <StatCard
               label="Referred users"
               value={String(totals.referred_users ?? 0)}
               icon={<Users className="h-3.5 w-3.5" />}
-              tone="indigo"
+              tone="royal"
             />
           </div>
         </div>
       )}
 
       {/* Territory */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+      <div className="bg-surface rounded-xl shadow-sm border border-line p-5">
         <div className="flex items-center justify-between mb-4 gap-3">
           <div>
-            <h2 className="text-sm font-bold text-slate-900">Territory</h2>
-            <p className="mt-0.5 text-xs text-slate-500">
+            <h2 className="text-sm font-bold text-ink">Territory</h2>
+            <p className="mt-0.5 text-xs text-moon">
               {role === 'district_president'
                 ? 'District President seat (state + district).'
                 : role === 'state_executive'
@@ -262,7 +219,7 @@ export default function TrusteeDetailPage() {
           </div>
         </div>
         {assignments.length === 0 ? (
-          <p className="text-sm text-amber-600">
+          <p className="text-sm text-warning">
             No territory assigned — vacant layers are retained by Admin.
           </p>
         ) : (
@@ -273,17 +230,17 @@ export default function TrusteeDetailPage() {
               return (
                 <div
                   key={a.id}
-                  className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5"
+                  className="flex items-center gap-2 rounded-lg border border-line bg-cream px-3 py-1.5"
                 >
-                  <span className="text-sm font-medium text-slate-800">
+                  <span className="text-sm font-medium text-ink">
                     {a.state_name || '—'}
                     {a.district_name ? ` · ${a.district_name}` : ''}
                   </span>
-                  <span className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+                  <span className="rounded-full border border-line bg-surface px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-charcoal">
                     {String(seatRole).replace(/_/g, ' ')}
                   </span>
                   {override != null && override !== '' ? (
-                    <span className="text-xs text-slate-500">{formatPercent(override)}</span>
+                    <span className="text-xs text-moon">{formatPercent(override)}</span>
                   ) : null}
                   {!a.is_active && <StatusBadge status={a.is_active} type="active" />}
                 </div>
@@ -294,9 +251,9 @@ export default function TrusteeDetailPage() {
       </div>
 
       {/* Commission ledger */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-        <div className="p-4 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <h2 className="text-sm font-bold text-slate-900">Commission Ledger</h2>
+      <div className="bg-surface rounded-xl shadow-sm border border-line overflow-hidden flex flex-col">
+        <div className="p-4 border-b border-line bg-cream flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <h2 className="text-sm font-bold text-ink">Commission Ledger</h2>
           <div className="flex flex-wrap gap-2 items-center">
             <Select
               value={statusFilter}
@@ -305,7 +262,7 @@ export default function TrusteeDetailPage() {
                 setLedgerPage(1);
               }}
             >
-              <SelectTrigger className="bg-white w-[140px]">
+              <SelectTrigger className="bg-surface w-[140px]">
                 <SelectValue placeholder="All Statuses">
                   {statusFilter === 'all' ? 'All Statuses' : statusFilter}
                 </SelectValue>
@@ -326,7 +283,7 @@ export default function TrusteeDetailPage() {
                 setLedgerPage(1);
               }}
             >
-              <SelectTrigger className="bg-white w-[120px]">
+              <SelectTrigger className="bg-surface w-[120px]">
                 <SelectValue placeholder="All Kinds">
                   {kindFilter === 'all' ? 'All Kinds' : kindFilter}
                 </SelectValue>

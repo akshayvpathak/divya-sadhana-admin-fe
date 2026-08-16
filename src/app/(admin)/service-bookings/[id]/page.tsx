@@ -2,10 +2,14 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
-import Link from 'next/link';
 import dayjs from 'dayjs';
+import {
+  formatDate,
+  formatDateTime,
+  toDateInput,
+  toDateTimeInput,
+} from '@/lib/datetime';
 import { toast } from 'react-toastify';
-import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,6 +27,7 @@ import { useAllSadhanaServicesQuery } from '@/hooks/queries/useSadhanaServicesQu
 import { useServiceBatchesByServiceQuery } from '@/hooks/queries/useServiceBatchesQuery';
 import { serviceBookingStatusMap } from '@/components/ui/badges/badge-status';
 import { UpdateServiceBookingPayload, ServiceBookingStatus } from '@/schemas/service-bookings.schema';
+import { PageHeader } from '@/components/common/PageHeader';
 
 const STATUS_KEYS = Object.keys(serviceBookingStatusMap);
 
@@ -60,11 +65,11 @@ export default function ServiceBookingDetailPage() {
   useEffect(() => {
     if (!booking) return;
     setStatus(booking.status);
-    setScheduledAt(booking.scheduled_at ? dayjs(booking.scheduled_at).format('YYYY-MM-DDTHH:mm') : '');
+    setScheduledAt(toDateTimeInput(booking.scheduled_at));
     setBatchId(booking.batch ?? '');
     setAdminNotes(booking.admin_notes ?? '');
-    setSubStart(booking.subscription_start ? dayjs(booking.subscription_start).format('YYYY-MM-DD') : '');
-    setSubEnd(booking.subscription_end ? dayjs(booking.subscription_end).format('YYYY-MM-DD') : '');
+    setSubStart(toDateInput(booking.subscription_start));
+    setSubEnd(toDateInput(booking.subscription_end));
   }, [booking]);
 
   const quickStatus = (s: ServiceBookingStatus) => {
@@ -99,19 +104,11 @@ export default function ServiceBookingDetailPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/service-bookings">
-          <Button variant="outline" size="icon">
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">
-            {isLoading ? <Skeleton className="h-9 w-64" /> : 'Booking Details'}
-          </h1>
-          <p className="mt-1 text-slate-500">Review and manage this service booking</p>
-        </div>
-      </div>
+      <PageHeader
+        backHref="/service-bookings"
+        title={isLoading ? <Skeleton className="h-9 w-64" /> : 'Booking Details'}
+        description="Review and manage this service booking"
+      />
 
       {isLoading || !booking ? (
         <Skeleton className="h-96 w-full rounded-2xl" />
@@ -119,57 +116,57 @@ export default function ServiceBookingDetailPage() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {/* Left: booking info */}
           <div className="space-y-6 lg:col-span-2">
-            <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="space-y-4 rounded-2xl border border-line bg-surface p-6 shadow-sm">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900">{booking.service_name ?? '—'}</h2>
-                  <code className="text-xs text-slate-500">{booking.booking_number}</code>
+                  <h2 className="text-xl font-bold text-ink">{booking.service_name ?? '—'}</h2>
+                  <code className="text-xs text-moon">{booking.booking_number}</code>
                 </div>
                 <StatusBadge status={booking.status} type="service_booking_status" />
               </div>
 
               <dl className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <dt className="text-xs uppercase text-slate-400">Amount</dt>
-                  <dd className="font-semibold text-slate-900">{formatINR(booking.amount)}</dd>
+                  <dt className="text-xs uppercase text-moon">Amount</dt>
+                  <dd className="font-semibold text-ink">{formatINR(booking.amount)}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs uppercase text-slate-400">Option</dt>
-                  <dd className="text-slate-700">{booking.selected_option_key || '—'}</dd>
+                  <dt className="text-xs uppercase text-moon">Option</dt>
+                  <dd className="text-charcoal">{booking.selected_option_key || '—'}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs uppercase text-slate-400">Booker</dt>
-                  <dd className="text-slate-700">{booking.booker_name || '—'}</dd>
+                  <dt className="text-xs uppercase text-moon">Booker</dt>
+                  <dd className="text-charcoal">{booking.booker_name || '—'}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs uppercase text-slate-400">Contact</dt>
-                  <dd className="text-slate-700">{booking.contact_phone || booking.booker_email || '—'}</dd>
+                  <dt className="text-xs uppercase text-moon">Contact</dt>
+                  <dd className="text-charcoal">{booking.contact_phone || booking.booker_email || '—'}</dd>
                 </div>
                 {booking.paid_at && (
                   <div>
-                    <dt className="text-xs uppercase text-slate-400">Paid At</dt>
-                    <dd className="text-slate-700">{dayjs(booking.paid_at).format('MMM D, YYYY h:mm A')}</dd>
+                    <dt className="text-xs uppercase text-moon">Paid At</dt>
+                    <dd className="text-charcoal">{formatDateTime(booking.paid_at)}</dd>
                   </div>
                 )}
                 {booking.subscription_start && (
                   <div>
-                    <dt className="text-xs uppercase text-slate-400">Subscription</dt>
-                    <dd className="text-slate-700">
-                      {dayjs(booking.subscription_start).format('MMM D, YYYY')} –{' '}
-                      {booking.subscription_end ? dayjs(booking.subscription_end).format('MMM D, YYYY') : '—'}
+                    <dt className="text-xs uppercase text-moon">Subscription</dt>
+                    <dd className="text-charcoal">
+                      {formatDate(booking.subscription_start)} –{' '}
+                      {booking.subscription_end ? formatDate(booking.subscription_end) : '—'}
                     </dd>
                   </div>
                 )}
               </dl>
 
               {answerEntries.length > 0 && (
-                <div className="border-t border-slate-100 pt-4">
-                  <h3 className="mb-2 text-sm font-semibold text-slate-900">Submitted Details</h3>
+                <div className="border-t border-line/60 pt-4">
+                  <h3 className="mb-2 text-sm font-semibold text-ink">Submitted Details</h3>
                   <dl className="space-y-2 text-sm">
                     {answerEntries.map(([key, val]) => (
                       <div key={key} className="flex gap-2">
-                        <dt className="min-w-[40%] text-slate-500">{labelFor(key)}</dt>
-                        <dd className="text-slate-800">{renderAnswer(val)}</dd>
+                        <dt className="min-w-[40%] text-moon">{labelFor(key)}</dt>
+                        <dd className="text-ink">{renderAnswer(val)}</dd>
                       </div>
                     ))}
                   </dl>
@@ -177,20 +174,20 @@ export default function ServiceBookingDetailPage() {
               )}
 
               {imageUrl && (
-                <div className="border-t border-slate-100 pt-4">
-                  <h3 className="mb-2 text-sm font-semibold text-slate-900">Uploaded Photo</h3>
+                <div className="border-t border-line/60 pt-4">
+                  <h3 className="mb-2 text-sm font-semibold text-ink">Uploaded Photo</h3>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={imageUrl} alt="uploaded" className="max-h-56 rounded-lg object-cover" />
                 </div>
               )}
 
               {booking.payments && booking.payments.length > 0 && (
-                <div className="border-t border-slate-100 pt-4">
-                  <h3 className="mb-2 text-sm font-semibold text-slate-900">Payments</h3>
+                <div className="border-t border-line/60 pt-4">
+                  <h3 className="mb-2 text-sm font-semibold text-ink">Payments</h3>
                   <ul className="space-y-1.5 text-sm">
                     {booking.payments.map((p, i) => (
                       <li key={p.internal_payment_ref ?? i} className="flex items-center justify-between">
-                        <span className="font-mono text-xs text-slate-500">
+                        <span className="font-mono text-xs text-moon">
                           {p.provider_payment_id ?? p.internal_payment_ref ?? '—'}
                         </span>
                         <span className="flex items-center gap-2">
@@ -206,12 +203,12 @@ export default function ServiceBookingDetailPage() {
           </div>
 
           {/* Right: admin action panel */}
-          <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h3 className="text-sm font-bold uppercase tracking-wide text-slate-500">Manage Booking</h3>
+          <div className="space-y-4 rounded-2xl border border-line bg-surface p-6 shadow-sm">
+            <h3 className="text-sm font-bold uppercase tracking-wide text-moon">Manage Booking</h3>
 
             {booking.status === 'application_review' && (
               <div className="flex gap-2">
-                <Button className="flex-1 bg-green-600 hover:bg-green-700" disabled={isPending} onClick={() => quickStatus('pending')}>
+                <Button className="flex-1 bg-success hover:bg-success" disabled={isPending} onClick={() => quickStatus('pending')}>
                   Approve
                 </Button>
                 <Button variant="outline" className="flex-1" disabled={isPending} onClick={() => setRejectOpen(true)}>
@@ -223,7 +220,7 @@ export default function ServiceBookingDetailPage() {
             <div className="space-y-2">
               <Label>Status</Label>
               <Select value={status} onValueChange={(v) => setStatus(v ?? '')}>
-                <SelectTrigger className="bg-white">
+                <SelectTrigger className="bg-surface">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -245,7 +242,7 @@ export default function ServiceBookingDetailPage() {
               <div className="space-y-2">
                 <Label>Batch</Label>
                 <Select value={batchId || 'none'} onValueChange={(v) => setBatchId(v && v !== 'none' ? v : '')}>
-                  <SelectTrigger className="bg-white">
+                  <SelectTrigger className="bg-surface">
                     <SelectValue placeholder="Assign batch" />
                   </SelectTrigger>
                   <SelectContent>
@@ -278,7 +275,7 @@ export default function ServiceBookingDetailPage() {
               <Textarea id="admin_notes" rows={3} value={adminNotes} onChange={(e) => setAdminNotes(e.target.value)} />
             </div>
 
-            <Button className="w-full bg-indigo-600 hover:bg-indigo-700" disabled={isPending} onClick={handleSave}>
+            <Button className="w-full bg-gold-deep hover:bg-gold-deep" disabled={isPending} onClick={handleSave}>
               {isPending ? 'Saving...' : 'Save changes'}
             </Button>
           </div>

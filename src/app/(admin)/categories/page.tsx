@@ -14,6 +14,8 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { DataTablePagination } from '@/components/common/DataTablePagination';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { categoryStatusOptions } from '@/components/ui/badges/badge-status';
+import { PageHeader } from '@/components/common/PageHeader';
+import { Card, CardBand } from '@/components/ui/card';
 
 export default function CategoriesPage() {
   const [page, setPage] = useState(1);
@@ -66,26 +68,25 @@ export default function CategoriesPage() {
 
   return (
     <div className="space-y-6  pb-8">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Categories</h1>
-          <p className="text-slate-500 mt-1">Manage product categories and taxonomy</p>
-        </div>
-        
-        <Link href="/categories/create">
-          <Button className="bg-indigo-600 hover:bg-indigo-700">
-            <Plus className="h-4 w-4" /> Add Category
-          </Button>
-        </Link>
-      </div>
+      <PageHeader
+        title="Categories"
+        description="Manage product categories and taxonomy"
+        actions={
+          <Link href="/categories/create">
+            <Button>
+              <Plus className="h-4 w-4" /> Add Category
+            </Button>
+          </Link>
+        }
+      />
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-        <div className="p-4 border-b border-slate-200 bg-slate-50 flex flex-col md:flex-row gap-4 items-center justify-between">
+      <Card>
+        <CardBand className="flex flex-col items-center justify-between gap-4 border-b border-line md:flex-row">
           <div className="relative max-w-sm flex-1 w-full">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-moon" />
             <Input
               placeholder="Search Categories..."
-              className="pl-9 bg-white w-full"
+              className="pl-9 bg-surface w-full"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -94,7 +95,7 @@ export default function CategoriesPage() {
             />
           </div>
           <div className="flex flex-wrap sm:flex-nowrap gap-2 items-center w-full md:w-auto">
-            <Filter className="h-4 w-4 text-slate-400 shrink-0" />
+            <Filter className="h-4 w-4 text-moon shrink-0" />
             <Select
               value={status}
               onValueChange={(val) => {
@@ -102,7 +103,7 @@ export default function CategoriesPage() {
                 setPage(1);
               }}
             >
-              <SelectTrigger className="bg-white w-[140px]">
+              <SelectTrigger className="bg-surface w-[140px]">
                 <SelectValue placeholder="All Statuses">
                   {categoryStatusOptions.find(o => o.value === status)?.label || 'All Statuses'}
                 </SelectValue>
@@ -119,7 +120,7 @@ export default function CategoriesPage() {
               <ClearFiltersButton onClear={clearAllFilters} />
             )}
           </div>
-        </div>
+        </CardBand>
 
         <DataTable
           columns={columns}
@@ -138,7 +139,7 @@ export default function CategoriesPage() {
             onPageChange={setPage}
           />
         )}
-      </div>
+      </Card>
 
       <ConfirmModal
         isOpen={isDeleteModalOpen}

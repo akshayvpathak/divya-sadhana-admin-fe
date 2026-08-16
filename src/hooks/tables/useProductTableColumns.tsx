@@ -35,7 +35,7 @@ export const useProductTableColumns = ({
       sortable: true,
       renderCell: (row) => (
         <div className="flex items-center gap-3">
-          <div className="relative h-10 w-10 rounded-md overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
+          <div className="relative h-10 w-10 rounded-md overflow-hidden bg-cosmos shrink-0 border border-line">
             {row.image ? (
               <Image 
                 src={row.image} 
@@ -45,7 +45,7 @@ export const useProductTableColumns = ({
                 unoptimized
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-slate-400">
+              <div className="w-full h-full flex items-center justify-center text-moon">
                 <Package className="h-5 w-5" />
               </div>
             )}
@@ -53,7 +53,7 @@ export const useProductTableColumns = ({
           <div className="flex flex-col max-w-[250px]">
             <span className="font-medium truncate">{row.name}</span>
             <span 
-              className="text-xs text-slate-500 overflow-hidden whitespace-nowrap text-ellipsis [&>*]:inline"
+              className="text-xs text-moon overflow-hidden whitespace-nowrap text-ellipsis [&>*]:inline"
               dangerouslySetInnerHTML={{ __html: row.description || '' }}
             />
           </div>
@@ -67,7 +67,7 @@ export const useProductTableColumns = ({
       sortable: true,
       sortKey: 'category',
       renderCell: (row) => (
-        <span className="px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-xs">
+        <span className="px-2.5 py-1 rounded-md bg-cosmos text-charcoal text-xs">
           {getCategoryName(row.categoryId)}
         </span>
       ),
@@ -77,7 +77,7 @@ export const useProductTableColumns = ({
       accessorKey: 'price',
       header: 'Price',
       sortable: true,
-      cellClassName: 'font-medium text-slate-900',
+      cellClassName: 'font-medium text-ink',
       renderCell: (row) => formatINR(row.price),
     },
     {
@@ -87,7 +87,7 @@ export const useProductTableColumns = ({
       sortable: true,
       sortKey: 'stock_quantity',
       renderCell: (row) => (
-        <span className={`text-xs font-bold ${row.stock <= 10 ? 'text-rose-600' : 'text-slate-600'}`}>
+        <span className={`text-xs font-bold ${row.stock <= 10 ? 'text-danger' : 'text-charcoal'}`}>
           {row.stock}
         </span>
       ),

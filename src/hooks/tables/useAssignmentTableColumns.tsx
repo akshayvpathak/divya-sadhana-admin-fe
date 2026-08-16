@@ -21,20 +21,20 @@ export const useAssignmentTableColumns = ({
     {
       id: 'member_email',
       header: 'Member',
-      cellClassName: 'font-medium text-slate-900',
-      renderCell: (row) => row.member_email || row.trustee_email || '—',
+      cellClassName: 'font-medium text-ink',
+      renderCell: (row) => row.member_email || row.trustee_email || null,
     },
     {
       id: 'member_referral_code',
       header: 'Code',
-      cellClassName: 'font-mono text-xs text-slate-500',
-      renderCell: (row) => row.member_referral_code || row.trustee_referral_code || '—',
+      cellClassName: 'font-mono text-xs text-moon',
+      renderCell: (row) => row.member_referral_code || row.trustee_referral_code || null,
     },
     {
       id: 'role',
       header: 'Role',
       renderCell: (row) => (
-        <span className="text-sm text-slate-700">
+        <span className="text-sm text-charcoal">
           {row.role_display || (row.role ? row.role.replace(/_/g, ' ') : '—')}
         </span>
       ),
@@ -43,7 +43,7 @@ export const useAssignmentTableColumns = ({
       id: 'state_name',
       accessorKey: 'state_name',
       header: 'Territory',
-      cellClassName: 'text-slate-700',
+      cellClassName: 'text-charcoal',
       renderCell: (row) => {
         const state = row.state_name || '—';
         return row.district_name ? `${state} · ${row.district_name}` : state;
@@ -55,7 +55,7 @@ export const useAssignmentTableColumns = ({
       header: 'Rate override',
       headerAlign: 'right',
       cellAlign: 'right',
-      cellClassName: 'font-medium text-slate-900',
+      cellClassName: 'font-medium text-ink',
       renderCell: (row) => {
         const pct = row.commission_percent_override ?? row.area_commission_percent;
         return pct !== null && pct !== undefined && pct !== ''

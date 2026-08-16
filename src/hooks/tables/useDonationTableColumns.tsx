@@ -2,7 +2,7 @@ import React from 'react';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { ColumnConfig } from '@/components/common/DataTable/types';
 import { formatINR } from '@/lib/currency';
-import dayjs from 'dayjs';
+import { DateTimeCell } from '@/components/common/DateTimeCell';
 
 export interface DonationRow {
   id: string;
@@ -24,7 +24,7 @@ export const useDonationTableColumns = (): ColumnConfig<DonationRow>[] => {
       accessorKey: 'donation_number',
       header: 'Reference',
       sortable: true,
-      cellClassName: 'font-medium text-xs text-slate-500',
+      cellClassName: 'font-medium text-xs text-moon',
       // null rather than '-' so the table's shared N/A chip stands in.
       renderCell: (row) => row.donation_number || null,
     },
@@ -39,7 +39,7 @@ export const useDonationTableColumns = (): ColumnConfig<DonationRow>[] => {
       accessorKey: 'campaign',
       header: 'Campaign',
       sortable: true,
-      cellClassName: 'text-slate-600',
+      cellClassName: 'text-charcoal',
       renderCell: (row) => {
         if (row.campaign_title) {
           return row.campaign_title;
@@ -74,18 +74,8 @@ export const useDonationTableColumns = (): ColumnConfig<DonationRow>[] => {
       accessorKey: 'paid_at',
       header: 'Date',
       sortable: true,
-      cellClassName: 'text-slate-500 whitespace-nowrap',
-      renderCell: (row) =>
-        row.paid_at ? (
-          <span className="flex flex-col leading-tight">
-            <span className="font-medium text-slate-700">
-              {dayjs(row.paid_at).format('MMM D, YYYY')}
-            </span>
-            <span className="text-xs text-slate-400">
-              {dayjs(row.paid_at).format('h:mm A')}
-            </span>
-          </span>
-        ) : null,
+      cellClassName: 'text-moon whitespace-nowrap',
+      renderCell: (row) => <DateTimeCell value={row.paid_at} />,
     },
   ];
 };

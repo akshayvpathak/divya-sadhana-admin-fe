@@ -27,25 +27,25 @@ const PRESETS: Record<
     label: 'View',
     icon: <Eye className="h-3.5 w-3.5" />,
     className:
-      'border-slate-200 text-slate-600 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700',
+      'border-line bg-surface text-charcoal hover:border-gold/40 hover:bg-tint hover:text-gold-press',
   },
   edit: {
     label: 'Edit',
     icon: <Pencil className="h-3.5 w-3.5" />,
     className:
-      'border-slate-200 text-slate-600 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700',
+      'border-line bg-surface text-charcoal hover:border-royal/25 hover:bg-royal-tint hover:text-royal',
   },
   delete: {
     label: 'Delete',
     icon: <Trash2 className="h-3.5 w-3.5" />,
     className:
-      'border-slate-200 text-slate-600 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600',
+      'border-line bg-surface text-charcoal hover:border-danger/30 hover:bg-danger-tint hover:text-danger',
   },
   custom: {
     label: 'Action',
     icon: null,
     className:
-      'border-slate-200 text-slate-600 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700',
+      'border-line bg-surface text-charcoal hover:border-gold/40 hover:bg-tint hover:text-gold-press',
   },
 };
 

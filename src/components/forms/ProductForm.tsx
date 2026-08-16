@@ -8,7 +8,7 @@ import "react-quill-new/dist/quill.snow.css";
 const ReactQuill = dynamic(() => import("react-quill-new"), {
   ssr: false,
   loading: () => (
-    <p className="text-sm text-slate-500 py-4">Loading editor...</p>
+    <p className="text-sm text-moon py-4">Loading editor...</p>
   ),
 });
 import { productSchema, ProductFormData } from "@/schemas/product.schema";
@@ -47,7 +47,6 @@ interface ProductFormProps {
   }[];
   onSubmit?: (data: ProductFormData) => void;
   isPending?: boolean;
-  readOnly?: boolean;
 }
 
 export function ProductForm({
@@ -56,7 +55,6 @@ export function ProductForm({
   categories: propsCategories,
   onSubmit,
   isPending,
-  readOnly = false,
 }: ProductFormProps) {
   const { data: fetchedProduct, isLoading: isFetchingProduct } = useProduct(
     productId || "",
@@ -163,14 +161,14 @@ export function ProductForm({
   }, [register]);
 
   useEffect(() => {
-    if (!readOnly && !productId && nameValue) {
+    if (!productId && nameValue) {
       const generatedSlug = nameValue
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/(^-|-$)+/g, "");
       setValue("slug", generatedSlug, { shouldValidate: true });
     }
-  }, [nameValue, setValue, readOnly, productId]);
+  }, [nameValue, setValue, productId]);
 
   useEffect(() => {
     if (fetchedProduct?.primary_image_url) {
@@ -230,9 +228,9 @@ export function ProductForm({
   const handleDragOver = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
-      if (!readOnly) setIsDragging(true);
+      setIsDragging(true);
     },
-    [readOnly],
+    [],
   );
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
@@ -244,14 +242,13 @@ export function ProductForm({
     async (e: React.DragEvent) => {
       e.preventDefault();
       setIsDragging(false);
-      if (readOnly) return;
 
       const files = Array.from(e.dataTransfer.files);
       if (files.length > 0) {
         handleFileUpload(files[0]);
       }
     },
-    [readOnly],
+    [],
   );
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -349,9 +346,9 @@ export function ProductForm({
   const handleOgDragOver = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
-      if (!readOnly) setIsOgDragging(true);
+      setIsOgDragging(true);
     },
-    [readOnly],
+    [],
   );
 
   const handleOgDragLeave = useCallback((e: React.DragEvent) => {
@@ -363,14 +360,13 @@ export function ProductForm({
     async (e: React.DragEvent) => {
       e.preventDefault();
       setIsOgDragging(false);
-      if (readOnly) return;
 
       const files = Array.from(e.dataTransfer.files);
       if (files.length > 0) {
         await handleOgFileUpload(files[0]);
       }
     },
-    [readOnly],
+    [],
   );
 
   const handleOgFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -432,14 +428,14 @@ export function ProductForm({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="space-y-2">
-              <div className="h-4 w-20 bg-slate-100 animate-pulse rounded" />
-              <div className="h-10 w-full bg-slate-50 animate-pulse rounded-lg" />
+              <div className="h-4 w-20 bg-cosmos animate-pulse rounded" />
+              <div className="h-10 w-full bg-cream animate-pulse rounded-lg" />
             </div>
           ))}
         </div>
         <div className="space-y-2">
-          <div className="h-4 w-20 bg-slate-100 animate-pulse rounded" />
-          <div className="h-24 w-full bg-slate-50 animate-pulse rounded-lg" />
+          <div className="h-4 w-20 bg-cosmos animate-pulse rounded" />
+          <div className="h-24 w-full bg-cream animate-pulse rounded-lg" />
         </div>
       </div>
     );
@@ -450,21 +446,15 @@ export function ProductForm({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="name">
-            Product Name <span className="text-rose-500">*</span>
+            Product Name <span className="text-danger">*</span>
           </Label>
           <Input
             id="name"
             placeholder="Product Name"
             {...register("name")}
-            disabled={readOnly}
-            className={
-              readOnly
-                ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0"
-                : ""
-            }
-          />
+                      />
           {errors.name && (
-            <p className="text-sm text-rose-500">{errors.name.message}</p>
+            <p className="text-sm text-danger">{errors.name.message}</p>
           )}
         </div>
 
@@ -478,16 +468,14 @@ export function ProductForm({
             step="0.01"
             placeholder="99.99"
             {...register("price")}
-            disabled={readOnly || hasVariants}
+            disabled={hasVariants}
             min={0}
             className={
-              readOnly || hasVariants
-                ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0"
-                : ""
+            hasVariants ? "bg-ivory border-line text-charcoal cursor-default focus-visible:ring-0" : ""
             }
           />
           {errors.price && (
-            <p className="text-sm text-rose-500">{errors.price.message}</p>
+            <p className="text-sm text-danger">{errors.price.message}</p>
           )}
         </div>
 
@@ -497,7 +485,7 @@ export function ProductForm({
               "Base SKU"
             ) : (
               <>
-                SKU <span className="text-rose-500">*</span>
+                SKU <span className="text-danger">*</span>
               </>
             )}
           </Label>
@@ -505,15 +493,13 @@ export function ProductForm({
             id="sku"
             placeholder="PROD-123"
             {...register("sku")}
-            disabled={readOnly || hasVariants}
+            disabled={hasVariants}
             className={
-              readOnly || hasVariants
-                ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0"
-                : ""
+            hasVariants ? "bg-ivory border-line text-charcoal cursor-default focus-visible:ring-0" : ""
             }
           />
           {errors.sku && (
-            <p className="text-sm text-rose-500">{errors.sku.message}</p>
+            <p className="text-sm text-danger">{errors.sku.message}</p>
           )}
         </div>
 
@@ -526,16 +512,14 @@ export function ProductForm({
             type="number"
             placeholder="100"
             {...register("stock_quantity")}
-            disabled={readOnly || hasVariants}
+            disabled={hasVariants}
             min={0}
             className={
-              readOnly || hasVariants
-                ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0"
-                : ""
+            hasVariants ? "bg-ivory border-line text-charcoal cursor-default focus-visible:ring-0" : ""
             }
           />
           {errors.stock_quantity && errors.stock_quantity && (
-            <p className="text-sm text-rose-500">
+            <p className="text-sm text-danger">
               {errors.stock_quantity.message}
             </p>
           )}
@@ -548,15 +532,10 @@ export function ProductForm({
             onValueChange={(val) =>
               setValue("categoryId", (val as string) || "")
             }
-            disabled={readOnly}
           >
             <SelectTrigger
               id="categoryId"
-              className={
-                readOnly
-                  ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default"
-                  : "bg-white"
-              }
+              className="bg-surface"
             >
               <SelectValue placeholder="Select a category">
                 {categoryId
@@ -579,7 +558,7 @@ export function ProductForm({
             </SelectContent>
           </Select>
           {errors.categoryId && (
-            <p className="text-sm text-rose-500">{errors.categoryId.message}</p>
+            <p className="text-sm text-danger">{errors.categoryId.message}</p>
           )}
         </div>
 
@@ -589,7 +568,6 @@ export function ProductForm({
               id="is_active"
               checked={is_active}
               onCheckedChange={(val) => setValue("is_active", val)}
-              disabled={readOnly}
             />
             <Label htmlFor="is_active" className="cursor-pointer">
               Active
@@ -600,7 +578,6 @@ export function ProductForm({
               id="is_published"
               checked={isPublished}
               onCheckedChange={(val) => setValue("is_published", val)}
-              disabled={readOnly}
             />
             <Label htmlFor="is_published" className="cursor-pointer">
               Published
@@ -611,16 +588,10 @@ export function ProductForm({
 
       <div className="space-y-2 pb-4">
         <Label htmlFor="description">
-          Description <span className="text-rose-500">*</span>
+          Description <span className="text-danger">*</span>
         </Label>
-        <div className="bg-white rounded-md pb-6">
-          {readOnly ? (
-            <div
-              className="p-4 bg-slate-50 border border-slate-200 rounded-md min-h-[200px] max-h-[400px] overflow-y-auto prose prose-sm max-w-none text-slate-700"
-              dangerouslySetInnerHTML={{ __html: watch("description") || "" }}
-            />
-          ) : (
-            <Controller
+        <div className="bg-surface rounded-md pb-6">
+          <Controller
               name="description"
               control={control}
               render={({ field }) => (
@@ -632,41 +603,34 @@ export function ProductForm({
                 />
               )}
             />
-          )}
         </div>
         {errors.description && (
-          <p className="text-sm text-rose-500">{errors.description.message}</p>
+          <p className="text-sm text-danger">{errors.description.message}</p>
         )}
       </div>
 
       {productId && (
-        <div className="rounded-xl border border-slate-200 p-4">
-          <ProductVariantsEditor productId={productId} readOnly={readOnly} />
+        <div className="rounded-xl border border-line p-4">
+          <ProductVariantsEditor productId={productId} />
         </div>
       )}
 
       <div className="space-y-4">
-        <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500">
+        <h3 className="text-sm font-bold uppercase tracking-wider text-moon">
           SEO
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor="slug">
-              Slug <span className="text-rose-500">*</span>
+              Slug <span className="text-danger">*</span>
             </Label>
             <Input
               id="slug"
               placeholder="product-url-slug"
               {...register("slug")}
-              disabled={readOnly}
-              className={
-                readOnly
-                  ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0"
-                  : ""
-              }
-            />
+                          />
             {errors.slug && (
-              <p className="text-sm text-rose-500">{errors.slug.message}</p>
+              <p className="text-sm text-danger">{errors.slug.message}</p>
             )}
           </div>
 
@@ -677,15 +641,9 @@ export function ProductForm({
               placeholder="Leave empty to use product name"
               maxLength={70}
               {...register("meta_title")}
-              disabled={readOnly}
-              className={
-                readOnly
-                  ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0"
-                  : ""
-              }
-            />
+                          />
             {errors.meta_title && (
-              <p className="text-sm text-rose-500">
+              <p className="text-sm text-danger">
                 {errors.meta_title.message}
               </p>
             )}
@@ -699,15 +657,9 @@ export function ProductForm({
               maxLength={160}
               rows={3}
               {...register("meta_description")}
-              disabled={readOnly}
-              className={
-                readOnly
-                  ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0"
-                  : ""
-              }
-            />
+                          />
             {errors.meta_description && (
-              <p className="text-sm text-rose-500">
+              <p className="text-sm text-danger">
                 {errors.meta_description.message}
               </p>
             )}
@@ -720,15 +672,9 @@ export function ProductForm({
               placeholder="Comma-separated keywords"
               maxLength={255}
               {...register("meta_keywords")}
-              disabled={readOnly}
-              className={
-                readOnly
-                  ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0"
-                  : ""
-              }
-            />
+                          />
             {errors.meta_keywords && (
-              <p className="text-sm text-rose-500">
+              <p className="text-sm text-danger">
                 {errors.meta_keywords.message}
               </p>
             )}
@@ -739,7 +685,6 @@ export function ProductForm({
               id="is_indexable"
               checked={isIndexable}
               onCheckedChange={(val) => setValue("is_indexable", val)}
-              disabled={readOnly}
             />
             <Label htmlFor="is_indexable" className="cursor-pointer">
               Indexable (include in sitemap)
@@ -753,51 +698,46 @@ export function ProductForm({
             className={cn(
               "border-2 border-dashed rounded-xl p-8 transition-all flex flex-col items-center justify-center gap-4 text-center",
               isOgDragging
-                ? "border-indigo-500 bg-indigo-50/50"
-                : "border-slate-200",
-              !readOnly &&
-                "hover:border-indigo-400 hover:bg-slate-50/50 cursor-pointer",
-              readOnly && "opacity-75 cursor-default bg-slate-50",
+                ? "border-gold bg-tint/50"
+                : "border-line",
             )}
             onDragOver={handleOgDragOver}
             onDragLeave={handleOgDragLeave}
             onDrop={handleOgDrop}
             onClick={() =>
-              !readOnly && document.getElementById("og-image-upload")?.click()
+              document.getElementById("og-image-upload")?.click()
             }
           >
             {ogPreviewUrl || ogImageKey ? (
-              <div className="relative group w-full max-w-[240px] aspect-video rounded-lg overflow-hidden border border-slate-200">
+              <div className="relative group w-full max-w-[240px] aspect-video rounded-lg overflow-hidden border border-line">
                 <img
                   src={ogPreviewUrl || resolveProductImageUrl(ogImageKey || "")}
                   alt="OG preview"
                   className="w-full h-full object-cover"
                 />
-                {!readOnly && (
-                  <button
+                <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       setValue("og_image_key", "", { shouldDirty: true });
                       setOgPreviewUrl("");
                     }}
-                    className="absolute top-2 right-2 p-1.5 bg-rose-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                    className="absolute top-2 right-2 p-1.5 bg-danger text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
                   >
                     <X className="h-4 w-4" />
                   </button>
-                )}
               </div>
             ) : (
-              <div className="flex flex-col items-center gap-2 text-slate-500">
-                <div className="p-4 bg-slate-100 rounded-full">
+              <div className="flex flex-col items-center gap-2 text-moon">
+                <div className="p-4 bg-cosmos rounded-full">
                   {uploadOgMutation.isPending ? (
-                    <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+                    <Loader2 className="h-8 w-8 animate-spin text-gold-press" />
                   ) : (
-                    <Upload className="h-8 w-8 text-slate-400" />
+                    <Upload className="h-8 w-8 text-moon" />
                   )}
                 </div>
                 <div>
-                  <p className="font-medium text-slate-700">
+                  <p className="font-medium text-charcoal">
                     {uploadOgMutation.isPending
                       ? "Uploading..."
                       : "Click or drag to upload OG image"}
@@ -812,7 +752,7 @@ export function ProductForm({
               className="hidden"
               accept="image/*"
               onChange={handleOgFileSelect}
-              disabled={readOnly || uploadOgMutation.isPending}
+              disabled={uploadOgMutation.isPending}
             />
           </div>
         </div>
@@ -820,57 +760,52 @@ export function ProductForm({
 
       <div className="space-y-2">
         <Label>
-          Product Image <span className="text-rose-500">*</span>
+          Product Image <span className="text-danger">*</span>
         </Label>
         <div
           className={cn(
             "border-2 border-dashed rounded-xl p-8 transition-all flex flex-col items-center justify-center gap-4 text-center",
             isDragging
-              ? "border-indigo-500 bg-indigo-50/50"
-              : "border-slate-200",
-            !readOnly &&
-              "hover:border-indigo-400 hover:bg-slate-50/50 cursor-pointer",
-            readOnly && "opacity-75 cursor-default bg-slate-50",
+              ? "border-gold bg-tint/50"
+              : "border-line",
           )}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           onClick={() =>
-            !readOnly && document.getElementById("file-upload")?.click()
+            document.getElementById("file-upload")?.click()
           }
         >
           {imageKey ? (
-            <div className="relative group w-full max-w-[200px] aspect-square rounded-lg overflow-hidden border border-slate-200">
+            <div className="relative group w-full max-w-[200px] aspect-square rounded-lg overflow-hidden border border-line">
               <img
                 src={primaryPreviewUrl || resolveProductImageUrl(imageKey)}
                 alt="Preview"
                 className="w-full h-full object-cover"
               />
-              {!readOnly && (
-                <button
+              <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     setValue("image", "");
                     setPrimaryPreviewUrl("");
                   }}
-                  className="absolute top-2 right-2 p-1.5 bg-rose-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                  className="absolute top-2 right-2 p-1.5 bg-danger text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
                 >
                   <X className="h-4 w-4" />
                 </button>
-              )}
             </div>
           ) : (
-            <div className="flex flex-col items-center gap-2 text-slate-500">
-              <div className="p-4 bg-slate-100 rounded-full">
+            <div className="flex flex-col items-center gap-2 text-moon">
+              <div className="p-4 bg-cosmos rounded-full">
                 {uploadPrimaryMutation.isPending ? (
-                  <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+                  <Loader2 className="h-8 w-8 animate-spin text-gold-press" />
                 ) : (
-                  <Upload className="h-8 w-8 text-slate-400" />
+                  <Upload className="h-8 w-8 text-moon" />
                 )}
               </div>
               <div>
-                <p className="font-medium text-slate-700">
+                <p className="font-medium text-charcoal">
                   {uploadPrimaryMutation.isPending
                     ? "Uploading..."
                     : "Click or drag to upload"}
@@ -885,23 +820,23 @@ export function ProductForm({
             className="hidden"
             accept="image/*"
             onChange={handleFileSelect}
-            disabled={readOnly || uploadPrimaryMutation.isPending}
+            disabled={uploadPrimaryMutation.isPending}
           />
         </div>
         {errors.image && (
-          <p className="text-sm text-rose-500">{errors.image.message}</p>
+          <p className="text-sm text-danger">{errors.image.message}</p>
         )}
       </div>
 
       <div className="space-y-2">
         <Label>
-          Product Gallery <span className="text-rose-500">*</span>
+          Product Gallery <span className="text-danger">*</span>
         </Label>
         <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-4">
           {localPreviews.map((item) => (
             <div
               key={item.id}
-              className="relative group aspect-square rounded-lg overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center"
+              className="relative group aspect-square rounded-lg overflow-hidden border border-line bg-cream flex items-center justify-center"
             >
               <img
                 src={item.url}
@@ -913,14 +848,14 @@ export function ProductForm({
               />
               {item.isUploading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/10">
-                  <Loader2 className="h-6 w-6 animate-spin text-indigo-600" />
+                  <Loader2 className="h-6 w-6 animate-spin text-gold-press" />
                 </div>
               )}
-              {!readOnly && !item.isUploading && (
+              {!item.isUploading && (
                 <button
                   type="button"
                   onClick={() => handleRemoveGalleryImage(item.id, item.key)}
-                  className="absolute top-2 right-2 p-1.5 bg-rose-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                  className="absolute top-2 right-2 p-1.5 bg-danger text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -928,22 +863,21 @@ export function ProductForm({
             </div>
           ))}
 
-          {!readOnly && (
-            <div
+          <div
               className={cn(
-                "border-2 border-dashed rounded-lg aspect-square flex flex-col items-center justify-center gap-2 text-center cursor-pointer transition-all hover:border-indigo-400 hover:bg-slate-50/50",
+                "border-2 border-dashed rounded-lg aspect-square flex flex-col items-center justify-center gap-2 text-center cursor-pointer transition-all hover:border-gold hover:bg-cream",
                 uploadGalleryMutation.isPending
                   ? "opacity-50 pointer-events-none"
-                  : "border-slate-200",
+                  : "border-line",
               )}
               onClick={() => document.getElementById("gallery-upload")?.click()}
             >
               {uploadGalleryMutation.isPending ? (
-                <Loader2 className="h-5 w-5 animate-spin text-indigo-600" />
+                <Loader2 className="h-5 w-5 animate-spin text-gold-press" />
               ) : (
                 <>
-                  <Upload className="h-5 w-5 text-slate-400" />
-                  <span className="text-xs text-slate-500 font-medium px-2">
+                  <Upload className="h-5 w-5 text-moon" />
+                  <span className="text-xs text-moon font-medium px-2">
                     Upload Gallery
                   </span>
                 </>
@@ -958,10 +892,9 @@ export function ProductForm({
                 disabled={uploadGalleryMutation.isPending}
               />
             </div>
-          )}
         </div>
         {errors.gallery_image_keys && (
-          <p className="text-sm text-rose-500 mt-2">
+          <p className="text-sm text-danger mt-2">
             {errors.gallery_image_keys.message}
           </p>
         )}
@@ -970,11 +903,10 @@ export function ProductForm({
       <div className="pt-4 flex justify-end gap-2">
         <Link href="/products">
           <Button type="button" variant="outline">
-            {readOnly ? "Back" : "Cancel"}
+            Cancel
           </Button>
         </Link>
-        {!readOnly && (
-          <Button
+        <Button
             type="submit"
             disabled={
               isPending ||
@@ -982,7 +914,7 @@ export function ProductForm({
               uploadGalleryMutation.isPending ||
               uploadOgMutation.isPending
             }
-            className="bg-indigo-600 hover:bg-indigo-700 min-w-[120px]"
+            className="bg-gold-deep hover:bg-gold-deep min-w-[120px]"
           >
             {isPending ? (
               <>
@@ -995,7 +927,6 @@ export function ProductForm({
               "Create Product"
             )}
           </Button>
-        )}
       </div>
     </form>
   );

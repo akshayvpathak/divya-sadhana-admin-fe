@@ -84,32 +84,32 @@ export function RetentionReport() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-700">
-          <Filter className="h-4 w-4 text-slate-400" />
+      <div className="rounded-xl border border-line bg-surface p-4 shadow-sm">
+        <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-charcoal">
+          <Filter className="h-4 w-4 text-moon" />
           Filters
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <div className="space-y-1">
-            <Label className="text-xs text-slate-500">From</Label>
+            <Label className="text-xs text-moon">From</Label>
             <Input
               type="date"
-              className="bg-white"
+              className="bg-surface"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
             />
           </div>
           <div className="space-y-1">
-            <Label className="text-xs text-slate-500">To</Label>
+            <Label className="text-xs text-moon">To</Label>
             <Input
               type="date"
-              className="bg-white"
+              className="bg-surface"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
             />
           </div>
           <div className="space-y-1">
-            <Label className="text-xs text-slate-500">State</Label>
+            <Label className="text-xs text-moon">State</Label>
             <Select
               value={stateId}
               onValueChange={(v) => {
@@ -117,7 +117,7 @@ export function RetentionReport() {
                 setDistrictId('all');
               }}
             >
-              <SelectTrigger className="bg-white">
+              <SelectTrigger className="bg-surface">
                 <SelectValue>
                   {stateId === 'all'
                     ? 'All states'
@@ -135,13 +135,13 @@ export function RetentionReport() {
             </Select>
           </div>
           <div className="space-y-1">
-            <Label className="text-xs text-slate-500">District</Label>
+            <Label className="text-xs text-moon">District</Label>
             <Select
               value={districtId}
               onValueChange={(v) => setDistrictId(v || 'all')}
               disabled={stateId === 'all'}
             >
-              <SelectTrigger className="bg-white">
+              <SelectTrigger className="bg-surface">
                 <SelectValue>
                   {districtId === 'all'
                     ? 'All districts'
@@ -159,9 +159,9 @@ export function RetentionReport() {
             </Select>
           </div>
           <div className="space-y-1">
-            <Label className="text-xs text-slate-500">Source</Label>
+            <Label className="text-xs text-moon">Source</Label>
             <Select value={sourceKind} onValueChange={(v) => setSourceKind(v || 'all')}>
-              <SelectTrigger className="bg-white">
+              <SelectTrigger className="bg-surface">
                 <SelectValue>
                   {sourceKind === 'all' ? 'All sources' : sourceKind}
                 </SelectValue>
@@ -180,11 +180,11 @@ export function RetentionReport() {
       </div>
 
       {summaryLoading ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
+        <div className="rounded-xl border border-line bg-surface p-8 text-center text-sm text-moon">
           Loading retention summary…
         </div>
       ) : summaryError ? (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 p-6 text-sm text-rose-700">
+        <div className="rounded-xl border border-danger/25 bg-danger-tint p-6 text-sm text-danger-ink">
           {summaryError instanceof Error ? summaryError.message : 'Failed to load retention'}
         </div>
       ) : (
@@ -204,16 +204,16 @@ export function RetentionReport() {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-              <h3 className="mb-3 text-sm font-semibold text-slate-900">By layer</h3>
+            <div className="rounded-xl border border-line bg-surface p-4 shadow-sm">
+              <h3 className="mb-3 text-sm font-semibold text-ink">By layer</h3>
               <ul className="space-y-2">
                 {Object.keys(byKind).length === 0 ? (
-                  <li className="text-sm text-slate-500">No retained amounts in range.</li>
+                  <li className="text-sm text-moon">No retained amounts in range.</li>
                 ) : (
                   Object.entries(byKind).map(([kind, amount]) => (
                     <li key={kind} className="flex items-center justify-between text-sm">
-                      <span className="text-slate-600">{KIND_LABEL[kind] ?? kind}</span>
-                      <span className="font-medium tabular-nums text-slate-900">
+                      <span className="text-charcoal">{KIND_LABEL[kind] ?? kind}</span>
+                      <span className="font-medium tabular-nums text-ink">
                         {formatINR(amount)}
                       </span>
                     </li>
@@ -222,21 +222,21 @@ export function RetentionReport() {
               </ul>
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-              <h3 className="mb-3 text-sm font-semibold text-slate-900">Retained by reason</h3>
+            <div className="rounded-xl border border-line bg-surface p-4 shadow-sm">
+              <h3 className="mb-3 text-sm font-semibold text-ink">Retained by reason</h3>
               <ul className="space-y-2">
                 {(summary?.retained_by_reason ?? []).length === 0 ? (
-                  <li className="text-sm text-slate-500">No retention reasons in range.</li>
+                  <li className="text-sm text-moon">No retention reasons in range.</li>
                 ) : (
                   (summary?.retained_by_reason ?? []).map((row) => (
                     <li key={row.reason} className="flex items-center justify-between text-sm">
-                      <span className="text-slate-600">
+                      <span className="text-charcoal">
                         {REASON_LABEL[row.reason] ?? row.reason}
                         {row.entries != null ? (
-                          <span className="ml-2 text-xs text-slate-400">{row.entries} entries</span>
+                          <span className="ml-2 text-xs text-moon">{row.entries} entries</span>
                         ) : null}
                       </span>
-                      <span className="font-medium tabular-nums text-slate-900">
+                      <span className="font-medium tabular-nums text-ink">
                         {formatINR(row.amount)}
                       </span>
                     </li>
@@ -247,22 +247,22 @@ export function RetentionReport() {
           </div>
 
           {(summary?.top_gaps ?? []).length > 0 && (
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-              <h3 className="mb-3 text-sm font-semibold text-slate-900">Top gaps to appoint</h3>
-              <ul className="divide-y divide-slate-100">
+            <div className="rounded-xl border border-line bg-surface p-4 shadow-sm">
+              <h3 className="mb-3 text-sm font-semibold text-ink">Top gaps to appoint</h3>
+              <ul className="divide-y divide-line/60">
                 {(summary?.top_gaps ?? []).map((gap, i) => (
                   <li
                     key={`${gap.state_id}-${gap.district_id}-${i}`}
                     className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm"
                   >
-                    <span className="text-slate-700">
+                    <span className="text-charcoal">
                       {gap.state_name || '—'}
                       {gap.district_name ? ` · ${gap.district_name}` : ''}
                     </span>
-                    <span className="font-medium tabular-nums text-amber-700">
+                    <span className="font-medium tabular-nums text-warning-ink">
                       {formatINR(gap.retained_amount)}
                       {gap.entries != null ? (
-                        <span className="ml-2 text-xs font-normal text-slate-400">
+                        <span className="ml-2 text-xs font-normal text-moon">
                           {gap.entries} entries
                         </span>
                       ) : null}
@@ -275,30 +275,30 @@ export function RetentionReport() {
         </>
       )}
 
-      <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
-          <h3 className="text-sm font-semibold text-slate-900">Entry drilldown</h3>
+      <div className="rounded-xl border border-line bg-surface shadow-sm">
+        <div className="flex items-center justify-between border-b border-line px-4 py-3">
+          <h3 className="text-sm font-semibold text-ink">Entry drilldown</h3>
           <button
             type="button"
             onClick={() => setShowEntries((v) => !v)}
-            className="text-sm font-semibold text-indigo-600 hover:text-indigo-700"
+            className="text-sm font-semibold text-gold-press hover:text-gold-press"
           >
             {showEntries ? 'Hide entries' : 'Load entries'}
           </button>
         </div>
         {!showEntries ? (
-          <p className="px-4 py-6 text-sm text-slate-500">
+          <p className="px-4 py-6 text-sm text-moon">
             Load the entry table when you need line-level beneficiary / retention_reason detail.
           </p>
         ) : entriesLoading ? (
-          <p className="px-4 py-6 text-sm text-slate-500">Loading entries…</p>
+          <p className="px-4 py-6 text-sm text-moon">Loading entries…</p>
         ) : entries.length === 0 ? (
-          <p className="px-4 py-6 text-sm text-slate-500">No retention entries for these filters.</p>
+          <p className="px-4 py-6 text-sm text-moon">No retention entries for these filters.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[900px] text-sm">
               <thead>
-                <tr className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-400">
+                <tr className="bg-cream text-left text-xs uppercase tracking-wide text-moon">
                   <th className="px-3 py-2">Date</th>
                   <th className="px-3 py-2">Source</th>
                   <th className="px-3 py-2">Territory</th>
@@ -311,19 +311,19 @@ export function RetentionReport() {
               </thead>
               <tbody>
                 {entries.map((row) => (
-                  <tr key={row.id} className="border-t border-slate-100">
-                    <td className="px-3 py-2 text-slate-600">
+                  <tr key={row.id} className="border-t border-line/60">
+                    <td className="px-3 py-2 text-charcoal">
                       {row.created_at
                         ? new Date(row.created_at).toLocaleDateString('en-IN')
                         : '—'}
                     </td>
                     <td className="px-3 py-2">
-                      <div className="font-medium text-slate-800">
+                      <div className="font-medium text-ink">
                         {row.source_reference || row.sale_id || '—'}
                       </div>
-                      <div className="text-xs text-slate-400">{row.source_kind || ''}</div>
+                      <div className="text-xs text-moon">{row.source_kind || ''}</div>
                     </td>
-                    <td className="px-3 py-2 text-slate-600">
+                    <td className="px-3 py-2 text-charcoal">
                       {[row.state_name, row.district_name].filter(Boolean).join(' · ') || '—'}
                     </td>
                     <td className="px-3 py-2">
@@ -331,14 +331,14 @@ export function RetentionReport() {
                     </td>
                     <td className="px-3 py-2 tabular-nums font-medium">
                       {formatINR(row.amount)}
-                      <div className="text-xs font-normal text-slate-400">
+                      <div className="text-xs font-normal text-moon">
                         {row.percent != null ? `${row.percent}%` : ''}
                       </div>
                     </td>
                     <td className="px-3 py-2">
                       <div>{row.beneficiary_name || row.beneficiary || '—'}</div>
                     </td>
-                    <td className="px-3 py-2 text-slate-600">
+                    <td className="px-3 py-2 text-charcoal">
                       {row.retention_reason
                         ? REASON_LABEL[row.retention_reason] ?? row.retention_reason
                         : '—'}
@@ -368,14 +368,14 @@ function Stat({
 }) {
   const toneClass =
     tone === 'green'
-      ? 'border-emerald-200 bg-emerald-50'
+      ? 'border-success/25 bg-success-tint'
       : tone === 'amber'
-        ? 'border-amber-200 bg-amber-50'
-        : 'border-slate-200 bg-white';
+        ? 'border-warning/25 bg-warning-tint'
+        : 'border-line bg-surface';
   return (
     <div className={`rounded-xl border p-4 shadow-sm ${toneClass}`}>
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{label}</p>
-      <p className="mt-1 text-2xl font-bold tabular-nums text-slate-900">{value}</p>
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-moon">{label}</p>
+      <p className="mt-1 text-2xl font-bold tabular-nums text-ink">{value}</p>
     </div>
   );
 }

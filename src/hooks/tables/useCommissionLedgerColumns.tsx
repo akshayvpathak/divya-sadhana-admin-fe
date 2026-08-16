@@ -1,5 +1,5 @@
 import React from 'react';
-import dayjs from 'dayjs';
+import { formatDate } from '@/lib/datetime';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { ModuleStatus } from '@/components/ui/badges/ModuleStatus';
 import { ColumnConfig } from '@/components/common/DataTable/types';
@@ -27,15 +27,15 @@ export const useCommissionLedgerColumns = (): ColumnConfig<CommissionEntry>[] =>
     {
       id: 'order',
       header: 'Source',
-      cellClassName: 'font-mono text-xs text-slate-700',
+      cellClassName: 'font-mono text-xs text-charcoal',
       renderCell: (row) => resolveOrderLabel(row),
     },
     {
       id: 'kind',
       accessorKey: 'kind',
       header: 'Kind',
-      cellClassName: 'text-slate-700',
-      renderCell: (row) => row.kind ? <StatusBadge status={row.kind} /> : '—',
+      cellClassName: 'text-charcoal',
+      renderCell: (row) => (row.kind ? <StatusBadge status={row.kind} /> : null),
     },
     {
       id: 'amount',
@@ -43,7 +43,7 @@ export const useCommissionLedgerColumns = (): ColumnConfig<CommissionEntry>[] =>
       header: 'Amount',
       headerAlign: 'right',
       cellAlign: 'right',
-      cellClassName: 'font-medium text-slate-900',
+      cellClassName: 'font-medium text-ink',
       renderCell: (row) => formatINR(row.amount),
     },
     {
@@ -56,9 +56,9 @@ export const useCommissionLedgerColumns = (): ColumnConfig<CommissionEntry>[] =>
       id: 'matures_at',
       accessorKey: 'matures_at',
       header: 'Unlocks',
-      cellClassName: 'text-slate-500 text-sm',
+      cellClassName: 'text-moon text-sm',
       renderCell: (row) =>
-        row.matures_at ? dayjs(row.matures_at).format('MMM D, YYYY') : '—',
+        formatDate(row.matures_at),
     },
   ];
 };

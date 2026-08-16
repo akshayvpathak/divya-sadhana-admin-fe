@@ -2,7 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { RowActions } from '@/components/common/RowActions';
 import { ColumnConfig } from '@/components/common/DataTable/types';
-import dayjs from 'dayjs';
+import { formatDate } from '@/lib/datetime';
 import { ModuleStatus } from '@/components/ui/badges/ModuleStatus';
 import { FAILURE_CLASS_META, describeFailure } from '@/lib/reading-failures';
 
@@ -38,8 +38,8 @@ export const useAiReadingsTableColumns = (): ColumnConfig<AiReadingRow>[] => {
       sortable: true,
       renderCell: (row) => (
         <Link href={`/ai-readings/${row.id}`} className="flex flex-col group">
-          <span className="font-medium text-slate-900 group-hover:text-indigo-600 group-hover:underline">{row.user?.full_name || 'Unknown'}</span>
-          <span className="text-xs text-slate-500">{row.user?.email || 'N/A'}</span>
+          <span className="font-medium text-ink group-hover:text-gold-press group-hover:underline">{row.user?.full_name || 'Unknown'}</span>
+          <span className="text-xs text-moon">{row.user?.email || 'N/A'}</span>
         </Link>
       ),
     },
@@ -50,8 +50,8 @@ export const useAiReadingsTableColumns = (): ColumnConfig<AiReadingRow>[] => {
       sortable: true,
       renderCell: (row) => (
         <div className="flex flex-col">
-          <span className="font-medium text-slate-900">{row.service_name}</span>
-          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{row.service_kind.replace('_', ' ')}</span>
+          <span className="font-medium text-ink">{row.service_name}</span>
+          <span className="text-[10px] text-moon font-bold uppercase tracking-wider">{row.service_kind.replace('_', ' ')}</span>
         </div>
       )
     },
@@ -60,7 +60,7 @@ export const useAiReadingsTableColumns = (): ColumnConfig<AiReadingRow>[] => {
       header: 'Price',
       renderCell: (row) => (
         <span className="font-medium">
-          {row.report_unlock_price} <span className="text-xs text-slate-400 uppercase font-bold">{row.currency}</span>
+          {row.report_unlock_price} <span className="text-xs text-moon uppercase font-bold">{row.currency}</span>
         </span>
       ),
     },
@@ -92,8 +92,8 @@ export const useAiReadingsTableColumns = (): ColumnConfig<AiReadingRow>[] => {
       accessorKey: 'created_at',
       header: 'Created Date',
       sortable: true,
-      cellClassName: 'text-slate-500 text-sm',
-      renderCell: (row) => row.created_at ? dayjs(row.created_at).format('MMM D, YYYY') : '-',
+      cellClassName: 'text-moon text-sm',
+      renderCell: (row) => formatDate(row.created_at),
     },
     {
       id: 'actions',

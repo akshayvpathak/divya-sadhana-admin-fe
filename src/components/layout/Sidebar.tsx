@@ -5,49 +5,9 @@ import { usePathname } from 'next/navigation';
 import { useAtom } from 'jotai';
 import { cn } from '@/lib/utils';
 import { sidebarAtom } from '@/store/auth';
-import { useAuth } from '@/context/AuthContext';
-import {
-  LayoutDashboard,
-  Users,
-  Tags,
-  Package,
-  ChevronLeft,
-  ShoppingCart,
-  HeartHandshake,
-  Megaphone,
-  CreditCard,
-  UserCircle,
-  Sparkles,
-  Moon,
-  BadgeCheck,
-  Wallet,
-  Flame,
-  ClipboardList,
-  CalendarDays,
-  type LucideIcon
-} from 'lucide-react';
+import { navItems } from '@/lib/nav';
+import { ChevronLeft } from 'lucide-react';
 import { Button } from '../ui/button';
-
-type NavItem = { name: string; href: string; icon: LucideIcon; superuserOnly?: boolean };
-
-const navItems: NavItem[] = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Users', href: '/users', icon: Users },
-  { name: 'Categories', href: '/categories', icon: Tags },
-  { name: 'Products', href: '/products', icon: Package },
-  { name: 'Orders', href: '/orders', icon: ShoppingCart },
-  { name: 'Donations', href: '/donations', icon: HeartHandshake },
-  { name: 'Campaigns', href: '/donation-campaigns', icon: Megaphone },
-  { name: 'Sadhana Services', href: '/sadhana-services', icon: Flame },
-  { name: 'Service Bookings', href: '/service-bookings', icon: ClipboardList },
-  { name: 'Service Batches', href: '/service-batches', icon: CalendarDays },
-  { name: 'Payments', href: '/payments', icon: CreditCard },
-  { name: 'AI Readings', href: '/ai-readings', icon: Sparkles },
-  { name: 'Horoscope', href: '/horoscope', icon: Moon },
-  { name: 'Network Members', href: '/trustees', icon: BadgeCheck },
-  { name: 'Withdrawals', href: '/withdrawals', icon: Wallet },
-  { name: 'Profile', href: '/profile', icon: UserCircle },
-];
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -56,43 +16,56 @@ export default function Sidebar() {
   return (
     <aside
       className={cn(
-        "relative flex flex-col h-screen bg-slate-900 text-slate-100 transition-all duration-300 z-20 border-r border-slate-800",
-        isOpen ? "w-64" : "w-20"
+        'relative z-20 flex h-screen flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-300',
+        isOpen ? 'w-64' : 'w-20'
       )}
     >
-      <div className="flex items-center justify-between p-4 h-16 border-b border-slate-800">
-        <span className={cn("font-bold text-xl truncate transition-all", isOpen ? "block" : "hidden")}>
-          Admin Panel
+      <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
+        <span
+          className={cn(
+            'truncate text-lg font-bold tracking-tight text-white transition-all',
+            isOpen ? 'block' : 'hidden'
+          )}
+        >
+          Divya <span className="text-saffron">Sadhana</span>
         </span>
         <Button
           variant="ghost"
           size="icon"
           onClick={() => setIsOpen(!isOpen)}
-          className="text-slate-400 hover:text-white hover:bg-slate-800"
+          className="text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-white"
         >
-          <ChevronLeft className={cn("h-5 w-5 transition-transform", !isOpen && "rotate-180")} />
+          <ChevronLeft className={cn('h-5 w-5 transition-transform', !isOpen && 'rotate-180')} />
         </Button>
       </div>
 
-      <nav className="flex-1 overflow-y-auto py-4 custom-scrollbar">
-        <ul className="space-y-1 px-2">
+      <nav className="custom-scrollbar custom-scrollbar-dark flex-1 overflow-y-auto py-3">
+        <ul className="space-y-0.5 px-2.5">
           {navItems.map((item) => {
-            const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
-            
+            const isActive =
+              pathname === item.href ||
+              (item.href !== '/dashboard' && pathname.startsWith(item.href));
+
             return (
               <li key={item.href}>
                 <Link
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors group",
-                    isActive 
-                      ? "bg-indigo-600 text-white" 
-                      : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                    'group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                    isActive
+                      // Ink on saffron is 8.3:1 — the pill can carry real weight.
+                      ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-[0_1px_8px_0_rgb(255_153_51_/_0.35)]'
+                      : 'text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-white'
                   )}
                   title={!isOpen ? item.name : undefined}
                 >
                   <item.icon className="h-5 w-5 shrink-0" />
-                  <span className={cn("truncate transition-all", isOpen ? "opacity-100 w-auto" : "opacity-0 w-0 hidden")}>
+                  <span
+                    className={cn(
+                      'truncate transition-all',
+                      isOpen ? 'w-auto opacity-100' : 'hidden w-0 opacity-0'
+                    )}
+                  >
                     {item.name}
                   </span>
                 </Link>

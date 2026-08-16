@@ -23,6 +23,9 @@ import { Trustee } from '@/schemas/trustees.schema';
 import { CoverageTerritory } from '@/components/trustees/CoverageTerritory';
 import { RetentionReport } from '@/components/trustees/RetentionReport';
 import { cn } from '@/lib/utils';
+import { PageHeader } from '@/components/common/PageHeader';
+import { Card, CardBand } from '@/components/ui/card';
+import { StatCard } from '@/components/common/StatCard';
 
 type TrusteesTab = 'trustees' | 'coverage' | 'retention';
 
@@ -163,25 +166,23 @@ export default function TrusteesPage() {
 
   return (
     <div className="space-y-6 pb-8">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Network Members</h1>
-          <p className="text-slate-500 mt-1">
-            Appoint trustees, state executives, and district presidents
-          </p>
-        </div>
-        {tab === 'trustees' && (
-          <Link href="/trustees/create">
-            <Button className="bg-indigo-600 hover:bg-indigo-700 shadow-sm shadow-indigo-600/20">
-              <Plus className="h-4 w-4" /> Appoint member
-            </Button>
-          </Link>
-        )}
-      </div>
+      <PageHeader
+        title="Network Members"
+        description="Appoint trustees, state executives, and district presidents"
+        actions={
+          tab === 'trustees' && (
+            <Link href="/trustees/create">
+              <Button className="shadow-sm shadow-gold/20">
+                <Plus className="h-4 w-4" /> Appoint member
+              </Button>
+            </Link>
+          )
+        }
+      />
 
       {/* Tabs: members vs cross-member coverage (former Territory page) */}
       <div className="flex flex-wrap items-center gap-2">
-        <div className="inline-flex rounded-xl bg-slate-100/90 p-1 ring-1 ring-slate-200/80">
+        <div className="inline-flex rounded-xl bg-cosmos p-1 ring-1 ring-line/80">
           {TABS.map((t) => (
             <button
               key={t.key}
@@ -190,15 +191,15 @@ export default function TrusteesPage() {
               className={cn(
                 'rounded-lg px-3.5 py-2 text-sm font-semibold transition-all',
                 tab === t.key
-                  ? 'bg-white text-indigo-700 shadow-sm ring-1 ring-slate-200/80'
-                  : 'text-slate-500 hover:text-slate-800'
+                  ? 'bg-surface text-gold-press shadow-sm ring-1 ring-line/80'
+                  : 'text-moon hover:text-ink'
               )}
             >
               {t.label}
             </button>
           ))}
         </div>
-        <span className="hidden sm:inline text-xs text-slate-400 ml-1">
+        <span className="hidden sm:inline text-xs text-moon ml-1">
           {TABS.find((t) => t.key === tab)?.hint}
         </span>
       </div>
@@ -209,64 +210,42 @@ export default function TrusteesPage() {
         <RetentionReport />
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="rounded-xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm">
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
-                  <Users className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                    Members
-                  </p>
-                  <p className="text-xl font-semibold tabular-nums text-slate-900">
-                    {isLoading ? '—' : totalItems}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="rounded-xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm">
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-                  <Link2 className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                    With territory
-                  </p>
-                  <p className="text-xl font-semibold tabular-nums text-slate-900">
-                    {assignedMemberIds.size}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="rounded-xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm">
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sky-50 text-sky-600">
-                  <MapPin className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                    States covered
-                  </p>
-                  <p className="text-xl font-semibold tabular-nums text-slate-900">
-                    {coveredStates}
-                    <span className="ml-1 text-sm font-normal text-slate-400">
-                      / {states.length || '—'}
-                    </span>
-                  </p>
-                </div>
-              </div>
-            </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <StatCard
+              label="Members"
+              value={totalItems}
+              loading={isLoading}
+              icon={<Users className="h-4 w-4" />}
+              tone="gold"
+            />
+            <StatCard
+              label="With territory"
+              value={assignedMemberIds.size}
+              icon={<Link2 className="h-4 w-4" />}
+              tone="success"
+            />
+            <StatCard
+              label="States covered"
+              value={
+                <>
+                  {coveredStates}
+                  <span className="ml-1 text-sm font-normal text-moon">
+                    / {states.length || '—'}
+                  </span>
+                </>
+              }
+              icon={<MapPin className="h-4 w-4" />}
+              tone="info"
+            />
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-            <div className="p-4 border-b border-slate-200 bg-slate-50/80 flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+          <Card>
+            <CardBand className="flex flex-col items-stretch justify-between gap-3 border-b border-line md:flex-row md:items-center">
               <div className="relative max-w-md flex-1 w-full">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-moon" />
                 <Input
                   placeholder="Search by name, email, or code..."
-                  className="pl-9 bg-white w-full h-10"
+                  className="pl-9 bg-surface w-full h-10"
                   value={search}
                   onChange={(e) => {
                     setSearch(e.target.value);
@@ -275,7 +254,7 @@ export default function TrusteesPage() {
                 />
               </div>
               <div className="flex flex-wrap sm:flex-nowrap gap-2 items-center w-full md:w-auto">
-                <Filter className="h-4 w-4 text-slate-400 shrink-0 hidden sm:block" />
+                <Filter className="h-4 w-4 text-moon shrink-0 hidden sm:block" />
                 <Select
                   value={status}
                   onValueChange={(val) => {
@@ -283,7 +262,7 @@ export default function TrusteesPage() {
                     setPage(1);
                   }}
                 >
-                  <SelectTrigger className="bg-white w-full sm:w-[140px] h-10">
+                  <SelectTrigger className="bg-surface w-full sm:w-[140px] h-10">
                     <SelectValue placeholder="All Statuses">
                       {status === 'active'
                         ? 'Active'
@@ -306,7 +285,7 @@ export default function TrusteesPage() {
                     setPage(1);
                   }}
                 >
-                  <SelectTrigger className="bg-white w-full sm:w-[200px] h-10">
+                  <SelectTrigger className="bg-surface w-full sm:w-[200px] h-10">
                     <SelectValue placeholder="All States">
                       {stateFilter === 'all'
                         ? 'All States'
@@ -324,7 +303,7 @@ export default function TrusteesPage() {
                 </Select>
                 {hasActiveFilters && <ClearFiltersButton onClear={clearAllFilters} />}
               </div>
-            </div>
+            </CardBand>
 
             <DataTable
               columns={columns}
@@ -343,7 +322,7 @@ export default function TrusteesPage() {
                 onPageChange={setPage}
               />
             )}
-          </div>
+          </Card>
         </>
       )}
     </div>

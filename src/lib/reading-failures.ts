@@ -30,27 +30,27 @@ export const FAILURE_CLASS_META: Record<
   precheck_subject: {
     label: 'Pre-check · wrong subject',
     blame: 'User fixable',
-    badgeClass: 'bg-amber-50 text-amber-700 border-amber-200',
+    badgeClass: 'bg-warning-tint text-warning-ink border-warning/25',
   },
   precheck_quality: {
     label: 'Pre-check · image quality',
     blame: 'User fixable',
-    badgeClass: 'bg-amber-50 text-amber-700 border-amber-200',
+    badgeClass: 'bg-warning-tint text-warning-ink border-warning/25',
   },
   policy: {
     label: 'Policy refusal',
     blame: 'Refused by design',
-    badgeClass: 'bg-slate-100 text-slate-700 border-slate-300',
+    badgeClass: 'bg-cosmos text-charcoal border-line',
   },
   provider: {
     label: 'Provider / infrastructure',
     blame: 'Our problem',
-    badgeClass: 'bg-red-50 text-red-700 border-red-200',
+    badgeClass: 'bg-danger-tint text-danger-ink border-danger/25',
   },
   parsing: {
     label: 'Output parsing',
     blame: 'Our problem',
-    badgeClass: 'bg-red-50 text-red-700 border-red-200',
+    badgeClass: 'bg-danger-tint text-danger-ink border-danger/25',
   },
 };
 

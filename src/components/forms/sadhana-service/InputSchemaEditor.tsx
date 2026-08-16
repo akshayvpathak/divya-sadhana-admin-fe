@@ -35,7 +35,7 @@ function OptionsEditor({
 }) {
   const { fields, append, remove } = useFieldArray({ control, name: parentName });
   return (
-    <div className="space-y-2 rounded-md border border-slate-200 bg-white p-3">
+    <div className="space-y-2 rounded-md border border-line bg-surface p-3">
       <div className="flex items-center justify-between">
         <Label className="text-xs">Options</Label>
         {!readOnly && (
@@ -44,13 +44,13 @@ function OptionsEditor({
           </Button>
         )}
       </div>
-      {fields.length === 0 && <p className="text-xs text-slate-400">No options yet.</p>}
+      {fields.length === 0 && <p className="text-xs text-moon">No options yet.</p>}
       {fields.map((f, i) => (
         <div key={f.id} className="flex items-center gap-2">
           <Input placeholder="value" {...register(`${parentName}.${i}.value`)} disabled={readOnly} />
           <Input placeholder="label" {...register(`${parentName}.${i}.label`)} disabled={readOnly} />
           {!readOnly && (
-            <Button type="button" variant="ghost" size="icon" onClick={() => remove(i)} className="text-rose-500 shrink-0">
+            <Button type="button" variant="ghost" size="icon" onClick={() => remove(i)} className="text-danger shrink-0">
               <Trash2 className="h-4 w-4" />
             </Button>
           )}
@@ -81,9 +81,9 @@ function InputSchemaRow({
   const showOptions = CHOICE_TYPES.includes(type);
 
   return (
-    <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50/50 p-3">
+    <div className="space-y-3 rounded-lg border border-line bg-cream p-3">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-slate-500">Field {index + 1}</span>
+        <span className="text-xs font-semibold text-moon">Field {index + 1}</span>
         {!readOnly && (
           <div className="flex gap-1">
             <Button type="button" variant="ghost" size="icon" disabled={index === 0} onClick={() => move(index, index - 1)}>
@@ -92,7 +92,7 @@ function InputSchemaRow({
             <Button type="button" variant="ghost" size="icon" disabled={index === total - 1} onClick={() => move(index, index + 1)}>
               <ArrowDown className="h-4 w-4" />
             </Button>
-            <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="text-rose-500">
+            <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="text-danger">
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
@@ -115,7 +115,7 @@ function InputSchemaRow({
             name={`input_schema.${index}.type`}
             render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange} disabled={readOnly}>
-                <SelectTrigger className="bg-white">
+                <SelectTrigger className="bg-surface">
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -177,7 +177,7 @@ export default function InputSchemaEditor({ control, register, readOnly }: Edito
           </Button>
         )}
       </div>
-      {fields.length === 0 && <p className="text-sm text-slate-400">No fields yet.</p>}
+      {fields.length === 0 && <p className="text-sm text-moon">No fields yet.</p>}
       {fields.map((f, index) => (
         <InputSchemaRow
           key={f.id}

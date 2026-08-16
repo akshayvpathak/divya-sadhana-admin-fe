@@ -25,7 +25,7 @@ export default function PricingOptionsEditor({ control, register, errors, readOn
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <Label>
-          Pricing Options <span className="text-rose-500">*</span>
+          Pricing Options <span className="text-danger">*</span>
         </Label>
         {!readOnly && (
           <Button
@@ -42,13 +42,13 @@ export default function PricingOptionsEditor({ control, register, errors, readOn
       </div>
 
       {(rootError?.root?.message || rootError?.message) && (
-        <p className="text-sm text-rose-500">{rootError.root?.message || rootError.message}</p>
+        <p className="text-sm text-danger">{rootError.root?.message || rootError.message}</p>
       )}
 
       {fields.map((f, index) => (
-        <div key={f.id} className="space-y-3 rounded-lg border border-slate-200 bg-slate-50/50 p-3">
+        <div key={f.id} className="space-y-3 rounded-lg border border-line bg-cream p-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Option {index + 1}</span>
+            <span className="text-xs font-semibold text-moon">Option {index + 1}</span>
             {!readOnly && (
               <div className="flex gap-1">
                 <Button type="button" variant="ghost" size="icon" disabled={index === 0} onClick={() => move(index, index - 1)}>
@@ -57,7 +57,7 @@ export default function PricingOptionsEditor({ control, register, errors, readOn
                 <Button type="button" variant="ghost" size="icon" disabled={index === fields.length - 1} onClick={() => move(index, index + 1)}>
                   <ArrowDown className="h-4 w-4" />
                 </Button>
-                <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="text-rose-500">
+                <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="text-danger">
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>

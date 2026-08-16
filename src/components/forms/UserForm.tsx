@@ -18,10 +18,9 @@ interface UserFormProps {
   initialData?: UserFormData;
   onSubmit?: (data: UserFormData) => void | Promise<void>;
   isPending?: boolean;
-  readOnly?: boolean;
 }
 
-export function UserForm({ userId, initialData: propsInitialData, onSubmit, isPending, readOnly = false }: UserFormProps) {
+export function UserForm({ userId, initialData: propsInitialData, onSubmit, isPending }: UserFormProps) {
   const { data: fetchedUser, isLoading: isFetching } = useUser(userId || null);
   
   const initialData = useMemo(() => fetchedUser ? {
@@ -69,17 +68,17 @@ export function UserForm({ userId, initialData: propsInitialData, onSubmit, isPe
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <div className="h-4 w-20 bg-slate-100 animate-pulse rounded" />
-            <div className="h-10 w-full bg-slate-50 animate-pulse rounded-lg" />
+            <div className="h-4 w-20 bg-cosmos animate-pulse rounded" />
+            <div className="h-10 w-full bg-cream animate-pulse rounded-lg" />
           </div>
           <div className="space-y-2">
-            <div className="h-4 w-20 bg-slate-100 animate-pulse rounded" />
-            <div className="h-10 w-full bg-slate-50 animate-pulse rounded-lg" />
+            <div className="h-4 w-20 bg-cosmos animate-pulse rounded" />
+            <div className="h-10 w-full bg-cream animate-pulse rounded-lg" />
           </div>
         </div>
         <div className="space-y-2">
-          <div className="h-4 w-20 bg-slate-100 animate-pulse rounded" />
-          <div className="h-10 w-64 bg-slate-50 animate-pulse rounded-lg" />
+          <div className="h-4 w-20 bg-cosmos animate-pulse rounded" />
+          <div className="h-10 w-64 bg-cream animate-pulse rounded-lg" />
         </div>
       </div>
     );
@@ -89,40 +88,36 @@ export function UserForm({ userId, initialData: propsInitialData, onSubmit, isPe
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
-          <Label htmlFor="first_name">First Name <span className="text-rose-500">*</span></Label>
+          <Label htmlFor="first_name">First Name <span className="text-danger">*</span></Label>
           <Input 
             id="first_name" 
             placeholder="John" 
             {...register('first_name')} 
-            disabled={readOnly}
-            className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}
           />
-          {errors.first_name && <p className="text-sm text-rose-500">{errors.first_name.message}</p>}
+          {errors.first_name && <p className="text-sm text-danger">{errors.first_name.message}</p>}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="last_name">Last Name <span className="text-rose-500">*</span></Label>
+          <Label htmlFor="last_name">Last Name <span className="text-danger">*</span></Label>
           <Input 
             id="last_name" 
             placeholder="Doe" 
             {...register('last_name')} 
-            disabled={readOnly}
-            className={readOnly ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0" : ""}
           />
-          {errors.last_name && <p className="text-sm text-rose-500">{errors.last_name.message}</p>}
+          {errors.last_name && <p className="text-sm text-danger">{errors.last_name.message}</p>}
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="email">Email Address <span className="text-rose-500">*</span></Label>
+          <Label htmlFor="email">Email Address <span className="text-danger">*</span></Label>
           <Input 
             id="email" 
             type="email"
             placeholder="john@example.com" 
             {...register('email')} 
-            readOnly={readOnly || !!userId}
-            className={readOnly || !!userId ? "bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0 select-none" : ""}
+            readOnly={!!userId}
+            className={!!userId ? "bg-ivory border-line text-charcoal cursor-default focus-visible:ring-0 select-none" : ""}
           />
-          {errors.email && <p className="text-sm text-rose-500">{errors.email.message}</p>}
+          {errors.email && <p className="text-sm text-danger">{errors.email.message}</p>}
         </div>
 
         <div className="flex items-center gap-2 pt-8">
@@ -130,24 +125,21 @@ export function UserForm({ userId, initialData: propsInitialData, onSubmit, isPe
             id="is_active" 
             checked={!!isActiveValue} 
             onCheckedChange={(val) => setValue('is_active', val)}
-            disabled={readOnly}
           />
           <Label htmlFor="is_active" className="cursor-pointer">Active</Label>
-          {errors.is_active && <p className="text-sm text-rose-500">{errors.is_active.message}</p>}
+          {errors.is_active && <p className="text-sm text-danger">{errors.is_active.message}</p>}
         </div>
       </div>
 
       <div className="pt-4 flex justify-end gap-2">
         <Link href="/users">
           <Button type="button" variant="outline">
-            {readOnly ? 'Back' : 'Cancel'}
+            Cancel
           </Button>
         </Link>
-        {!readOnly && (
-          <Button type="submit" disabled={isPending} className="bg-indigo-600 hover:bg-indigo-700">
+        <Button type="submit" disabled={isPending} className="bg-gold-deep hover:bg-gold-deep">
             {isPending ? 'Processing...' : (initialData ? 'Edit User' : 'Create User')}
           </Button>
-        )}
       </div>
     </form>
   );

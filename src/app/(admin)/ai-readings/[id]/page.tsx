@@ -3,16 +3,17 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { AlertTriangle, ChevronLeft, Sparkles, Image as ImageIcon, Lock, Unlock, Info, Download, Loader2 } from 'lucide-react';
+import { AlertTriangle, Sparkles, Image as ImageIcon, Lock, Unlock, Info, Download, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAiReadingQuery } from '@/hooks/queries/useAiReadingsQuery';
 import { ReadingStatusBadge } from '@/hooks/tables/useAiReadingsTableColumns';
 import { toast } from 'react-toastify';
-import dayjs from 'dayjs';
+import { formatDateTime, formatStamp } from '@/lib/datetime';
 import { useMutation } from '@tanstack/react-query';
 import { previewService } from '@/services/preview.service';
 import { FAILURE_CLASS_META, describeFailure, durationLabel } from '@/lib/reading-failures';
+import { PageHeader } from '@/components/common/PageHeader';
 
 
 export default function AiReadingDetailPage() {
@@ -121,10 +122,10 @@ export default function AiReadingDetailPage() {
 
   if (error) {
     return (
-      <div className="max-w-6xl mx-auto p-8 text-center bg-rose-50 rounded-2xl border border-rose-200">
-        <h2 className="text-xl font-bold text-rose-800">Error Loading Reading Details</h2>
-        <p className="text-rose-600 mt-2">{error instanceof Error ? error.message : 'Unknown error'}</p>
-        <Link href="/ai-readings" className="mt-4 inline-block text-indigo-600 font-medium hover:underline">
+      <div className="max-w-6xl mx-auto p-8 text-center bg-danger-tint rounded-2xl border border-danger/25">
+        <h2 className="text-xl font-bold text-danger-ink">Error Loading Reading Details</h2>
+        <p className="text-danger mt-2">{error instanceof Error ? error.message : 'Unknown error'}</p>
+        <Link href="/ai-readings" className="mt-4 inline-block text-gold-press font-medium hover:underline">
           Go back to listing
         </Link>
       </div>
@@ -135,39 +136,10 @@ export default function AiReadingDetailPage() {
     <div className="space-y-6 pb-12">
       {/* Top Navigation / Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center gap-4">
-          <Link href="/ai-readings">
-            <Button variant="outline" size="icon">
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
-              {isLoading ? <Skeleton className="h-9 w-64" /> : `Reading Details`}
-            </h1>
-            {isLoading ? (
-              <Skeleton className="h-5 w-48 mt-1.5" />
-            ) : reading && (
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mt-1.5 text-xs sm:text-sm text-slate-500">
-                <span className="font-mono text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 font-semibold text-xs">
-                  {reading.request_number}
-                </span>
-                <span className="text-slate-300">•</span>
-                <span className="capitalize font-semibold text-slate-700">
-                  {reading.service_kind.replace('_', ' ')}
-                </span>
-                <span className="text-slate-300">•</span>
-                <span className="font-semibold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded border border-indigo-100">
-                  {reading.report_unlock_price} {reading.currency}
-                </span>
-                <span className="text-slate-300">•</span>
-                <span>
-                  Submitted {dayjs(reading.created_at).format('MMM D, YYYY HH:mm')}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
+        <PageHeader
+        backHref="/ai-readings"
+        title={isLoading ? <Skeleton className="h-9 w-64" /> : `Reading Details`}
+      />
         {!isLoading && reading && (
           <div className="flex items-center gap-2">
             <ReadingStatusBadge status={reading.status} />
@@ -206,9 +178,9 @@ export default function AiReadingDetailPage() {
                 reading.processing_completed_at,
               );
               return (
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                  <div className="flex items-center gap-2 mb-4 text-slate-400">
-                    <AlertTriangle className="h-4 w-4 text-rose-500" />
+                <div className="bg-surface p-6 rounded-2xl border border-line shadow-sm">
+                  <div className="flex items-center gap-2 mb-4 text-moon">
+                    <AlertTriangle className="h-4 w-4 text-danger" />
                     <span className="text-xs font-bold uppercase tracking-wider">
                       Failure Diagnosis
                     </span>
@@ -220,43 +192,43 @@ export default function AiReadingDetailPage() {
                     >
                       {meta.label}
                     </span>
-                    <span className="text-xs font-semibold text-slate-500">{klass.label}</span>
-                    <span className="text-slate-300">•</span>
-                    <span className="text-xs font-bold text-slate-700">{klass.blame}</span>
+                    <span className="text-xs font-semibold text-moon">{klass.label}</span>
+                    <span className="text-line">•</span>
+                    <span className="text-xs font-bold text-charcoal">{klass.blame}</span>
                   </div>
 
-                  <p className="mt-3 text-sm text-slate-700">{meta.meaning}</p>
+                  <p className="mt-3 text-sm text-charcoal">{meta.meaning}</p>
 
                   <dl className="mt-4 grid gap-3 sm:grid-cols-2">
-                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-150">
-                      <dt className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    <div className="bg-cream p-3 rounded-xl border border-line">
+                      <dt className="text-[10px] font-bold uppercase tracking-wider text-moon">
                         Raw code
                       </dt>
-                      <dd className="mt-0.5 font-mono text-xs text-slate-800 break-all">
+                      <dd className="mt-0.5 font-mono text-xs text-ink break-all">
                         {reading.failure_code || '—'}
                       </dd>
                     </div>
-                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-150">
-                      <dt className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    <div className="bg-cream p-3 rounded-xl border border-line">
+                      <dt className="text-[10px] font-bold uppercase tracking-wider text-moon">
                         Time to fail
                       </dt>
-                      <dd className="mt-0.5 text-xs font-bold text-slate-800">
+                      <dd className="mt-0.5 text-xs font-bold text-ink">
                         {took ?? 'Not recorded'}
                       </dd>
                     </div>
                   </dl>
 
                   {reading.failure_reason && (
-                    <div className="mt-3 bg-slate-50 p-3 rounded-xl border border-slate-150">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    <div className="mt-3 bg-cream p-3 rounded-xl border border-line">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-moon">
                         Reason shown to the user
                       </p>
-                      <p className="mt-1 text-sm text-slate-700">{reading.failure_reason}</p>
+                      <p className="mt-1 text-sm text-charcoal">{reading.failure_reason}</p>
                     </div>
                   )}
 
                   {meta.klass === 'policy' && (
-                    <p className="mt-3 text-xs font-semibold text-slate-500">
+                    <p className="mt-3 text-xs font-semibold text-moon">
                       The storefront intentionally offers no retry for this code.
                     </p>
                   )}
@@ -264,13 +236,13 @@ export default function AiReadingDetailPage() {
               );
             })()}
 
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-              <div className="p-6 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="bg-surface rounded-2xl border border-line shadow-sm overflow-hidden">
+              <div className="p-6 border-b border-line bg-cream flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-indigo-600" />
+                  <Sparkles className="h-5 w-5 text-gold-press" />
                   <div>
-                    <h3 className="font-bold text-slate-900">Generated Report</h3>
-                    <p className="text-xs text-slate-500 mt-0.5">
+                    <h3 className="font-bold text-ink">Generated Report</h3>
+                    <p className="text-xs text-moon mt-0.5">
                       {reading.report ? `Report ID: ${reading.report.id}` : 'No report available'}
                     </p>
                   </div>
@@ -278,13 +250,13 @@ export default function AiReadingDetailPage() {
                 
                 {reading.report && (
                   <div className="flex items-center gap-3">
-                    <div className="flex bg-slate-200/60 p-1 rounded-xl">
+                    <div className="flex bg-line p-1 rounded-xl">
                       <button
                         onClick={() => setActiveTab('full')}
                         className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                           activeTab === 'full' 
-                            ? 'bg-white text-slate-900 shadow-sm' 
-                            : 'text-slate-600 hover:text-slate-900'
+                            ? 'bg-surface text-ink shadow-sm' 
+                            : 'text-charcoal hover:text-ink'
                         }`}
                       >
                         Full Report
@@ -293,8 +265,8 @@ export default function AiReadingDetailPage() {
                         onClick={() => setActiveTab('teaser')}
                         className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                           activeTab === 'teaser' 
-                            ? 'bg-white text-slate-900 shadow-sm' 
-                            : 'text-slate-600 hover:text-slate-900'
+                            ? 'bg-surface text-ink shadow-sm' 
+                            : 'text-charcoal hover:text-ink'
                         }`}
                       >
                         Teaser
@@ -306,7 +278,7 @@ export default function AiReadingDetailPage() {
                         size="sm"
                         onClick={handleDownload}
                         disabled={isDownloading}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-1.5 text-xs h-9 font-bold rounded-xl"
+                        className="bg-gold-deep hover:bg-gold-deep text-white flex items-center gap-1.5 text-xs h-9 font-bold rounded-xl"
                       >
                         {isDownloading ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -322,7 +294,7 @@ export default function AiReadingDetailPage() {
 
               <div className="p-6">
                 {downloadError && (
-                  <div className="mb-4 bg-rose-50 text-rose-700 p-3 rounded-lg border border-rose-100 text-xs flex gap-2 items-start">
+                  <div className="mb-4 bg-danger-tint text-danger-ink p-3 rounded-lg border border-danger/25 text-xs flex gap-2 items-start">
                     <Info className="h-4 w-4 shrink-0 mt-0.5" />
                     <div>
                       <p className="font-bold">Download Failed</p>
@@ -333,40 +305,40 @@ export default function AiReadingDetailPage() {
 
                 {!reading.report ? (
                   <div className="text-center py-12">
-                    <Info className="h-8 w-8 text-slate-300 mx-auto mb-2" />
-                    <p className="text-slate-500 font-medium">No report generated</p>
-                    <p className="text-xs text-slate-400 mt-1">
-                      Current request status is <span className="font-semibold text-indigo-600">{reading.status}</span>
+                    <Info className="h-8 w-8 text-line mx-auto mb-2" />
+                    <p className="text-moon font-medium">No report generated</p>
+                    <p className="text-xs text-moon mt-1">
+                      Current request status is <span className="font-semibold text-gold-press">{reading.status}</span>
                     </p>
                   </div>
                 ) : (
                   <div>
                     {/* Unlock Status / Quick summary info */}
-                    <div className="mb-6 flex flex-wrap gap-4 items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-150">
+                    <div className="mb-6 flex flex-wrap gap-4 items-center justify-between bg-cream p-4 rounded-xl border border-line">
                       <div className="flex items-center gap-3">
                         {reading.report.is_unlocked ? (
-                          <div className="h-8 w-8 rounded-lg bg-green-100 flex items-center justify-center text-green-600">
+                          <div className="h-8 w-8 rounded-lg bg-success-tint flex items-center justify-center text-success">
                             <Unlock className="h-4 w-4" />
                           </div>
                         ) : (
-                          <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
+                          <div className="h-8 w-8 rounded-lg bg-cosmos flex items-center justify-center text-charcoal">
                             <Lock className="h-4 w-4" />
                           </div>
                         )}
                         <div>
-                          <span className="text-[10px] text-slate-400 font-bold uppercase block">User Unlock State</span>
-                          <span className="text-xs font-bold text-slate-800">
+                          <span className="text-[10px] text-moon font-bold uppercase block">User Unlock State</span>
+                          <span className="text-xs font-bold text-ink">
                             {reading.report.is_unlocked 
-                              ? `Unlocked at ${dayjs(reading.report.unlocked_at).format('MMM D, YYYY HH:mm')}`
+                              ? `Unlocked at ${formatDateTime(reading.report.unlocked_at)}`
                               : 'Report Locked (Requires payment)'}
                           </span>
                         </div>
                       </div>
                       
                       <div className="text-right sm:text-left">
-                        <span className="text-[10px] text-slate-400 font-bold uppercase block">Report Generation</span>
-                        <span className="text-xs font-medium text-slate-700">
-                          {dayjs(reading.report.created_at).format('MMM D, YYYY HH:mm:ss')}
+                        <span className="text-[10px] text-moon font-bold uppercase block">Report Generation</span>
+                        <span className="text-xs font-medium text-charcoal">
+                          {formatStamp(reading.report.created_at)}
                         </span>
                       </div>
                     </div>
@@ -374,8 +346,8 @@ export default function AiReadingDetailPage() {
                     {/* Summary */}
                     {reading.report.summary && (
                       <div className="mb-6">
-                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Executive Summary</h4>
-                        <blockquote className="border-l-4 border-indigo-500 pl-4 py-1.5 text-sm text-slate-600 italic bg-indigo-50/30 rounded-r-xl">
+                        <h4 className="text-xs font-bold text-moon uppercase tracking-wider mb-2">Executive Summary</h4>
+                        <blockquote className="border-l-4 border-gold pl-4 py-1.5 text-sm text-charcoal italic bg-tint/30 rounded-r-xl">
                           {reading.report.summary}
                         </blockquote>
                       </div>
@@ -385,8 +357,8 @@ export default function AiReadingDetailPage() {
                     {activeTab === 'full' && (
                       <div>
                         <div className="flex justify-between items-center mb-3">
-                          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Full HTML Report Content</h4>
-                          <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded tracking-wide uppercase">
+                          <h4 className="text-xs font-bold text-moon uppercase tracking-wider">Full HTML Report Content</h4>
+                          <span className="bg-warning-tint text-warning-ink text-[10px] font-bold px-2 py-0.5 rounded tracking-wide uppercase">
                             Admin Override: Always Ungated
                           </span>
                         </div>
@@ -416,11 +388,11 @@ export default function AiReadingDetailPage() {
                                 </body>
                               </html>
                             `}
-                            className="w-full min-h-[500px] border border-slate-200 rounded-xl bg-white"
+                            className="w-full min-h-[500px] border border-line rounded-xl bg-surface"
                             title="Full Report Preview"
                           />
                         ) : (
-                          <p className="text-sm text-slate-400 italic py-6 text-center bg-slate-50 border border-slate-200 rounded-xl">
+                          <p className="text-sm text-moon italic py-6 text-center bg-cream border border-line rounded-xl">
                             No full HTML payload provided in request response
                           </p>
                         )}
@@ -429,7 +401,7 @@ export default function AiReadingDetailPage() {
 
                     {activeTab === 'teaser' && (
                       <div>
-                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Teaser HTML Report Content</h4>
+                        <h4 className="text-xs font-bold text-moon uppercase tracking-wider mb-3">Teaser HTML Report Content</h4>
                         {reading.report.html_teaser ? (
                           <iframe
                             srcDoc={`
@@ -453,11 +425,11 @@ export default function AiReadingDetailPage() {
                                 </body>
                               </html>
                             `}
-                            className="w-full min-h-[350px] border border-slate-200 rounded-xl bg-white"
+                            className="w-full min-h-[350px] border border-line rounded-xl bg-surface"
                             title="Teaser Report Preview"
                           />
                         ) : (
-                          <p className="text-sm text-slate-400 italic py-6 text-center bg-slate-50 border border-slate-200 rounded-xl">
+                          <p className="text-sm text-moon italic py-6 text-center bg-cream border border-line rounded-xl">
                             No HTML teaser payload provided in request response
                           </p>
                         )}
@@ -474,16 +446,16 @@ export default function AiReadingDetailPage() {
             
             {/* User Inputs Card */}
             {reading.input_answers && Object.keys(reading.input_answers).length > 0 && (
-              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                <div className="flex items-center gap-2 mb-4 text-slate-400">
-                  <Sparkles className="h-4 w-4 text-indigo-500" />
+              <div className="bg-surface p-6 rounded-2xl border border-line shadow-sm">
+                <div className="flex items-center gap-2 mb-4 text-moon">
+                  <Sparkles className="h-4 w-4 text-gold-deep" />
                   <span className="text-xs font-bold uppercase tracking-wider">User Inputs</span>
                 </div>
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-150 text-sm space-y-2">
+                <div className="bg-cream p-4 rounded-xl border border-line text-sm space-y-2">
                   {Object.entries(reading.input_answers).map(([key, value]) => (
-                    <div key={key} className="flex justify-between py-1 border-b border-slate-200/50 last:border-0 last:pb-0 first:pt-0 flex-col">
-                      <span className="text-slate-500 capitalize font-medium">{key}</span>
-                      <span className="font-bold text-slate-800">{String(value)}</span>
+                    <div key={key} className="flex justify-between py-1 border-b border-line/50 last:border-0 last:pb-0 first:pt-0 flex-col">
+                      <span className="text-moon capitalize font-medium">{key}</span>
+                      <span className="font-bold text-ink">{String(value)}</span>
                     </div>
                   ))}
                 </div>
@@ -491,20 +463,20 @@ export default function AiReadingDetailPage() {
             )}
 
             {/* Actual Uploaded Image Card (Responsive 3:4 frame & download functionality) */}
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+            <div className="bg-surface p-6 rounded-2xl border border-line shadow-sm flex flex-col justify-between">
               <div>
-                <div className="flex items-center gap-2 mb-4 text-slate-400">
+                <div className="flex items-center gap-2 mb-4 text-moon">
                   <ImageIcon className="h-4 w-4" />
                   <span className="text-xs font-bold uppercase tracking-wider">Uploaded Image</span>
                 </div>
 
                 {reading.input_image_key ? (
                   <div className="space-y-4">
-                    <div className="relative group overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 aspect-[3/4] shadow-inner flex items-center justify-center">
+                    <div className="relative group overflow-hidden rounded-2xl border border-line bg-cream aspect-[3/4] shadow-inner flex items-center justify-center">
                       {isLoadingPreview || (!previewUrl && !imageError) ? (
-                        <div className="flex flex-col items-center justify-center text-slate-400 w-full h-full p-6 text-center">
-                          <Loader2 className="h-8 w-8 animate-spin mb-3 text-indigo-400" />
-                          <p className="font-semibold text-slate-600 text-sm">Loading Preview...</p>
+                        <div className="flex flex-col items-center justify-center text-moon w-full h-full p-6 text-center">
+                          <Loader2 className="h-8 w-8 animate-spin mb-3 text-gold-deep" />
+                          <p className="font-semibold text-charcoal text-sm">Loading Preview...</p>
                         </div>
                       ) : !imageError && previewUrl ? (
                         /* eslint-disable-next-line @next/next/no-img-element */
@@ -516,24 +488,24 @@ export default function AiReadingDetailPage() {
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                         />
                       ) : (
-                        <div className="flex flex-col items-center justify-center text-slate-400 bg-gradient-to-br from-indigo-50/50 via-slate-50 to-indigo-50/30 w-full h-full p-6 text-center">
-                          <div className="p-4 bg-indigo-50 rounded-full mb-3 text-indigo-500">
+                        <div className="flex flex-col items-center justify-center text-moon bg-gradient-to-br from-tint/60 via-cream to-tint/40 w-full h-full p-6 text-center">
+                          <div className="p-4 bg-tint rounded-full mb-3 text-gold-deep">
                             <ImageIcon className="h-8 w-8" />
                           </div>
-                          <p className="font-semibold text-slate-700 text-sm">Preview Unavailable</p>
-                          <p className="text-xs text-slate-400 max-w-[200px] mt-1">
+                          <p className="font-semibold text-charcoal text-sm">Preview Unavailable</p>
+                          <p className="text-xs text-moon max-w-[200px] mt-1">
                             The upload asset is missing or could not be loaded from remote storage.
                           </p>
                         </div>
                       )}
                       
                       {/* Image hover actions overlay */}
-                      <div className="absolute inset-0 bg-slate-950/65 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center gap-3">
+                      <div className="absolute inset-0 bg-royal-deep/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center gap-3">
                         <a
                           href={previewUrl || "#"}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="bg-white hover:bg-slate-100 text-slate-900 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-lg flex items-center gap-1.5"
+                          className="bg-surface hover:bg-cosmos text-ink px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-lg flex items-center gap-1.5"
                         >
                           <Unlock className="h-3.5 w-3.5" />
                           Open Full Image
@@ -542,7 +514,7 @@ export default function AiReadingDetailPage() {
                           size="sm"
                           onClick={handleDownloadImage}
                           disabled={isDownloadingImage}
-                          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-lg flex items-center gap-1.5"
+                          className="bg-gold-deep hover:bg-gold-deep text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-lg flex items-center gap-1.5"
                         >
                           {isDownloadingImage ? (
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -555,7 +527,7 @@ export default function AiReadingDetailPage() {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-xs text-slate-400 italic">No image provided</p>
+                  <p className="text-xs text-moon italic">No image provided</p>
                 )}
               </div>
             </div>

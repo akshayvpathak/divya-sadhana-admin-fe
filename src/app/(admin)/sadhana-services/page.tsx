@@ -16,6 +16,8 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { DataTablePagination } from '@/components/common/DataTablePagination';
 import { FilterManager, useFilterManager } from '@/components/common/FilterManager';
 import { serviceCategoryOptions } from '@/components/ui/badges/badge-status';
+import { PageHeader } from '@/components/common/PageHeader';
+import { Card, CardBand } from '@/components/ui/card';
 
 export default function SadhanaServicesPage() {
   const [page, setPage] = useState(1);
@@ -70,25 +72,25 @@ export default function SadhanaServicesPage() {
 
   return (
     <div className="space-y-6 pb-8">
-      <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Sadhana Services</h1>
-          <p className="mt-1 text-slate-500">Manage seva / anushthan service catalog</p>
-        </div>
-        <Link href="/sadhana-services/create">
-          <Button className="bg-indigo-600 hover:bg-indigo-700">
-            <Plus className="h-4 w-4" /> Add Service
-          </Button>
-        </Link>
-      </div>
+      <PageHeader
+        title="Sadhana Services"
+        description="Manage seva / anushthan service catalog"
+        actions={
+          <Link href="/sadhana-services/create">
+            <Button>
+              <Plus className="h-4 w-4" /> Add Service
+            </Button>
+          </Link>
+        }
+      />
 
-      <div className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex flex-col items-center justify-between gap-4 border-b border-slate-200 bg-slate-50 p-4 md:flex-row">
+      <Card>
+        <CardBand className="flex flex-col items-center justify-between gap-4 border-b border-line md:flex-row">
           <div className="relative w-full max-w-sm flex-1">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-moon" />
             <Input
               placeholder="Search services..."
-              className="bg-white pl-9 w-full"
+              className="bg-surface pl-9 w-full"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -103,7 +105,7 @@ export default function SadhanaServicesPage() {
             onClear={() => { resetFilters(); setSearch(''); setPage(1); }}
             hasActiveFilters={hasActiveFilters}
           />
-        </div>
+        </CardBand>
 
         <DataTable
           columns={columns}
@@ -122,7 +124,7 @@ export default function SadhanaServicesPage() {
             onPageChange={setPage}
           />
         )}
-      </div>
+      </Card>
 
       <ConfirmModal
         isOpen={isDeleteModalOpen}

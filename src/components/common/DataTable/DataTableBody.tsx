@@ -28,7 +28,7 @@ function isBlankCell(value: React.ReactNode): boolean {
 
 /** A chip, not bare text — missing data should look deliberate, not broken. */
 const DEFAULT_EMPTY_VALUE = (
-  <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-semibold tracking-wide text-slate-400 ring-1 ring-inset ring-slate-200/70">
+  <span className="inline-flex items-center rounded-md bg-cosmos px-2 py-0.5 text-[11px] font-semibold tracking-wide text-moon ring-1 ring-inset ring-line/70">
     N/A
   </span>
 );
@@ -74,7 +74,7 @@ export function DataTableBody<T>({
         {Array.from({ length: 6 }).map((_, rowIndex) => (
           <TableRow
             key={rowIndex}
-            className="border-slate-100/80 hover:bg-transparent"
+            className="border-line/50 bg-surface even:bg-cream hover:bg-transparent"
           >
             {columns.map((column, colIndex) => (
               <TableCell
@@ -88,7 +88,7 @@ export function DataTableBody<T>({
               >
                 <Skeleton
                   className={cn(
-                    "h-4 rounded-full",
+                    "h-3.5 rounded-full",
                     SKELETON_WIDTHS[(rowIndex + colIndex) % SKELETON_WIDTHS.length]
                   )}
                 />
@@ -106,12 +106,12 @@ export function DataTableBody<T>({
         <TableRow className="hover:bg-transparent">
           <TableCell colSpan={columns.length} className="px-5 py-16">
             <div className="flex flex-col items-center gap-3 text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
-                <Inbox className="h-5 w-5" />
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-tint text-gold-deep">
+                <Inbox className="h-6 w-6" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-slate-700">{emptyMessage}</p>
-                <p className="mt-0.5 text-xs text-slate-400">
+                <p className="text-sm font-semibold text-ink">{emptyMessage}</p>
+                <p className="mt-0.5 text-xs text-moon">
                   Try adjusting your search or filters.
                 </p>
               </div>
@@ -127,10 +127,9 @@ export function DataTableBody<T>({
       {data.map((row, rowIndex) => (
         <TableRow
           key={getRowKey(row, rowIndex)}
-          // The inset shadow draws an indigo rail on the hovered row's left
-          // edge, which tracks the eye across wide tables far better than a
-          // background tint alone.
-          className="border-slate-100/80 transition-colors duration-150 even:bg-slate-50/40 hover:bg-indigo-50/60 hover:shadow-[inset_3px_0_0_0_rgb(99_102_241)]"
+          // Backgrounds must stay opaque: sticky cells use `bg-inherit`, which
+          // copies the computed value including alpha.
+          className="border-line/50 bg-surface transition-colors duration-150 even:bg-cream hover:bg-tint hover:shadow-rail"
         >
           {columns.map((column) => {
             const alignmentClass = getAlignmentClass(column.cellAlign);
@@ -141,7 +140,7 @@ export function DataTableBody<T>({
               <TableCell
                 key={column.id}
                 className={cn(
-                  "px-5 py-4 text-sm text-slate-700",
+                  "px-5 py-4 text-sm text-charcoal",
                   alignmentClass,
                   stickyClass,
                   column.cellClassName

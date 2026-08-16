@@ -41,22 +41,21 @@ export function DataTableHeader<T>({ columns, sort, onSort }: DataTableHeaderPro
     const field = sortFieldOf(column);
     if (!field) return null;
     if (sort === field) {
-      return <ArrowUp className="h-3.5 w-3.5 text-indigo-600" />;
+      return <ArrowUp className="h-3.5 w-3.5 text-gold-deep" />;
     }
     if (sort === `-${field}`) {
-      return <ArrowDown className="h-3.5 w-3.5 text-indigo-600" />;
+      return <ArrowDown className="h-3.5 w-3.5 text-gold-deep" />;
     }
     // Faint until hovered, so unsorted columns don't shout for attention.
     return (
-      <ArrowUpDown className="h-3.5 w-3.5 text-slate-300 transition-colors group-hover/th:text-slate-500" />
+      <ArrowUpDown className="h-3.5 w-3.5 text-line transition-colors group-hover/th:text-moon" />
     );
   };
 
   return (
-    // Sticky so the header survives long scrolls. A slate band separates it from
-    // the white filter bar most pages render directly above the table.
+    // Sticky so the header survives long scrolls.
     <BaseTableHeader className="sticky top-0 z-20 [&_tr]:border-0">
-      <TableRow className="bg-gradient-to-b from-slate-100 to-slate-50 shadow-[inset_0_-1px_0_0_rgb(203_213_225)] hover:bg-transparent">
+      <TableRow className="bg-gradient-to-b from-cosmos to-cream shadow-band hover:bg-transparent">
         {columns.map((column) => {
           const alignmentClass = getAlignmentClass(column.headerAlign);
           const stickyClass = getStickyClass(column.sticky);
@@ -73,11 +72,13 @@ export function DataTableHeader<T>({ columns, sort, onSort }: DataTableHeaderPro
                   : undefined
               }
               className={cn(
-                "group/th h-auto px-5 py-3.5 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500",
+                "group/th h-auto px-5 py-3.5 text-[11px] font-bold uppercase tracking-[0.08em] text-moon",
                 column.sortable
-                  ? "cursor-pointer select-none transition-colors hover:bg-slate-200/60 hover:text-slate-800"
+                  ? "cursor-pointer select-none transition-colors hover:bg-ivory hover:text-ink"
                   : "",
-                sorted && "text-indigo-700",
+                // Wash the whole sorted column; on a wide table the arrow
+                // alone is too small to find.
+                sorted && "bg-tint/45 text-gold-press",
                 alignmentClass,
                 stickyClass,
                 column.headerClassName

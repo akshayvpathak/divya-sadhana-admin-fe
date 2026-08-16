@@ -11,6 +11,8 @@ import { DataTablePagination } from '@/components/common/DataTablePagination';
 import { FilterManager, useFilterManager } from '@/components/common/FilterManager';
 import { aiReadingStatusOptions } from '@/components/ui/badges/badge-status';
 import { failureCodeOptions } from '@/lib/reading-failures';
+import { PageHeader } from '@/components/common/PageHeader';
+import { Card, CardBand } from '@/components/ui/card';
 
 export default function AiReadingsPage() {
   const [page, setPage] = useState(1);
@@ -73,20 +75,18 @@ export default function AiReadingsPage() {
 
   return (
     <div className="space-y-6 pb-8">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">AI Readings</h1>
-          <p className="text-slate-500 mt-1">Monitor all users' AI Face & Palm readings and unlock status</p>
-        </div>
-      </div>
+      <PageHeader
+        title="AI Readings"
+        description="Monitor all users' AI Face & Palm readings and unlock status"
+      />
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-        <div className="p-4 border-b border-slate-200 bg-slate-50 flex flex-col md:flex-row gap-4 items-center justify-between">
+      <Card>
+        <CardBand className="flex flex-col items-center justify-between gap-4 border-b border-line md:flex-row">
           <div className="relative max-w-sm flex-1 w-full">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-moon" />
             <Input
               placeholder="Search AI Reports..."
-              className="pl-9 bg-white w-full"
+              className="pl-9 bg-surface w-full"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -102,7 +102,7 @@ export default function AiReadingsPage() {
             onClear={() => { resetFilters(); setSearch(''); setPage(1); }}
             hasActiveFilters={hasActiveFilters}
           />
-        </div>
+        </CardBand>
 
         <DataTable
           columns={columns}
@@ -121,7 +121,7 @@ export default function AiReadingsPage() {
             onPageChange={setPage}
           />
         )}
-      </div>
+      </Card>
     </div>
   );
 }
