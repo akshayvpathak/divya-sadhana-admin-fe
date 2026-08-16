@@ -67,7 +67,7 @@ export function WithdrawalReasonDialog({
             onChange={(e) => setReason(e.target.value)}
             rows={3}
             placeholder="Explain why this request is being actioned…"
-            className="bg-white"
+            className="bg-surface"
           />
         </div>
 
@@ -83,7 +83,7 @@ export function WithdrawalReasonDialog({
             type="button"
             onClick={handleConfirm}
             disabled={isPending || !trimmed}
-            className="bg-rose-600 hover:bg-rose-700 text-white"
+            className="bg-danger hover:bg-danger text-white"
           >
             {isPending ? 'Saving…' : confirmText}
           </Button>

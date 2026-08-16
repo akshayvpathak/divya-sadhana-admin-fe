@@ -161,7 +161,7 @@ export function MultiSelect({
             {selected.map((optionValue) => (
               <span
                 key={optionValue}
-                className="inline-flex items-center gap-1 rounded-md border border-indigo-100 bg-indigo-50 py-0.5 pr-1 pl-2 text-xs font-medium text-indigo-700"
+                className="inline-flex items-center gap-1 rounded-md border border-gold/25 bg-tint py-0.5 pr-1 pl-2 text-xs font-medium text-gold-press"
               >
                 {labelFor(optionValue)}
                 <button
@@ -170,7 +170,7 @@ export function MultiSelect({
                     event.stopPropagation();
                     removeValue(optionValue);
                   }}
-                  className="rounded text-indigo-400 transition-colors hover:text-rose-600"
+                  className="rounded text-gold-deep transition-colors hover:text-danger"
                   title={`Remove ${labelFor(optionValue)}`}
                 >
                   <X className="h-3 w-3" />
@@ -191,7 +191,7 @@ export function MultiSelect({
                 event.stopPropagation();
                 onChange([]);
               }}
-              className="rounded text-slate-400 transition-colors hover:text-rose-600"
+              className="rounded text-moon transition-colors hover:text-danger"
               title="Clear selection"
             >
               <X className="h-3.5 w-3.5" />
@@ -208,9 +208,9 @@ export function MultiSelect({
       </div>
 
       {open && (
-        <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
-          <div className="relative border-b border-slate-100">
-            <Search className="absolute top-2.5 left-3 h-3.5 w-3.5 text-slate-400" />
+        <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-xl border border-line bg-surface shadow-xl">
+          <div className="relative border-b border-line/60">
+            <Search className="absolute top-2.5 left-3 h-3.5 w-3.5 text-moon" />
             <input
               ref={searchRef}
               value={search}
@@ -220,7 +220,7 @@ export function MultiSelect({
               }}
               placeholder={searchPlaceholder}
               autoComplete="off"
-              className="w-full bg-transparent py-2 pr-3 pl-9 text-sm outline-none placeholder:text-slate-400"
+              className="w-full bg-transparent py-2 pr-3 pl-9 text-sm outline-none placeholder:text-moon"
             />
           </div>
 
@@ -231,7 +231,7 @@ export function MultiSelect({
             className="max-h-56 overflow-y-auto p-1"
           >
             {filtered.length === 0 ? (
-              <p className="px-3 py-2 text-sm text-slate-400">{emptyMessage}</p>
+              <p className="px-3 py-2 text-sm text-moon">{emptyMessage}</p>
             ) : (
               filtered.map((option) => {
                 const isSelected = selected.includes(option.value);
@@ -247,18 +247,18 @@ export function MultiSelect({
                     className={cn(
                       'flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-left text-sm transition-colors',
                       isBlocked
-                        ? 'cursor-not-allowed text-slate-300'
-                        : 'text-slate-700 hover:bg-slate-50',
-                      isSelected && 'font-medium text-indigo-700'
+                        ? 'cursor-not-allowed text-line'
+                        : 'text-charcoal hover:bg-cream',
+                      isSelected && 'font-medium text-gold-press'
                     )}
                   >
                     <span className="truncate">
                       {option.label}
                       {option.hint ? (
-                        <span className="ml-1.5 text-xs text-slate-400">{option.hint}</span>
+                        <span className="ml-1.5 text-xs text-moon">{option.hint}</span>
                       ) : null}
                     </span>
-                    {isSelected ? <Check className="h-4 w-4 shrink-0 text-indigo-600" /> : null}
+                    {isSelected ? <Check className="h-4 w-4 shrink-0 text-gold-press" /> : null}
                   </button>
                 );
               })
@@ -266,7 +266,7 @@ export function MultiSelect({
           </div>
 
           {atLimit ? (
-            <p className="border-t border-slate-100 px-3 py-1.5 text-xs text-slate-400">
+            <p className="border-t border-line/60 px-3 py-1.5 text-xs text-moon">
               Maximum {max} selected.
             </p>
           ) : null}

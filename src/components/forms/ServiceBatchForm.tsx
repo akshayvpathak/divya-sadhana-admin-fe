@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import dayjs from 'dayjs';
+import { toDateTimeInput } from '@/lib/datetime';
 import { createServiceBatchSchema, CreateServiceBatchPayload } from '@/schemas/service-batches.schema';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,8 +32,8 @@ export function ServiceBatchForm({ batchId, onSubmit, isPending, readOnly = fals
     return {
       service: fetched.service ?? '',
       title: fetched.title,
-      starts_at: fetched.starts_at ? dayjs(fetched.starts_at).format('YYYY-MM-DDTHH:mm') : '',
-      ends_at: fetched.ends_at ? dayjs(fetched.ends_at).format('YYYY-MM-DDTHH:mm') : '',
+      starts_at: toDateTimeInput(fetched.starts_at),
+      ends_at: toDateTimeInput(fetched.ends_at),
       capacity: fetched.capacity ?? null,
       meet_link: fetched.meet_link ?? '',
       is_open: fetched.is_open ?? true,
@@ -77,15 +78,15 @@ export function ServiceBatchForm({ batchId, onSubmit, isPending, readOnly = fals
     });
   };
 
-  const roClass = readOnly ? 'bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0' : '';
+  const roClass = readOnly ? 'bg-ivory border-line text-charcoal cursor-default focus-visible:ring-0' : '';
 
   return (
     <form onSubmit={handleSubmit(submit)} className="space-y-6">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="service">Class Service <span className="text-rose-500">*</span></Label>
+          <Label htmlFor="service">Class Service <span className="text-danger">*</span></Label>
           <Select value={serviceValue || ''} onValueChange={(v) => setValue('service', v ?? '')} disabled={readOnly}>
-            <SelectTrigger id="service" className={readOnly ? 'bg-slate-50 border-slate-200' : 'bg-white'}>
+            <SelectTrigger id="service" className={readOnly ? 'bg-cream border-line' : 'bg-surface'}>
               <SelectValue placeholder="Select class service" />
             </SelectTrigger>
             <SelectContent>
@@ -96,13 +97,13 @@ export function ServiceBatchForm({ batchId, onSubmit, isPending, readOnly = fals
               ))}
             </SelectContent>
           </Select>
-          {errors.service && <p className="text-sm text-rose-500">{errors.service.message}</p>}
+          {errors.service && <p className="text-sm text-danger">{errors.service.message}</p>}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="title">Title <span className="text-rose-500">*</span></Label>
+          <Label htmlFor="title">Title <span className="text-danger">*</span></Label>
           <Input id="title" placeholder="Batch title" {...register('title')} disabled={readOnly} className={roClass} />
-          {errors.title && <p className="text-sm text-rose-500">{errors.title.message}</p>}
+          {errors.title && <p className="text-sm text-danger">{errors.title.message}</p>}
         </div>
 
         <div className="space-y-2">
@@ -138,7 +139,7 @@ export function ServiceBatchForm({ batchId, onSubmit, isPending, readOnly = fals
           </Button>
         </Link>
         {!readOnly && (
-          <Button type="submit" disabled={isPending} className="bg-indigo-600 hover:bg-indigo-700">
+          <Button type="submit" disabled={isPending} className="bg-gold-deep hover:bg-gold-deep">
             {isPending ? 'Processing...' : batchId ? 'Save Batch' : 'Create Batch'}
           </Button>
         )}

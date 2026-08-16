@@ -32,7 +32,7 @@ export const useUserTableColumns = ({
         row.name?.trim() ? (
           <div className="flex items-center gap-3">
             <TableAvatar name={row.name} />
-            <span className="font-semibold text-slate-900">{row.name}</span>
+            <span className="font-semibold text-ink">{row.name}</span>
           </div>
         ) : null,
     },
@@ -41,7 +41,7 @@ export const useUserTableColumns = ({
       accessorKey: 'email',
       header: 'Email',
       sortable: true,
-      cellClassName: 'text-slate-500',
+      cellClassName: 'text-moon',
     },
     {
       id: 'role',
@@ -64,7 +64,7 @@ export const useUserTableColumns = ({
     //   accessorKey: 'createdAt',
     //   header: 'Joined',
     //   sortable: false,
-    //   cellClassName: 'text-slate-500',
+    //   cellClassName: 'text-moon',
     //   renderCell: (row) => dayjs(row.createdAt).format('MMM D, YYYY'),
     // },
     {

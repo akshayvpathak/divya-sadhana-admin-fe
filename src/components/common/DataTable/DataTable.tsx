@@ -15,7 +15,9 @@ export function DataTable<T>({
   emptyValue,
 }: DataTableProps<T>) {
   return (
-    <div className="overflow-x-auto flex-1">
+    // No overflow here: <Table> already owns the scroll container, and nesting
+    // two of them produced a second, unstyled scrollbar.
+    <div className="flex-1">
       <Table>
         <DataTableHeader columns={columns} sort={sort} onSort={onSort} />
         <DataTableBody

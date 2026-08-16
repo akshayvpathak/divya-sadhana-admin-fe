@@ -1,10 +1,7 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { useAtomValue } from 'jotai';
-import { sidebarAtom } from '@/store/auth';
-import { Menu, UserCircle } from 'lucide-react';
+import { UserCircle } from 'lucide-react';
 import { useState } from 'react';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { Button } from '../ui/button';
@@ -19,60 +16,44 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 export default function Navbar() {
-  const pathname = usePathname();
   const { user, logout } = useAuth();
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-  
-  const generateBreadcrumbs = () => {
-    const paths = pathname.split('/').filter(Boolean);
-    const isID = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str) || /^[0-9a-f]{24}$/i.test(str);
-    
-    const filteredPaths = paths.filter(path => !isID(path));
-
-    return filteredPaths.map((path, index) => {
-      const isLast = index === filteredPaths.length - 1;
-      const title = path.charAt(0).toUpperCase() + path.slice(1).replace(/-/g, ' ');
-      
-      return (
-        <div key={path} className="flex items-center">
-          {index > 0 && <span className="mx-2 text-slate-400">/</span>}
-          <span className={isLast ? "text-slate-900 font-medium uppercase" : "text-slate-500"}>
-            {title}
-          </span>
-        </div>
-      );
-    });
-  };
 
   return (
-    <header className="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-6 z-10 sticky top-0 shadow-sm">
+    <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-line bg-surface/90 px-6 backdrop-blur-sm">
       <div className="flex items-center gap-4">
-        {/* Mobile menu button could go here */}
-        <div className="flex items-center text-sm">
-          {generateBreadcrumbs()}
-        </div>
+        {/* Left slot: mobile menu / page-context actions */}
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         <DropdownMenu>
-          <DropdownMenuTrigger render={<Button variant="ghost" className="relative h-10 w-10 rounded-full bg-slate-100 hover:bg-slate-200" />}>
-            <UserCircle className="h-6 w-6 text-slate-600" />
+          <DropdownMenuTrigger
+            render={
+              <Button
+                variant="ghost"
+                className="relative h-10 w-10 rounded-full bg-cosmos hover:bg-tint"
+              />
+            }
+          >
+            <UserCircle className="h-6 w-6 text-charcoal" />
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end">
             <DropdownMenuGroup>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-bold leading-none text-slate-900">{user ? `${user.first_name} ${user.last_name}` : 'Admin User'}</p>
-                  <p className="text-[10px] text-slate-500 break-all leading-relaxed">
+                  <p className="text-sm font-bold leading-none text-ink">
+                    {user ? `${user.first_name} ${user.last_name}` : 'Admin User'}
+                  </p>
+                  <p className="text-[10px] leading-relaxed break-all text-moon">
                     {user?.email || 'admin@divyasadhana.com'}
                   </p>
                 </div>
               </DropdownMenuLabel>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem 
-              onClick={() => setIsLogoutModalOpen(true)} 
-              className="text-rose-600 cursor-pointer focus:bg-rose-50 focus:text-rose-700"
+            <DropdownMenuItem
+              onClick={() => setIsLogoutModalOpen(true)}
+              className="cursor-pointer text-danger focus:bg-danger-tint focus:text-danger-ink"
             >
               Log out
             </DropdownMenuItem>

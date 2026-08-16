@@ -2,43 +2,230 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/* KEEP THIS LINE.
+   Tailwind v4's stock `dark` variant is `@media (prefers-color-scheme: dark)`.
+   Re-pointing it at a `.dark` ancestor — a class this app never applies, since
+   there is no ThemeProvider — is the only thing keeping the legacy `dark:`
+   utilities in src/components/ui/* inert. Delete it and every macOS/Windows
+   user in dark mode gets a half-broken theme with no way to opt out. */
 @custom-variant dark (&:is(.dark *));
 
+/* ===========================================================================
+   1. RAW PALETTE — the only place a literal colour may appear. Hex on purpose:
+   it is the design spec verbatim, and Tailwind v4 handles opacity modifiers on
+   hex via color-mix() exactly as it does on oklch.
+   =========================================================================== */
+:root {
+  /* Surfaces — lightest to heaviest */
+  --page: #fbf8f3; /* app shell / "void"                        */
+  --surface: #ffffff; /* cards, table body                         */
+  --tint: #fff0d4; /* saffron wash: row hover, chips, callouts  */
+  --cream: #f7f1e8; /* bands: filter bars, card footers, zebra   */
+  --cosmos: #f3ece2; /* chips, icon tiles, skeletons              */
+  --ivory: #efe7db; /* read-only inputs, mono/code blocks        */
+  --line: #e6ddd0; /* every border in the app                   */
+
+  /* Brand — saffron / gold */
+  --saffron: #ff9933; /* focus ring, hover rail, active nav pill   */
+  --gold-soft: #f5a623;
+  --gold: #e8890c; /* filled-button HOVER                       */
+  --gold-deep: #c26e00; /* filled-button REST, sort arrows, icons    */
+  --gold-press: #a85f00; /* gold TEXT on light surfaces (4.62:1 AA)   */
+
+  /* Brand — royal indigo: shell, sidebar, headings, form-commit actions */
+  --royal: #2f2a5a; /* spec: "secondary" */
+  --royal-soft: #3d3a6b; /* spec: "purple"    */
+  --royal-deep: #252248; /* spec: "violet"    */
+
+  /* Ink ramp */
+  --ink: #1a1624; /* headings, primary values */
+  --charcoal: #4a433c; /* body copy, table cells   */
+  --moon: #7a7166; /* labels, hints, secondary */
+
+  /* Status tones — solid / tint / ink triples. Every ink clears AA on its own
+     tint and on --surface. Replaces the emerald/amber/rose/sky/indigo/violet/
+     orange Tailwind scales scattered through badge.tsx and the pages. */
+  --success: #1f7a4c; /* jade */
+  --success-tint: #e6f2eb;
+  --success-ink: #14603a;
+  --warning: #b8720a;
+  --warning-tint: #fdefd0;
+  --warning-ink: #8a5200;
+  --danger: #b3261e;
+  --danger-tint: #fbeae9;
+  --danger-ink: #8c1d16;
+  --info: #106b7a;
+  --info-tint: #e3f1f4;
+  --info-ink: #0d5461;
+  --royal-tint: #ecebf6;
+  --royal-ink: #2f2a5a;
+  --neutral-tint: #f0ebe3;
+  --neutral-ink: #57504a;
+  --plum: #6b2d6e;
+  --plum-tint: #f4e9f4;
+  --plum-ink: #5a2560;
+  --copper: #a2510f;
+  --copper-tint: #fbe9dc;
+  --copper-ink: #8a430b;
+
+  /* =========================================================================
+     2. shadcn ALIASES — every component in src/components/ui/* already reads
+     these names, so re-pointing them re-themes all 19 files with ZERO edits.
+     ========================================================================= */
+  --background: var(--page);
+  --foreground: var(--ink);
+
+  --card: var(--surface);
+  --card-foreground: var(--ink);
+  --popover: var(--surface);
+  --popover-foreground: var(--ink);
+
+  /* White on #c26e00 is 3.80:1 — clears the 3:1 UI-component bar and AA-large.
+     Swap to #b06400 (exactly 4.50:1) if AA on 14px button labels is required;
+     it is visually indistinguishable at that size. */
+  --primary: var(--gold-deep);
+  --primary-foreground: #ffffff;
+
+  /* Royal: form-commit actions, so a save reads differently from a gold CTA. */
+  --secondary: var(--royal);
+  --secondary-foreground: #ffffff;
+
+  --muted: var(--cosmos); /* Skeleton, ghost/outline button hover */
+  --muted-foreground: var(--moon); /* alias of text-moon                   */
+
+  /* NOT the brand gold. In shadcn this is the menu-item hover fill; solid gold
+     there is 2.6:1. Brand gold lives on bg-gold / bg-gold-deep / bg-saffron. */
+  --accent: var(--tint);
+  --accent-foreground: var(--ink);
+
+  --destructive: var(--danger);
+  /* badge.tsx references text-destructive-foreground; without this the utility
+     generates nothing. */
+  --destructive-foreground: #ffffff;
+
+  --border: var(--line);
+  --input: var(--line);
+  --ring: var(--saffron);
+
+  --chart-1: var(--saffron);
+  --chart-2: var(--royal);
+  --chart-3: var(--success);
+  --chart-4: var(--gold-deep);
+  --chart-5: var(--moon);
+
+  --radius: 0.625rem;
+
+  /* Sidebar: violet shell, saffron active pill (ink on saffron = 8.3:1). */
+  --sidebar: var(--royal-deep);
+  --sidebar-foreground: #d8d3ea;
+  --sidebar-primary: var(--saffron);
+  --sidebar-primary-foreground: var(--royal-deep);
+  --sidebar-accent: #322d63;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #332f60;
+  --sidebar-ring: var(--saffron);
+
+  /* Elevation — tinted with the ink hue; neutral black reads dirty on cream. */
+  --elev-card: 0 1px 2px 0 rgb(26 22 36 / 0.04), 0 1px 3px 0 rgb(26 22 36 / 0.06);
+  --elev-hover: 0 4px 14px -3px rgb(26 22 36 / 0.1), 0 2px 5px -3px rgb(26 22 36 / 0.06);
+  --elev-pop: 0 12px 34px -12px rgb(37 34 72 / 0.28);
+  --elev-band: inset 0 -1px 0 0 var(--line);
+  --elev-rail: inset 3px 0 0 0 var(--saffron);
+}
+
+/* ===========================================================================
+   3. THEME MAPPING. `@theme inline` emits utilities that reference var(--x)
+   rather than copying it, so overriding a raw token cascades. Names only.
+   =========================================================================== */
 @theme inline {
+  /* --- fonts --- */
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
+  --font-heading: var(--font-sans);
+
+  /* --- surfaces --- */
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-tint: var(--tint);
+  --color-cream: var(--cream);
+  --color-cosmos: var(--cosmos);
+  --color-ivory: var(--ivory);
+  --color-line: var(--line);
+
+  /* --- brand --- */
+  --color-saffron: var(--saffron);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-gold-deep: var(--gold-deep);
+  --color-gold-press: var(--gold-press);
+  --color-royal: var(--royal);
+  --color-royal-soft: var(--royal-soft);
+  --color-royal-deep: var(--royal-deep);
+
+  /* --- ink --- */
+  --color-ink: var(--ink);
+  --color-charcoal: var(--charcoal);
+  --color-moon: var(--moon);
+
+  /* --- status tones --- */
+  --color-success: var(--success);
+  --color-success-tint: var(--success-tint);
+  --color-success-ink: var(--success-ink);
+  --color-warning: var(--warning);
+  --color-warning-tint: var(--warning-tint);
+  --color-warning-ink: var(--warning-ink);
+  --color-danger: var(--danger);
+  --color-danger-tint: var(--danger-tint);
+  --color-danger-ink: var(--danger-ink);
+  --color-info: var(--info);
+  --color-info-tint: var(--info-tint);
+  --color-info-ink: var(--info-ink);
+  --color-royal-tint: var(--royal-tint);
+  --color-royal-ink: var(--royal-ink);
+  --color-neutral-tint: var(--neutral-tint);
+  --color-neutral-ink: var(--neutral-ink);
+  --color-plum: var(--plum);
+  --color-plum-tint: var(--plum-tint);
+  --color-plum-ink: var(--plum-ink);
+  --color-copper: var(--copper);
+  --color-copper-tint: var(--copper-tint);
+  --color-copper-ink: var(--copper-ink);
+
+  /* --- shadcn aliases (unchanged names, new values) --- */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-poppins);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* --- radii (unchanged scale) --- */
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -46,75 +233,13 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
-}
 
-:root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-}
-
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  /* --- elevation: shadow-card / shadow-hover / shadow-pop / band / rail --- */
+  --shadow-card: var(--elev-card);
+  --shadow-hover: var(--elev-hover);
+  --shadow-pop: var(--elev-pop);
+  --shadow-band: var(--elev-band);
+  --shadow-rail: var(--elev-rail);
 }
 
 @layer base {
@@ -127,12 +252,20 @@
   html {
     @apply font-sans;
   }
+  /* Numerals in tables and amounts should not jitter between rows. */
+  th,
+  td,
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
 }
 
-/* Custom Scrollbar Styles */
+/* Custom Scrollbar Styles — warm, to match the cream page. Horizontal gets a
+   little more height than vertical gets width: a wide table's bar is a real
+   drag target, where a vertical one is mostly just an indicator. */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
-  height: 6px;
+  height: 10px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -140,16 +273,91 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.3);
+  background: rgb(122 113 102 / 0.28);
+  border: 3px solid transparent;
+  background-clip: content-box;
   border-radius: 9999px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.5);
+  background: rgb(122 113 102 / 0.45);
+  background-clip: content-box;
 }
 
-/* For Firefox */
+/* Firefox has no per-axis control, so `thin` is the closest equivalent. */
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
+  scrollbar-color: rgb(122 113 102 / 0.28) transparent;
+}
+
+/* The sidebar scrollbar lives on a dark violet surface. */
+.custom-scrollbar-dark::-webkit-scrollbar-thumb {
+  background: rgb(255 153 51 / 0.28);
+}
+
+.custom-scrollbar-dark::-webkit-scrollbar-thumb:hover {
+  background: rgb(255 153 51 / 0.45);
+}
+
+.custom-scrollbar-dark {
+  scrollbar-color: rgb(255 153 51 / 0.28) transparent;
+}
+
+/* Rich-text rendering for ReactQuill HTML (product descriptions, campaign
+   bodies). @tailwindcss/typography is not installed and this is its only
+   consumer, so a scoped block is cheaper than the plugin. */
+.rich-text {
+  @apply text-sm leading-relaxed text-charcoal;
+}
+.rich-text > * + * {
+  @apply mt-3;
+}
+.rich-text h1 {
+  @apply text-lg font-bold text-ink;
+}
+.rich-text h2 {
+  @apply text-base font-bold text-ink;
+}
+.rich-text h3 {
+  @apply text-sm font-bold text-ink;
+}
+.rich-text p {
+  @apply text-sm leading-relaxed;
+}
+.rich-text strong {
+  @apply font-semibold text-ink;
+}
+.rich-text em {
+  @apply italic;
+}
+.rich-text a {
+  @apply font-medium text-gold-press underline underline-offset-2 hover:text-gold-deep;
+}
+.rich-text ul {
+  @apply list-disc space-y-1 pl-5 marker:text-gold-deep;
+}
+.rich-text ol {
+  @apply list-decimal space-y-1 pl-5 marker:text-moon;
+}
+.rich-text blockquote {
+  @apply border-l-2 border-saffron/60 bg-tint/50 py-2 pl-4 italic text-charcoal;
+}
+.rich-text img {
+  @apply rounded-xl border border-line;
+}
+.rich-text code {
+  @apply rounded bg-ivory px-1.5 py-0.5 font-mono text-xs text-ink;
+}
+.rich-text hr {
+  @apply border-line;
+}
+.rich-text table {
+  @apply w-full border-collapse text-sm;
+}
+.rich-text th,
+.rich-text td {
+  @apply border border-line px-3 py-2 text-left;
+}
+.rich-text th {
+  @apply bg-cream font-semibold text-ink;
 }

@@ -82,24 +82,29 @@ export default function LoginPage() {
   if (isAuthenticated) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden transition-all duration-300">
+    <div className="flex min-h-screen items-center justify-center bg-page p-4">
+      <div className="w-full max-w-md overflow-hidden rounded-2xl border border-line bg-surface shadow-pop transition-all duration-300">
+        {/* Saffron rule ties the sign-in card to the sidebar's wordmark. */}
+        <div className="h-1 bg-gradient-to-r from-saffron via-gold to-gold-deep" />
         <div className="p-8">
 
           {mode === "login" ? (
             <>
-              <div className="text-center mb-8">
-                <h1 className="text-3xl font-bold text-slate-900 mb-2">
+              <div className="mb-8 text-center">
+                <p className="mb-3 text-lg font-bold tracking-tight text-ink">
+                  Divya <span className="text-gold-deep">Sadhana</span>
+                </p>
+                <h1 className="mb-2 text-3xl font-bold tracking-tight text-ink">
                   Welcome Back
                 </h1>
-                <p className="text-slate-500">Sign in to your admin dashboard</p>
+                <p className="text-moon">Sign in to your admin dashboard</p>
               </div>
 
               <form onSubmit={handleSubmitLogin(onLoginSubmit)} className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-moon" />
                     <Input
                       id="email"
                       type="email"
@@ -109,7 +114,7 @@ export default function LoginPage() {
                     />
                   </div>
                   {loginErrors.email && (
-                    <p className="text-sm text-rose-500">{loginErrors.email.message}</p>
+                    <p className="text-sm text-danger">{loginErrors.email.message}</p>
                   )}
                 </div>
 
@@ -118,7 +123,7 @@ export default function LoginPage() {
                     <Label htmlFor="password">Password</Label>
                   </div>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-moon" />
                     <Input
                       id="password"
                       type={showPassword ? "text" : "password"}
@@ -129,14 +134,14 @@ export default function LoginPage() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-moon hover:text-charcoal focus:outline-none transition-colors"
                       title={showPassword ? "Hide password" : "Show password"}
                     >
                       {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                     </button>
                   </div>
                   {loginErrors.password && (
-                    <p className="text-sm text-rose-500">
+                    <p className="text-sm text-danger">
                       {loginErrors.password.message}
                     </p>
                   )}
@@ -144,14 +149,14 @@ export default function LoginPage() {
                 <div className="text-right">  <button
                   type="button"
                   onClick={() => setMode("forgot")}
-                  className="text-sm font-medium text-indigo-600 hover:text-indigo-500 transition-colors"
+                  className="text-sm font-medium text-gold-press hover:text-gold-deep transition-colors"
                 >
                   Forgot password?
                 </button></div>
 
                 <Button
                   type="submit"
-                  className="w-full h-10 bg-indigo-600 hover:bg-indigo-700"
+                  className="w-full h-10 bg-gold-deep hover:bg-gold-deep"
                   disabled={loginMutation.isPending}
                 >
                   {loginMutation.isPending ? "Logging in..." : "Log In"}
@@ -161,17 +166,17 @@ export default function LoginPage() {
           ) : (
             <>
               <div className="text-center mb-8">
-                <h1 className="text-3xl font-bold text-slate-900 mb-2">
+                <h1 className="text-3xl font-bold text-ink mb-2">
                   Reset Password
                 </h1>
-                <p className="text-slate-500">Enter your email to receive reset instructions</p>
+                <p className="text-moon">Enter your email to receive reset instructions</p>
               </div>
 
               <form onSubmit={handleSubmitForgot(onForgotSubmit)} className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="forgot-email">Email Address</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-moon" />
                     <Input
                       id="forgot-email"
                       type="email"
@@ -181,13 +186,13 @@ export default function LoginPage() {
                     />
                   </div>
                   {forgotErrors.email && (
-                    <p className="text-sm text-rose-500">{forgotErrors.email.message}</p>
+                    <p className="text-sm text-danger">{forgotErrors.email.message}</p>
                   )}
                 </div>
 
                 <Button
                   type="submit"
-                  className="w-full h-10 bg-indigo-600 hover:bg-indigo-700"
+                  className="w-full h-10 bg-gold-deep hover:bg-gold-deep"
                   disabled={forgotMutation.isPending}
                 >
                   {forgotMutation.isPending ? "Sending..." : "Send Reset Instructions"}
@@ -199,7 +204,7 @@ export default function LoginPage() {
                     resetForgot();
                     setMode("login");
                   }}
-                  className="w-full flex items-center justify-center text-sm font-medium text-slate-600 hover:text-slate-800 py-2 transition-colors mt-2"
+                  className="w-full flex items-center justify-center text-sm font-medium text-charcoal hover:text-ink py-2 transition-colors mt-2"
                 >
                   <ArrowLeft className="h-4 w-4 mr-1.5" /> Back to Login
                 </button>

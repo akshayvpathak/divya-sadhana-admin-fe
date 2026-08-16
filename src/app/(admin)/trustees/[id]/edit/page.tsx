@@ -88,14 +88,14 @@ export default function EditTrusteePage() {
           </Button>
         </Link>
         <div className="min-w-0">
-          <h1 className="text-3xl font-bold text-slate-900">Edit network member</h1>
-          <p className="text-slate-500 mt-1 truncate">
+          <h1 className="text-3xl font-bold text-ink">Edit network member</h1>
+          <p className="text-moon mt-1 truncate">
             {initial ? initial.userName : 'Loading member…'}
           </p>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <div className="bg-surface rounded-xl shadow-sm border border-line p-6">
         {initial ? (
           // Keyed on the record so the form remounts — and re-seeds its
           // defaults — if the underlying member changes.

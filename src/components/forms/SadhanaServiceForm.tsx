@@ -27,7 +27,7 @@ import PricingOptionsEditor from './sadhana-service/PricingOptionsEditor';
 
 const ReactQuill = dynamic(() => import('react-quill-new'), {
   ssr: false,
-  loading: () => <p className="py-4 text-sm text-slate-500">Loading editor...</p>,
+  loading: () => <p className="py-4 text-sm text-moon">Loading editor...</p>,
 });
 
 const CATEGORIES = serviceCategoryEnum.options;
@@ -171,33 +171,33 @@ export function SadhanaServiceForm({ serviceId, onSubmit, isPending, readOnly = 
     return (
       <div className="space-y-4">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-10 w-full animate-pulse rounded-lg bg-slate-100" />
+          <div key={i} className="h-10 w-full animate-pulse rounded-lg bg-cosmos" />
         ))}
       </div>
     );
   }
 
-  const roClass = readOnly ? 'bg-slate-50 border-slate-200 text-slate-600 cursor-default focus-visible:ring-0' : '';
+  const roClass = readOnly ? 'bg-ivory border-line text-charcoal cursor-default focus-visible:ring-0' : '';
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="name">Name <span className="text-rose-500">*</span></Label>
+          <Label htmlFor="name">Name <span className="text-danger">*</span></Label>
           <Input id="name" placeholder="Service name" {...register('name')} disabled={readOnly} className={roClass} />
-          {errors.name && <p className="text-sm text-rose-500">{errors.name.message}</p>}
+          {errors.name && <p className="text-sm text-danger">{errors.name.message}</p>}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="slug">Slug <span className="text-rose-500">*</span></Label>
+          <Label htmlFor="slug">Slug <span className="text-danger">*</span></Label>
           <Input id="slug" placeholder="service-slug" {...register('slug')} disabled={readOnly} className={roClass} />
-          {errors.slug && <p className="text-sm text-rose-500">{errors.slug.message}</p>}
+          {errors.slug && <p className="text-sm text-danger">{errors.slug.message}</p>}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="category">Category <span className="text-rose-500">*</span></Label>
+          <Label htmlFor="category">Category <span className="text-danger">*</span></Label>
           <Select value={categoryValue || ''} onValueChange={(val) => setValue('category', val as CreateSadhanaServicePayload['category'])} disabled={readOnly}>
-            <SelectTrigger id="category" className={readOnly ? 'bg-slate-50 border-slate-200 text-slate-600' : 'bg-white'}>
+            <SelectTrigger id="category" className={readOnly ? 'bg-cream border-line text-charcoal' : 'bg-surface'}>
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
             <SelectContent>
@@ -208,7 +208,7 @@ export function SadhanaServiceForm({ serviceId, onSubmit, isPending, readOnly = 
               ))}
             </SelectContent>
           </Select>
-          {errors.category && <p className="text-sm text-rose-500">{errors.category.message}</p>}
+          {errors.category && <p className="text-sm text-danger">{errors.category.message}</p>}
         </div>
 
         <div className="space-y-2">
@@ -233,10 +233,10 @@ export function SadhanaServiceForm({ serviceId, onSubmit, isPending, readOnly = 
       </div>
 
       <div className="space-y-2 pb-4">
-        <Label htmlFor="description">Description <span className="text-rose-500">*</span></Label>
-        <div className="rounded-md bg-white pb-6">
+        <Label htmlFor="description">Description <span className="text-danger">*</span></Label>
+        <div className="rounded-md bg-surface pb-6">
           {readOnly ? (
-            <div className="min-h-[160px] whitespace-pre-line rounded-md border border-slate-200 bg-slate-50 p-4 text-slate-700">
+            <div className="min-h-[160px] whitespace-pre-line rounded-md border border-line bg-cream p-4 text-charcoal">
               {watch('description') || ''}
             </div>
           ) : (
@@ -249,7 +249,7 @@ export function SadhanaServiceForm({ serviceId, onSubmit, isPending, readOnly = 
             />
           )}
         </div>
-        {errors.description && <p className="text-sm text-rose-500">{errors.description.message}</p>}
+        {errors.description && <p className="text-sm text-danger">{errors.description.message}</p>}
       </div>
 
       <div className="space-y-2">
@@ -257,9 +257,9 @@ export function SadhanaServiceForm({ serviceId, onSubmit, isPending, readOnly = 
         <div
           className={cn(
             'flex flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed p-8 text-center transition-all',
-            isDragging ? 'border-indigo-500 bg-indigo-50/50' : 'border-slate-200',
-            !readOnly && 'cursor-pointer hover:border-indigo-400 hover:bg-slate-50/50',
-            readOnly && 'cursor-default bg-slate-50 opacity-75',
+            isDragging ? 'border-gold bg-tint/50' : 'border-line',
+            !readOnly && 'cursor-pointer hover:border-gold hover:bg-cream',
+            readOnly && 'cursor-default bg-cream opacity-75',
           )}
           onDragOver={(e) => {
             e.preventDefault();
@@ -279,7 +279,7 @@ export function SadhanaServiceForm({ serviceId, onSubmit, isPending, readOnly = 
           onClick={() => !readOnly && document.getElementById('sadhana-cover-upload')?.click()}
         >
           {previewUrl ? (
-            <div className="relative aspect-[16/10] w-full max-w-[200px] overflow-hidden rounded-lg border border-slate-200 group">
+            <div className="relative aspect-[16/10] w-full max-w-[200px] overflow-hidden rounded-lg border border-line group">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={previewUrl} alt="Preview" className="h-full w-full object-cover" />
               {!readOnly && (
@@ -290,22 +290,22 @@ export function SadhanaServiceForm({ serviceId, onSubmit, isPending, readOnly = 
                     setValue('cover_image_key', '', { shouldValidate: true });
                     setPreviewUrl('');
                   }}
-                  className="absolute right-2 top-2 rounded-full bg-rose-500 p-1.5 text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100"
+                  className="absolute right-2 top-2 rounded-full bg-danger p-1.5 text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100"
                 >
                   <X className="h-4 w-4" />
                 </button>
               )}
             </div>
           ) : (
-            <div className="flex flex-col items-center gap-2 text-slate-500">
-              <div className="rounded-full bg-slate-100 p-4">
+            <div className="flex flex-col items-center gap-2 text-moon">
+              <div className="rounded-full bg-cosmos p-4">
                 {uploadMutation.isPending ? (
-                  <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+                  <Loader2 className="h-8 w-8 animate-spin text-gold-press" />
                 ) : (
-                  <Upload className="h-8 w-8 text-slate-400" />
+                  <Upload className="h-8 w-8 text-moon" />
                 )}
               </div>
-              <p className="font-medium text-slate-700">
+              <p className="font-medium text-charcoal">
                 {uploadMutation.isPending ? 'Uploading...' : 'Click or drag to upload'}
               </p>
             </div>
@@ -317,12 +317,12 @@ export function SadhanaServiceForm({ serviceId, onSubmit, isPending, readOnly = 
         </div>
       </div>
 
-      <div className="rounded-xl border border-slate-200 p-4">
+      <div className="rounded-xl border border-line p-4">
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         <PricingOptionsEditor control={control as any} register={register as any} errors={errors} readOnly={readOnly} />
       </div>
 
-      <div className="rounded-xl border border-slate-200 p-4">
+      <div className="rounded-xl border border-line p-4">
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         <InputSchemaEditor control={control as any} register={register as any} readOnly={readOnly} />
       </div>
@@ -334,7 +334,7 @@ export function SadhanaServiceForm({ serviceId, onSubmit, isPending, readOnly = 
           </Button>
         </Link>
         {!readOnly && (
-          <Button type="submit" disabled={isPending} className="bg-indigo-600 hover:bg-indigo-700">
+          <Button type="submit" disabled={isPending} className="bg-gold-deep hover:bg-gold-deep">
             {isPending ? 'Processing...' : serviceId ? 'Save Service' : 'Create Service'}
           </Button>
         )}

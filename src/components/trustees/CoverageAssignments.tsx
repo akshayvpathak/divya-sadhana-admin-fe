@@ -49,14 +49,14 @@ export function CoverageAssignments() {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-moon">
         Area-trustee assignments — who owns which state (territory layer). Manage
         assignments from a trustee&apos;s detail page.
       </p>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-        <div className="p-4 border-b border-slate-200 bg-slate-50 flex flex-wrap gap-2 items-center">
-          <Filter className="h-4 w-4 text-slate-400 shrink-0" />
+      <div className="bg-surface rounded-xl shadow-sm border border-line overflow-hidden flex flex-col">
+        <div className="p-4 border-b border-line bg-cream flex flex-wrap gap-2 items-center">
+          <Filter className="h-4 w-4 text-moon shrink-0" />
           <Select
             value={trusteeFilter}
             onValueChange={(val) => {
@@ -64,7 +64,7 @@ export function CoverageAssignments() {
               setPage(1);
             }}
           >
-            <SelectTrigger className="bg-white w-[180px]">
+            <SelectTrigger className="bg-surface w-[180px]">
               <SelectValue placeholder="All Trustees">
                 {trusteeFilter === 'all'
                   ? 'All Trustees'
@@ -91,7 +91,7 @@ export function CoverageAssignments() {
               setPage(1);
             }}
           >
-            <SelectTrigger className="bg-white w-[160px]">
+            <SelectTrigger className="bg-surface w-[160px]">
               <SelectValue placeholder="All States">
                 {stateFilter === 'all'
                   ? 'All States'
@@ -115,7 +115,7 @@ export function CoverageAssignments() {
               setPage(1);
             }}
           >
-            <SelectTrigger className="bg-white w-[140px]">
+            <SelectTrigger className="bg-surface w-[140px]">
               <SelectValue placeholder="All Statuses">
                 {statusFilter === 'active' ? 'Active' : statusFilter === 'inactive' ? 'Inactive' : 'All Statuses'}
               </SelectValue>

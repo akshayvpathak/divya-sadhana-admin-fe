@@ -12,6 +12,8 @@ export function trusteeDisplayName(row: Trustee): string {
   if (row.name) return row.name;
   const full = [row.first_name, row.last_name].filter(Boolean).join(' ').trim();
   if (full) return full;
+  // Feeds a composed avatar + name cell, so this has to stay a string — the
+  // DataTable's N/A chip only fires for a cell that is entirely blank.
   return row.user_email || row.email || '—';
 }
 
@@ -22,9 +24,9 @@ const ROLE_LABEL: Record<string, string> = {
 };
 
 const ROLE_BADGE: Record<string, string> = {
-  trustee: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-  state_executive: 'bg-violet-50 text-violet-700 border-violet-200',
-  district_president: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  trustee: 'bg-tint text-gold-press border-gold/25',
+  state_executive: 'bg-plum-tint text-plum-ink border-plum/25',
+  district_president: 'bg-success-tint text-success-ink border-success/25',
 };
 
 export function networkRoleLabel(row: Pick<Trustee, 'role' | 'role_display'>): string {
@@ -56,9 +58,9 @@ export const useTrusteeTableColumns = ({
           <div className="flex items-center gap-3 min-w-[180px]">
             <TableAvatar name={name} />
             <div className="min-w-0">
-              <p className="font-medium text-slate-900 truncate">{name}</p>
+              <p className="font-medium text-ink truncate">{name}</p>
               {email ? (
-                <p className="text-xs text-slate-400 truncate max-w-[200px]">{email}</p>
+                <p className="text-xs text-moon truncate max-w-[200px]">{email}</p>
               ) : null}
             </div>
           </div>
@@ -73,7 +75,7 @@ export const useTrusteeTableColumns = ({
       renderCell: (row) => {
         const role = row.role || 'trustee';
         const label = networkRoleLabel(row);
-        const badge = ROLE_BADGE[role] ?? 'bg-slate-50 text-slate-700 border-slate-200';
+        const badge = ROLE_BADGE[role] ?? 'bg-cream text-charcoal border-line';
         return (
           <span
             className={`inline-flex whitespace-nowrap rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${badge}`}
@@ -90,11 +92,11 @@ export const useTrusteeTableColumns = ({
       header: 'Code',
       renderCell: (row) =>
         row.referral_code ? (
-          <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 font-mono text-xs font-medium text-slate-700 ring-1 ring-inset ring-slate-200/80">
+          <span className="inline-flex items-center rounded-md bg-cosmos px-2 py-1 font-mono text-xs font-medium text-charcoal ring-1 ring-inset ring-line/80">
             {row.referral_code}
           </span>
         ) : (
-          <span className="text-slate-300">—</span>
+          <span className="text-line">—</span>
         ),
     },
     {
@@ -103,7 +105,7 @@ export const useTrusteeTableColumns = ({
       header: 'Comm %',
       headerAlign: 'right',
       cellAlign: 'right',
-      cellClassName: 'font-semibold tabular-nums text-slate-900',
+      cellClassName: 'font-semibold tabular-nums text-ink',
       renderCell: (row) =>
         row.commission_percent !== null && row.commission_percent !== undefined
           ? formatPercent(row.commission_percent)
@@ -117,7 +119,7 @@ export const useTrusteeTableColumns = ({
         const labels = getTerritory(row);
         if (!labels.length) {
           return (
-            <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-400 ring-1 ring-inset ring-slate-200">
+            <span className="inline-flex items-center gap-1 rounded-full bg-cream px-2 py-0.5 text-xs font-medium text-moon ring-1 ring-inset ring-line">
               <MapPin className="h-3 w-3" />
               Unassigned
             </span>
@@ -128,7 +130,7 @@ export const useTrusteeTableColumns = ({
             {labels.slice(0, 2).map((label) => (
               <span
                 key={label}
-                className="inline-flex items-center rounded-full bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-800 ring-1 ring-inset ring-sky-100"
+                className="inline-flex items-center rounded-full bg-info-tint px-2 py-0.5 text-xs font-medium text-info-ink ring-1 ring-inset ring-info/20"
                 title={label}
               >
                 {label}
@@ -136,7 +138,7 @@ export const useTrusteeTableColumns = ({
             ))}
             {labels.length > 2 ? (
               <span
-                className="inline-flex items-center rounded-full bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-500 ring-1 ring-inset ring-slate-200"
+                className="inline-flex items-center rounded-full bg-cream px-2 py-0.5 text-xs font-medium text-moon ring-1 ring-inset ring-line"
                 title={labels.slice(2).join(', ')}
               >
                 +{labels.length - 2}

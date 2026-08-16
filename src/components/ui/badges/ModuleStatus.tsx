@@ -3,7 +3,7 @@ import { Badge } from '../badge';
 import { cn } from '@/lib/utils';
 import { formatStatusLabel } from '@/lib/statusFormatter';
 import { StatusConfig } from './types';
-import { activeStatusMap, aiReadingsStatusMap, campaignStatusMap, commissionStatusMap, orderStatusMap, paymentStatusMap, publishedStatusMap, roleStatusMap, serviceBookingStatusMap, serviceCategoryMap, shippingStatusMap, transactionStatusMap } from './badge-status';
+import { STATUS_CLASS, activeStatusMap, aiReadingsStatusMap, campaignStatusMap, commissionStatusMap, orderStatusMap, paymentStatusMap, publishedStatusMap, roleStatusMap, serviceBookingStatusMap, serviceCategoryMap, shippingStatusMap, transactionStatusMap } from './badge-status';
 
 
 export type ModuleType =
@@ -59,12 +59,12 @@ export function ModuleStatus({ status, module, className }: ModuleStatusProps) {
     );
   }
 
-  // Fallback to title case formatted label
+  // STATUS_CLASS is required here too, or the fallback renders oversized.
   const formatted = formatStatusLabel(status);
   return (
     <Badge
       variant="slate"
-      className={cn("px-2.5 py-1 text-center whitespace-nowrap", className)}
+      className={cn("px-2.5 py-1 text-center whitespace-nowrap", STATUS_CLASS, className)}
     >
       {formatted || 'N/A'}
     </Badge>

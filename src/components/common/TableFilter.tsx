@@ -38,7 +38,7 @@ export function TableFilter({
         }
       }}
     >
-      <SelectTrigger className={`bg-white shrink-0 ${widthClass}`}>
+      <SelectTrigger className={`bg-surface shrink-0 ${widthClass}`}>
         <SelectValue placeholder={placeholder}>
           {currentOption ? currentOption.label : placeholder}
         </SelectValue>

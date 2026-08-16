@@ -15,6 +15,8 @@ import {
 } from '@/components/ui/select';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { cn } from '@/lib/utils';
+import { formatDateTime } from '@/lib/datetime';
+import { NAValue } from '@/components/common/DetailCard';
 import { useUpdateOrderShippingMutation } from '@/hooks/queries/useOrdersQuery';
 import {
   courierPartnerOptions,
@@ -199,16 +201,16 @@ export default function OrderFulfillmentPanel({ order, embedded = false }: Props
     <div
       className={cn(
         'space-y-5',
-        !embedded && 'rounded-2xl border border-slate-200 bg-white p-6 shadow-sm'
+        !embedded && 'rounded-2xl border border-line bg-surface p-6 shadow-sm'
       )}
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-slate-500">
+          <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-moon">
             <Truck className="h-4 w-4" />
             Fulfillment
           </h3>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-moon">
             Manual courier entry — India Post / Anjani. No Shiprocket sync.
           </p>
         </div>
@@ -216,8 +218,8 @@ export default function OrderFulfillmentPanel({ order, embedded = false }: Props
       </div>
 
       {summaryLabel ? (
-        <p className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-          Customer sees: <span className="font-semibold text-slate-900">{summaryLabel}</span>
+        <p className="rounded-xl border border-gold/25 bg-tint px-3 py-2 text-xs text-charcoal">
+          Customer sees: <span className="font-semibold text-ink">{summaryLabel}</span>
           {order.tracking_summary?.estimated_delivery_max
             ? ` · ETA max ${order.tracking_summary.estimated_delivery_max}`
             : null}
@@ -225,13 +227,13 @@ export default function OrderFulfillmentPanel({ order, embedded = false }: Props
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2 sm:col-span-2">
+        <div className="space-y-2">
           <Label>Courier</Label>
           <Select
             value={partner || 'none'}
             onValueChange={(v) => setPartner(v && v !== 'none' ? (v as CourierPartner) : '')}
           >
-            <SelectTrigger className="bg-white">
+            <SelectTrigger className="bg-surface">
               {/* Without children SelectValue prints the raw value ("other"). */}
               <SelectValue placeholder="Select courier">
                 {partner ? PARTNER_LABEL[partner] ?? partner : NO_COURIER_LABEL}
@@ -240,6 +242,24 @@ export default function OrderFulfillmentPanel({ order, embedded = false }: Props
             <SelectContent>
               <SelectItem value="none">{NO_COURIER_LABEL}</SelectItem>
               {courierPartnerOptions.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Shipping status</Label>
+          <Select value={status} onValueChange={(v) => { if (v) setStatus(v as ShippingStatusChoice); }}>
+            <SelectTrigger className="bg-surface">
+              <SelectValue placeholder="Select status">
+                {SHIPPING_STATUS_LABEL[status] ?? status}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {SHIPPING_STATUS_OPTIONS.map((o) => (
                 <SelectItem key={o.value} value={o.value}>
                   {o.label}
                 </SelectItem>
@@ -258,37 +278,26 @@ export default function OrderFulfillmentPanel({ order, embedded = false }: Props
             className="font-mono"
           />
         </div>
-
-        <div className="space-y-2 sm:col-span-2">
-          <Label>Shipping status</Label>
-          <Select value={status} onValueChange={(v) => { if (v) setStatus(v as ShippingStatusChoice); }}>
-            <SelectTrigger className="bg-white">
-              <SelectValue placeholder="Select status">
-                {SHIPPING_STATUS_LABEL[status] ?? status}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {SHIPPING_STATUS_OPTIONS.map((o) => (
-                <SelectItem key={o.value} value={o.value}>
-                  {o.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
       </div>
 
       {/* Quick actions sit in their own tray: progression on the left, the two
           exception paths after a divider, and the rarely-wanted reset pushed to
           the far end so it can't be hit by accident. */}
-      <div className="space-y-2.5 rounded-xl border border-slate-200 bg-slate-50/70 p-3">
-        <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-          Quick actions
-        </p>
+      <div className="space-y-2.5 rounded-xl border border-line border-l-2 border-l-saffron bg-cream p-3.5">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-moon">
+            Quick actions
+          </p>
+          {/* Dispatch is gated on courier + tracking; say so. */}
+          {!canDispatch && (
+            <p className="text-[11px] text-moon">
+              Add a courier and tracking number to dispatch.
+            </p>
+          )}
+        </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button
-            size="sm"
-            className="gap-1.5 bg-indigo-600 shadow-sm shadow-indigo-600/20 hover:bg-indigo-700"
+            className="gap-1.5 shadow-sm shadow-gold/20"
             disabled={isPending || !canDispatch}
             onClick={handleDispatch}
           >
@@ -296,9 +305,8 @@ export default function OrderFulfillmentPanel({ order, embedded = false }: Props
             Mark dispatched
           </Button>
           <Button
-            size="sm"
             variant="outline"
-            className="gap-1.5 border-emerald-300 bg-white text-emerald-700 hover:bg-emerald-50"
+            className="gap-1.5 border-success/30 bg-surface text-success-ink hover:bg-success-tint"
             disabled={isPending}
             onClick={handleMarkDelivered}
           >
@@ -306,12 +314,12 @@ export default function OrderFulfillmentPanel({ order, embedded = false }: Props
             Mark delivered
           </Button>
 
-          <span aria-hidden className="mx-0.5 hidden h-6 w-px bg-slate-200 sm:block" />
+          <span aria-hidden className="mx-1 hidden h-6 w-px bg-line sm:block" />
 
           <Button
             size="sm"
             variant="outline"
-            className="gap-1.5 border-amber-300 bg-white text-amber-800 hover:bg-amber-50"
+            className="gap-1.5 border-warning/25 bg-surface text-warning-ink hover:bg-warning-tint"
             disabled={isPending}
             onClick={handleMarkRto}
           >
@@ -321,7 +329,7 @@ export default function OrderFulfillmentPanel({ order, embedded = false }: Props
           <Button
             size="sm"
             variant="outline"
-            className="gap-1.5 border-rose-300 bg-white text-rose-700 hover:bg-rose-50"
+            className="gap-1.5 border-danger/25 bg-surface text-danger-ink hover:bg-danger-tint"
             disabled={isPending}
             onClick={handleCancelShipment}
           >
@@ -332,7 +340,7 @@ export default function OrderFulfillmentPanel({ order, embedded = false }: Props
           <Button
             size="sm"
             variant="ghost"
-            className="gap-1.5 text-slate-500 hover:text-slate-800 sm:ml-auto"
+            className="gap-1.5 text-moon hover:text-ink sm:ml-auto"
             disabled={isPending}
             onClick={handleResetPending}
           >
@@ -343,7 +351,8 @@ export default function OrderFulfillmentPanel({ order, embedded = false }: Props
       </div>
 
       <Button
-        className="w-full gap-1.5 bg-slate-900 text-white hover:bg-slate-800"
+        variant="secondary"
+        className="w-full gap-1.5"
         disabled={isPending}
         onClick={handleSave}
       >
@@ -351,23 +360,21 @@ export default function OrderFulfillmentPanel({ order, embedded = false }: Props
         {isPending ? 'Saving…' : 'Save shipping details'}
       </Button>
 
-      <dl className="grid gap-2 border-t border-slate-100 pt-4 text-xs text-slate-500 sm:grid-cols-2">
-        <div>
-          <dt className="font-semibold uppercase tracking-wide">Dispatched at</dt>
-          <dd className="mt-0.5 text-slate-800">{order.dispatched_at || '—'}</dd>
-        </div>
-        <div>
-          <dt className="font-semibold uppercase tracking-wide">Delivered at</dt>
-          <dd className="mt-0.5 text-slate-800">{order.delivered_at || '—'}</dd>
-        </div>
-        <div>
-          <dt className="font-semibold uppercase tracking-wide">Returned at</dt>
-          <dd className="mt-0.5 text-slate-800">{order.returned_at || '—'}</dd>
-        </div>
-        <div>
-          <dt className="font-semibold uppercase tracking-wide">Courier name</dt>
-          <dd className="mt-0.5 text-slate-800">{order.courier_name || PARTNER_LABEL[order.courier_partner || ''] || '—'}</dd>
-        </div>
+      <dl className="grid gap-3 border-t border-line/60 pt-4 text-xs sm:grid-cols-2">
+        {([
+          ['Dispatched at', formatDateTime(order.dispatched_at)],
+          ['Delivered at', formatDateTime(order.delivered_at)],
+          ['Returned at', formatDateTime(order.returned_at)],
+          [
+            'Courier name',
+            order.courier_name || PARTNER_LABEL[order.courier_partner || ''] || null,
+          ],
+        ] as const).map(([label, value]) => (
+          <div key={label}>
+            <dt className="font-semibold uppercase tracking-wide text-moon">{label}</dt>
+            <dd className="mt-0.5 text-sm text-ink">{value ?? <NAValue />}</dd>
+          </div>
+        ))}
       </dl>
     </div>
   );

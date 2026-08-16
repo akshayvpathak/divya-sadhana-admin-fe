@@ -1,13 +1,14 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 
+// Every ink clears 4.5:1 on its own tint, so initials stay readable at 12px.
 const AVATAR_TONES = [
-  'bg-indigo-100 text-indigo-700',
-  'bg-sky-100 text-sky-700',
-  'bg-emerald-100 text-emerald-700',
-  'bg-amber-100 text-amber-800',
-  'bg-rose-100 text-rose-700',
-  'bg-violet-100 text-violet-700',
+  'bg-tint text-gold-press',
+  'bg-royal-tint text-royal',
+  'bg-success-tint text-success-ink',
+  'bg-plum-tint text-plum-ink',
+  'bg-copper-tint text-copper-ink',
+  'bg-info-tint text-info-ink',
 ];
 
 export function initialsFromName(name: string): string {

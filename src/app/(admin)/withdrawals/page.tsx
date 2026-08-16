@@ -15,6 +15,8 @@ import { DataTablePagination } from '@/components/common/DataTablePagination';
 import { useWithdrawalsListQuery } from '@/hooks/queries/useWithdrawalsQuery';
 import { useWithdrawalTableColumns } from '@/components/withdrawals/useWithdrawalTableColumns';
 import { WITHDRAWAL_STATUSES } from '@/schemas/withdrawals.schema';
+import { PageHeader } from '@/components/common/PageHeader';
+import { Card, CardBand } from '@/components/ui/card';
 
 const PAGE_SIZE = 10;
 
@@ -55,19 +57,15 @@ export default function WithdrawalsPage() {
 
   return (
     <div className="space-y-6 pb-8">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Withdrawals</h1>
-          <p className="text-slate-500 mt-1">
-            Review and process trustee payout requests
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Withdrawals"
+        description="Review and process trustee payout requests"
+      />
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-        <div className="p-4 border-b border-slate-200 bg-slate-50 flex flex-col md:flex-row gap-4 items-center justify-end">
+      <Card>
+        <CardBand className="flex flex-col items-center justify-end gap-4 border-b border-line md:flex-row">
           <div className="flex flex-wrap sm:flex-nowrap gap-2 items-center w-full md:w-auto">
-            <Filter className="h-4 w-4 text-slate-400 shrink-0" />
+            <Filter className="h-4 w-4 text-moon shrink-0" />
             <Select
               value={status}
               onValueChange={(val) => {
@@ -75,7 +73,7 @@ export default function WithdrawalsPage() {
                 setPage(1);
               }}
             >
-              <SelectTrigger className="bg-white w-[160px]">
+              <SelectTrigger className="bg-surface w-[160px]">
                 <SelectValue placeholder="All Statuses">
                   {statusLabel}
                 </SelectValue>
@@ -92,10 +90,10 @@ export default function WithdrawalsPage() {
               <ClearFiltersButton onClear={clearAllFilters} />
             )}
           </div>
-        </div>
+        </CardBand>
 
         {isError ? (
-          <div className="p-8 text-center text-rose-600">
+          <div className="p-8 text-center text-danger">
             {(error as Error)?.message || 'Failed to load withdrawals'}
           </div>
         ) : (
@@ -118,7 +116,7 @@ export default function WithdrawalsPage() {
             )}
           </>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

@@ -289,27 +289,27 @@ export function PromoteTrusteeForm({
         {/* User */}
         <div className="space-y-2">
           <Label htmlFor="promote-user">
-            User {!isEdit && <span className="text-rose-500">*</span>}
+            User {!isEdit && <span className="text-danger">*</span>}
           </Label>
           {isEdit ? (
-            <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-              <p className="truncate text-sm font-medium text-slate-900">
+            <div className="rounded-lg border border-line bg-cream px-3 py-2">
+              <p className="truncate text-sm font-medium text-ink">
                 {initial?.userName || '—'}
               </p>
-              <p className="truncate text-xs text-slate-500">{initial?.userEmail}</p>
+              <p className="truncate text-xs text-moon">{initial?.userEmail}</p>
             </div>
           ) : selectedUser ? (
-            <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+            <div className="flex items-center justify-between rounded-lg border border-line bg-cream px-3 py-2">
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-slate-900">{selectedUser.name}</p>
-                <p className="truncate text-xs text-slate-500">{selectedUser.email}</p>
+                <p className="truncate text-sm font-medium text-ink">{selectedUser.name}</p>
+                <p className="truncate text-xs text-moon">{selectedUser.email}</p>
               </div>
               <Button
                 variant="ghost"
                 size="icon-sm"
                 type="button"
                 onClick={clearUser}
-                className="text-slate-400 hover:text-rose-600"
+                className="text-moon hover:text-danger"
                 title="Clear"
               >
                 <X className="h-4 w-4" />
@@ -317,7 +317,7 @@ export function PromoteTrusteeForm({
             </div>
           ) : (
             <div className="relative">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-moon" />
               <Input
                 id="promote-user"
                 placeholder="Search by name or email..."
@@ -331,24 +331,24 @@ export function PromoteTrusteeForm({
                 autoComplete="off"
               />
               {showResults && debouncedUserSearch.length > 0 && (
-                <div className="absolute z-50 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg">
+                <div className="absolute z-50 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-line bg-surface shadow-lg">
                   {usersLoading ? (
-                    <p className="px-3 py-2 text-sm text-slate-400">Searching...</p>
+                    <p className="px-3 py-2 text-sm text-moon">Searching...</p>
                   ) : users.length === 0 ? (
-                    <p className="px-3 py-2 text-sm text-slate-400">No users found</p>
+                    <p className="px-3 py-2 text-sm text-moon">No users found</p>
                   ) : (
                     users.map((u) => (
                       <button
                         key={u.id}
                         type="button"
                         onClick={() => pickUser(u)}
-                        className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left hover:bg-slate-50"
+                        className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left hover:bg-cream"
                       >
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-slate-800">
+                          <p className="truncate text-sm font-medium text-ink">
                             {[u.first_name, u.last_name].filter(Boolean).join(' ').trim() || u.email}
                           </p>
-                          <p className="truncate text-xs text-slate-500">{u.email}</p>
+                          <p className="truncate text-xs text-moon">{u.email}</p>
                         </div>
                         <Check className="h-4 w-4 shrink-0 text-transparent" />
                       </button>
@@ -358,17 +358,17 @@ export function PromoteTrusteeForm({
               )}
             </div>
           )}
-          {errors.email && <p className="text-sm text-rose-500">{errors.email.message}</p>}
+          {errors.email && <p className="text-sm text-danger">{errors.email.message}</p>}
         </div>
 
         {/* Network role */}
         <div className="space-y-2">
           <Label>
-            Network role {!isEdit && <span className="text-rose-500">*</span>}
+            Network role {!isEdit && <span className="text-danger">*</span>}
           </Label>
           {isEdit ? (
             <>
-              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+              <div className="rounded-lg border border-line bg-cream px-3 py-2 text-sm text-charcoal">
                 {roleLabel}
               </div>
             </>
@@ -391,7 +391,7 @@ export function PromoteTrusteeForm({
               </SelectContent>
             </Select>
           )}
-          {errors.role && <p className="text-sm text-rose-500">{errors.role.message}</p>}
+          {errors.role && <p className="text-sm text-danger">{errors.role.message}</p>}
         </div>
       </div>
 
@@ -399,7 +399,7 @@ export function PromoteTrusteeForm({
       <div className="space-y-4">
         <div>
           <Label>
-            Territory <span className="text-rose-500">*</span>
+            Territory <span className="text-danger">*</span>
           </Label>
         </div>
 
@@ -419,7 +419,7 @@ export function PromoteTrusteeForm({
                 searchPlaceholder="Search states..."
                 emptyMessage="No states found"
               />
-              {stateError && <p className="text-sm text-rose-500">{stateError}</p>}
+              {stateError && <p className="text-sm text-danger">{stateError}</p>}
             </div>
 
             <div className="space-y-2">
@@ -430,7 +430,7 @@ export function PromoteTrusteeForm({
                 onChange={setDistrict}
                 disabled={!selectedStateIds[0]}
               />
-              {districtError && <p className="text-sm text-rose-500">{districtError}</p>}
+              {districtError && <p className="text-sm text-danger">{districtError}</p>}
             </div>
           </div>
         ) : (
@@ -459,12 +459,12 @@ export function PromoteTrusteeForm({
                 emptyMessage="No states found"
               />
             )}
-            {stateError && <p className="text-sm text-rose-500">{stateError}</p>}
+            {stateError && <p className="text-sm text-danger">{stateError}</p>}
           </div>
         )}
 
         {typeof errors.assignments?.message === 'string' && (
-          <p className="text-sm text-rose-500">{errors.assignments.message}</p>
+          <p className="text-sm text-danger">{errors.assignments.message}</p>
         )}
       </div>
 
@@ -474,7 +474,7 @@ export function PromoteTrusteeForm({
           <Label htmlFor="promote-active">Status</Label>
           <div className="flex items-center gap-2">
             <Switch id="promote-active" checked={isActive} onCheckedChange={setIsActive} />
-            <span className="text-sm text-slate-600">{isActive ? 'Active' : 'Inactive'}</span>
+            <span className="text-sm text-charcoal">{isActive ? 'Active' : 'Inactive'}</span>
           </div>
         </div>
       )}
@@ -491,7 +491,7 @@ export function PromoteTrusteeForm({
       </div>
 
       {errors.root?.message && (
-        <p className="text-sm text-rose-500">{errors.root.message}</p>
+        <p className="text-sm text-danger">{errors.root.message}</p>
       )}
 
       <div className="flex justify-end gap-2 pt-4">
@@ -503,7 +503,7 @@ export function PromoteTrusteeForm({
         <Button
           type="submit"
           disabled={isPending}
-          className="bg-indigo-600 hover:bg-indigo-700"
+          className="bg-gold-deep hover:bg-gold-deep"
         >
           {isEdit
             ? isPending

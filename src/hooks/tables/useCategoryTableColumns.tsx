@@ -27,7 +27,7 @@ export const useCategoryTableColumns = ({
         <div className="flex flex-col max-w-[250px]">
           <span className="font-medium truncate">{row.name}</span>
           <span 
-            className="text-xs text-slate-500 overflow-hidden whitespace-nowrap text-ellipsis [&>*]:inline"
+            className="text-xs text-moon overflow-hidden whitespace-nowrap text-ellipsis [&>*]:inline"
             dangerouslySetInnerHTML={{ __html: row.description || '' }}
           />
         </div>

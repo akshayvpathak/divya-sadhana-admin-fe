@@ -165,53 +165,53 @@ export function HoroscopeSeoForm({
       onSubmit={handleSubmit(handleFormSubmit, () => undefined)}
       className="space-y-8"
     >
-      <div className="rounded-xl border border-slate-200 bg-slate-50 p-5 space-y-4">
-        <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500">
+      <div className="rounded-xl border border-line bg-cream p-5 space-y-4">
+        <h3 className="text-sm font-bold uppercase tracking-wider text-moon">
           Reading (read-only)
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1">
-            <Label className="text-slate-500">Sign</Label>
-            <p className="font-semibold text-slate-900 capitalize">
+            <Label className="text-moon">Sign</Label>
+            <p className="font-semibold text-ink capitalize">
               {SIGN_LABELS[entry.zodiac_sign]}
               {entry.rashi_hi ? (
-                <span className="text-slate-500 font-normal ml-2">
+                <span className="text-moon font-normal ml-2">
                   ({entry.rashi_hi})
                 </span>
               ) : null}
             </p>
           </div>
           <div className="space-y-1">
-            <Label className="text-slate-500">Period</Label>
-            <p className="font-semibold text-slate-900">
+            <Label className="text-moon">Period</Label>
+            <p className="font-semibold text-ink">
               {PERIOD_LABELS[entry.period]}
-              <span className="text-slate-500 font-normal ml-2">
+              <span className="text-moon font-normal ml-2">
                 · {entry.period_key}
               </span>
             </p>
           </div>
           <div className="space-y-1 md:col-span-2">
-            <Label className="text-slate-500">Slug</Label>
-            <p className="font-mono text-sm text-slate-700 bg-white border border-slate-200 rounded-md px-3 py-2">
+            <Label className="text-moon">Slug</Label>
+            <p className="font-mono text-sm text-charcoal bg-surface border border-line rounded-md px-3 py-2">
               {entry.slug}
             </p>
           </div>
           <div className="space-y-1 md:col-span-2">
-            <Label className="text-slate-500">Summary</Label>
-            <p className="text-sm text-slate-700 leading-relaxed bg-white border border-slate-200 rounded-md px-3 py-3">
+            <Label className="text-moon">Summary</Label>
+            <p className="text-sm text-charcoal leading-relaxed bg-surface border border-line rounded-md px-3 py-3">
               {entry.summary || "No summary available"}
             </p>
           </div>
         </div>
         {entry.stale ? (
-          <p className="text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+          <p className="text-xs font-medium text-warning-ink bg-warning-tint border border-warning/25 rounded-md px-3 py-2">
             This reading is marked stale — showing the last known-good period.
           </p>
         ) : null}
       </div>
 
       <div className="space-y-4">
-        <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500">
+        <h3 className="text-sm font-bold uppercase tracking-wider text-moon">
           SEO metadata
         </h3>
         <div className="grid grid-cols-1 gap-4">
@@ -224,7 +224,7 @@ export function HoroscopeSeoForm({
               {...register("meta_title")}
             />
             {errors.meta_title ? (
-              <p className="text-sm text-rose-500">{errors.meta_title.message}</p>
+              <p className="text-sm text-danger">{errors.meta_title.message}</p>
             ) : null}
           </div>
 
@@ -238,7 +238,7 @@ export function HoroscopeSeoForm({
               {...register("meta_description")}
             />
             {errors.meta_description ? (
-              <p className="text-sm text-rose-500">
+              <p className="text-sm text-danger">
                 {errors.meta_description.message}
               </p>
             ) : null}
@@ -253,7 +253,7 @@ export function HoroscopeSeoForm({
               {...register("meta_keywords")}
             />
             {errors.meta_keywords ? (
-              <p className="text-sm text-rose-500">
+              <p className="text-sm text-danger">
                 {errors.meta_keywords.message}
               </p>
             ) : null}
@@ -278,8 +278,8 @@ export function HoroscopeSeoForm({
           className={cn(
             "border-2 border-dashed rounded-xl p-8 transition-all flex flex-col items-center justify-center gap-4 text-center",
             isDragging
-              ? "border-indigo-500 bg-indigo-50/50"
-              : "border-slate-200 hover:border-indigo-400 hover:bg-slate-50/50 cursor-pointer"
+              ? "border-gold bg-tint/50"
+              : "border-line hover:border-gold hover:bg-cream cursor-pointer"
           )}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -287,7 +287,7 @@ export function HoroscopeSeoForm({
           onClick={() => document.getElementById("og-image-upload")?.click()}
         >
           {previewUrl || ogImageKey ? (
-            <div className="relative group w-full max-w-[240px] aspect-video rounded-lg overflow-hidden border border-slate-200">
+            <div className="relative group w-full max-w-[240px] aspect-video rounded-lg overflow-hidden border border-line">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={previewUrl || resolveProductImageUrl(ogImageKey || "")}
@@ -301,22 +301,22 @@ export function HoroscopeSeoForm({
                   setValue("og_image_key", "", { shouldDirty: true });
                   setPreviewUrl("");
                 }}
-                className="absolute top-2 right-2 p-1.5 bg-rose-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                className="absolute top-2 right-2 p-1.5 bg-danger text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
           ) : (
-            <div className="flex flex-col items-center gap-2 text-slate-500">
-              <div className="p-4 bg-slate-100 rounded-full">
+            <div className="flex flex-col items-center gap-2 text-moon">
+              <div className="p-4 bg-cosmos rounded-full">
                 {uploadMutation.isPending ? (
-                  <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+                  <Loader2 className="h-8 w-8 animate-spin text-gold-press" />
                 ) : (
-                  <Upload className="h-8 w-8 text-slate-400" />
+                  <Upload className="h-8 w-8 text-moon" />
                 )}
               </div>
               <div>
-                <p className="font-medium text-slate-700">
+                <p className="font-medium text-charcoal">
                   {uploadMutation.isPending
                     ? "Uploading..."
                     : "Click or drag to upload OG image"}
@@ -338,7 +338,7 @@ export function HoroscopeSeoForm({
 
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-4">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-moon">
             FAQ
           </h3>
           <Button
@@ -353,7 +353,7 @@ export function HoroscopeSeoForm({
         </div>
 
         {fields.length === 0 ? (
-          <p className="text-sm text-slate-500 italic">
+          <p className="text-sm text-moon italic">
             No FAQ items yet. Add question and answer pairs for structured data.
           </p>
         ) : (
@@ -361,17 +361,17 @@ export function HoroscopeSeoForm({
             {fields.map((field, index) => (
               <div
                 key={field.id}
-                className="rounded-xl border border-slate-200 bg-white p-4 space-y-3"
+                className="rounded-xl border border-line bg-surface p-4 space-y-3"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  <span className="text-xs font-bold uppercase tracking-wider text-moon">
                     Item {index + 1}
                   </span>
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="text-rose-500 hover:text-rose-600 hover:bg-rose-50"
+                    className="text-danger hover:text-danger hover:bg-danger-tint"
                     onClick={() => remove(index)}
                   >
                     <Trash2 className="h-4 w-4" />
@@ -385,7 +385,7 @@ export function HoroscopeSeoForm({
                     {...register(`faq.${index}.question`)}
                   />
                   {errors.faq?.[index]?.question ? (
-                    <p className="text-sm text-rose-500">
+                    <p className="text-sm text-danger">
                       {errors.faq[index]?.question?.message}
                     </p>
                   ) : null}
@@ -399,7 +399,7 @@ export function HoroscopeSeoForm({
                     {...register(`faq.${index}.answer`)}
                   />
                   {errors.faq?.[index]?.answer ? (
-                    <p className="text-sm text-rose-500">
+                    <p className="text-sm text-danger">
                       {errors.faq[index]?.answer?.message}
                     </p>
                   ) : null}
@@ -419,7 +419,7 @@ export function HoroscopeSeoForm({
         <Button
           type="submit"
           disabled={isPending || uploadMutation.isPending}
-          className="bg-indigo-600 hover:bg-indigo-700 min-w-[140px]"
+          className="bg-gold-deep hover:bg-gold-deep min-w-[140px]"
         >
           {isPending ? (
             <>

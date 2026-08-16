@@ -2,7 +2,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { RowActions } from '@/components/common/RowActions';
 import { ColumnConfig } from '@/components/common/DataTable/types';
 import { formatINR } from '@/lib/currency';
-import dayjs from 'dayjs';
+import { formatDate, formatDateTime } from '@/lib/datetime';
 
 export interface ServiceBookingRow {
   id: string;
@@ -26,7 +26,7 @@ export const useServiceBookingTableColumns = (): ColumnConfig<ServiceBookingRow>
       renderCell: (row) => (
         <div className="flex flex-col">
           <span className="font-medium">{row.service_name ?? '—'}</span>
-          <span className="font-mono text-xs text-slate-500">{row.booking_number}</span>
+          <span className="font-mono text-xs text-moon">{row.booking_number}</span>
         </div>
       ),
     },
@@ -34,14 +34,14 @@ export const useServiceBookingTableColumns = (): ColumnConfig<ServiceBookingRow>
       id: 'booker_name',
       accessorKey: 'booker_name',
       header: 'Booker',
-      renderCell: (row) => row.booker_name ?? '—',
+      renderCell: (row) => row.booker_name ?? null,
     },
     {
       id: 'amount',
       accessorKey: 'amount',
       header: 'Amount',
       sortable: true,
-      cellClassName: 'font-medium text-slate-900',
+      cellClassName: 'font-medium text-ink',
       renderCell: (row) => formatINR(row.amount),
     },
     {
@@ -55,16 +55,16 @@ export const useServiceBookingTableColumns = (): ColumnConfig<ServiceBookingRow>
       id: 'scheduled_at',
       accessorKey: 'scheduled_at',
       header: 'Muhurat',
-      cellClassName: 'text-slate-500',
-      renderCell: (row) => (row.scheduled_at ? dayjs(row.scheduled_at).format('MMM D, YYYY h:mm A') : '-'),
+      cellClassName: 'text-moon',
+      renderCell: (row) => (formatDateTime(row.scheduled_at)),
     },
     {
       id: 'created_at',
       accessorKey: 'created_at',
       header: 'Created',
       sortable: true,
-      cellClassName: 'text-slate-500',
-      renderCell: (row) => (row.created_at ? dayjs(row.created_at).format('MMM D, YYYY') : '-'),
+      cellClassName: 'text-moon',
+      renderCell: (row) => (formatDate(row.created_at)),
     },
     {
       id: 'actions',

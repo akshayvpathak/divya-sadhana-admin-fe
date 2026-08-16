@@ -25,7 +25,6 @@ import type { ProductOptionGroup, ProductVariant } from '@/schemas/products.sche
 
 interface ProductVariantsEditorProps {
   productId: string;
-  readOnly?: boolean;
 }
 
 type DraftValue = { label: string; value: string };
@@ -122,7 +121,6 @@ function allCombinations(
 
 export default function ProductVariantsEditor({
   productId,
-  readOnly = false,
 }: ProductVariantsEditorProps) {
   const { data: product, isLoading } = useProduct(productId);
   const createGroup = useCreateOptionGroup(productId);
@@ -475,7 +473,7 @@ export default function ProductVariantsEditor({
 
   if (isLoading || !product) {
     return (
-      <div className="flex items-center gap-2 text-sm text-slate-500 py-4">
+      <div className="flex items-center gap-2 text-sm text-moon py-4">
         <Loader2 className="h-4 w-4 animate-spin" /> Loading variants…
       </div>
     );
@@ -492,13 +490,12 @@ export default function ProductVariantsEditor({
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-moon flex items-center gap-2">
             <IndianRupee className="h-4 w-4" />
             Variant pricing
           </h3>
         </div>
-        {!readOnly && (
-          <Button
+        <Button
             type="button"
             variant="outline"
             size="sm"
@@ -506,7 +503,6 @@ export default function ProductVariantsEditor({
           >
             <Plus className="h-4 w-4" /> Add option group
           </Button>
-        )}
       </div>
 
       {optionGroups.length > 0 && (
@@ -514,15 +510,15 @@ export default function ProductVariantsEditor({
           {optionGroups.map((g) => (
             <div
               key={g.id}
-              className="rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2"
+              className="rounded-lg border border-line bg-cream px-3 py-2"
             >
               <div className="flex items-baseline gap-2">
-                <span className="text-sm font-medium text-slate-800">
+                <span className="text-sm font-medium text-ink">
                   {g.name || g.code}
                 </span>
-                <span className="text-xs text-slate-400 font-mono">{g.code}</span>
+                <span className="text-xs text-moon font-mono">{g.code}</span>
               </div>
-              <p className="text-sm text-slate-600 mt-1">
+              <p className="text-sm text-charcoal mt-1">
                 {(g.values || []).map((v) => v.label || v.value).join(' · ') ||
                   'No values'}
               </p>
@@ -531,9 +527,9 @@ export default function ProductVariantsEditor({
         </div>
       )}
 
-      {!readOnly && showGroupForm && (
-        <div className="rounded-lg border border-slate-200 p-4 space-y-3 bg-white">
-          <p className="text-sm font-medium text-slate-700">New option group</p>
+      {showGroupForm && (
+        <div className="rounded-lg border border-line p-4 space-y-3 bg-surface">
+          <p className="text-sm font-medium text-charcoal">New option group</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label>Name</Label>
@@ -593,7 +589,7 @@ export default function ProductVariantsEditor({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="text-rose-500 shrink-0"
+                  className="text-danger shrink-0"
                   disabled={groupValues.length <= 1}
                   onClick={() =>
                     setGroupValues(groupValues.filter((_, idx) => idx !== i))
@@ -644,7 +640,7 @@ export default function ProductVariantsEditor({
           <div className="flex flex-wrap items-center justify-between gap-2">
             <Label>Sellable variants — set price per row ({variants.length})</Label>
             <div className="flex flex-wrap gap-2">
-              {!readOnly && dirtyVariants.length > 0 && (
+              {dirtyVariants.length > 0 && (
                 <Button
                   type="button"
                   size="sm"
@@ -659,8 +655,7 @@ export default function ProductVariantsEditor({
                   Save all prices ({dirtyVariants.length})
                 </Button>
               )}
-              {!readOnly && (
-                <Button
+              <Button
                   type="button"
                   variant="outline"
                   size="sm"
@@ -668,13 +663,12 @@ export default function ProductVariantsEditor({
                 >
                   <Plus className="h-4 w-4" /> Add one variant
                 </Button>
-              )}
             </div>
           </div>
 
-          {!readOnly && showVariantForm && (
-            <div className="rounded-lg border border-slate-200 p-4 space-y-3 bg-white">
-              <p className="text-sm font-medium text-slate-700">
+          {showVariantForm && (
+            <div className="rounded-lg border border-line p-4 space-y-3 bg-surface">
+              <p className="text-sm font-medium text-charcoal">
                 New variant with its own price
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -725,7 +719,7 @@ export default function ProductVariantsEditor({
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label>Price (₹) <span className="text-rose-500">*</span></Label>
+                  <Label>Price (₹) <span className="text-danger">*</span></Label>
                   <Input
                     type="number"
                     min={0}
@@ -777,57 +771,48 @@ export default function ProductVariantsEditor({
           )}
 
           {variants.length === 0 ? (
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-moon">
               No variants yet. Use <strong>Generate all combinations</strong> with a default price, or add one variant at a time.
             </p>
           ) : (
-            <div className="overflow-x-auto rounded-lg border border-slate-200">
+            <div className="overflow-x-auto rounded-lg border border-line">
               <table className="w-full text-sm">
-                <thead className="bg-slate-50 text-left text-xs uppercase tracking-wider text-slate-500">
+                <thead className="bg-cream text-left text-xs uppercase tracking-wider text-moon">
                   <tr>
                     <th className="px-3 py-2 font-semibold">Options</th>
                     <th className="px-3 py-2 font-semibold">SKU</th>
                     <th className="px-3 py-2 font-semibold">Price (₹)</th>
                     <th className="px-3 py-2 font-semibold">Stock</th>
                     <th className="px-3 py-2 font-semibold">Active</th>
-                    {!readOnly && (
-                      <th className="px-3 py-2 font-semibold w-[100px]">
+                    <th className="px-3 py-2 font-semibold w-[100px]">
                         Actions
                       </th>
-                    )}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-line/60">
                   {variants.map((v) => {
                     const draft = getDraft(v);
                     const dirty = isDirty(v);
                     return (
                       <tr
                         key={v.id}
-                        className={dirty ? 'bg-amber-50/60' : 'bg-white'}
+                        className={dirty ? 'bg-warning-tint/60' : 'bg-surface'}
                       >
-                        <td className="px-3 py-2 text-slate-700 whitespace-nowrap">
+                        <td className="px-3 py-2 text-charcoal whitespace-nowrap">
                           {formatVariantLabel(v, valueLabelById)}
                         </td>
                         <td className="px-3 py-2">
-                          {readOnly ? (
-                            <span className="font-mono text-xs">{v.sku}</span>
-                          ) : (
-                            <Input
+                          <Input
                               className="h-8 min-w-[140px] font-mono text-xs"
                               value={draft.sku}
                               onChange={(e) =>
                                 setDraftField(v.id, 'sku', e.target.value)
                               }
                             />
-                          )}
                         </td>
                         <td className="px-3 py-2">
-                          {readOnly ? (
-                            <span className="font-medium">₹{v.price}</span>
-                          ) : (
-                            <div className="relative w-28">
-                              <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+                          <div className="relative w-28">
+                              <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-xs text-moon">
                                 ₹
                               </span>
                               <Input
@@ -841,13 +826,9 @@ export default function ProductVariantsEditor({
                                 }
                               />
                             </div>
-                          )}
                         </td>
                         <td className="px-3 py-2">
-                          {readOnly ? (
-                            <span>{v.stock_quantity}</span>
-                          ) : (
-                            <Input
+                          <Input
                               className="h-8 w-20"
                               type="number"
                               min={0}
@@ -860,30 +841,16 @@ export default function ProductVariantsEditor({
                                 )
                               }
                             />
-                          )}
                         </td>
                         <td className="px-3 py-2">
-                          {readOnly ? (
-                            <span
-                              className={
-                                v.is_active
-                                  ? 'text-emerald-600'
-                                  : 'text-slate-400'
-                              }
-                            >
-                              {v.is_active ? 'Yes' : 'No'}
-                            </span>
-                          ) : (
-                            <Switch
+                          <Switch
                               checked={draft.is_active}
                               onCheckedChange={(val) =>
                                 setDraftField(v.id, 'is_active', val)
                               }
                             />
-                          )}
                         </td>
-                        {!readOnly && (
-                          <td className="px-3 py-2">
+                        <td className="px-3 py-2">
                             <div className="flex gap-1">
                               <Button
                                 type="button"
@@ -904,7 +871,7 @@ export default function ProductVariantsEditor({
                                 type="button"
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-rose-500"
+                                className="h-8 w-8 text-danger"
                                 disabled={deletingId === v.id}
                                 onClick={() => handleDeleteVariant(v.id)}
                                 title="Delete"
@@ -917,7 +884,6 @@ export default function ProductVariantsEditor({
                               </Button>
                             </div>
                           </td>
-                        )}
                       </tr>
                     );
                   })}
@@ -929,10 +895,9 @@ export default function ProductVariantsEditor({
       )}
 
       {optionGroups.length === 0 && !showGroupForm && (
-        <p className="text-sm text-slate-500">
-          {readOnly
-            ? 'This product has no variants — price is on the product itself.'
-            : 'Start by adding an option group (Weight / Flavor), then generate variants and set each price.'}
+        <p className="text-sm text-moon">
+          Start by adding an option group (Weight / Flavor), then generate
+          variants and set each price.
         </p>
       )}
     </div>
