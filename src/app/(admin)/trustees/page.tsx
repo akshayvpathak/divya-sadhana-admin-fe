@@ -168,7 +168,6 @@ export default function TrusteesPage() {
     <div className="space-y-6 pb-8">
       <PageHeader
         title="Network Members"
-        description="Appoint trustees, state executives, and district presidents"
         actions={
           tab === 'trustees' && (
             <Link href="/trustees/create">

@@ -56,6 +56,8 @@ export const useSadhanaServiceTableColumns = ({
       accessorKey: 'category',
       header: 'Category',
       sortable: true,
+      headerAlign: 'center',
+      cellAlign: 'center',
       renderCell: (row) => <StatusBadge status={row.category} type="service_category" />,
     },
     {
@@ -69,6 +71,8 @@ export const useSadhanaServiceTableColumns = ({
       accessorKey: 'is_active',
       header: 'Status',
       sortable: true,
+      headerAlign: 'center',
+      cellAlign: 'center',
       renderCell: (row) => <StatusBadge status={row.is_active} type="active" />,
     },
     {
@@ -82,8 +86,8 @@ export const useSadhanaServiceTableColumns = ({
     {
       id: 'actions',
       header: 'Actions',
-      headerAlign: 'right',
-      cellAlign: 'right',
+      headerAlign: 'center',
+      cellAlign: 'center',
       renderCell: (row) => (
         <RowActions
           actions={[

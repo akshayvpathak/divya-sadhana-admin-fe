@@ -24,7 +24,6 @@ export default function CreateProductPage() {
       <PageHeader
         backHref="/products"
         title="Create New Product"
-        description="Add a new item to your inventory. After saving, open Edit to add variants (size / flavor)."
       />
 
       <div className="bg-surface rounded-xl shadow-sm border border-line p-6">

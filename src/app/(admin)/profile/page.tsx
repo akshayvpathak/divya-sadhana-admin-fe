@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
-import { UserCircle, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Eye, EyeOff, KeyRound, UserPen } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useUpdateProfile, useChangePassword } from '@/hooks/useProfile';
 import { useForm } from 'react-hook-form';
@@ -10,10 +10,34 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { changePasswordSchema, ChangePasswordPayload } from '@/schemas/auth.schema';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { PageHeader } from '@/components/common/PageHeader';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatusBadge } from '@/components/ui/status-badge';
+import { NAValue } from '@/components/common/DetailCard';
+import { initialsFromName, avatarTone } from '@/components/common/TableAvatar';
+import { cn } from '@/lib/utils';
 
 interface ProfileFormData {
   firstName: string;
   lastName: string;
+}
+
+/**
+ * A field the API does not accept edits for. Sized to match <Input> so a row
+ * stays aligned when its neighbour swaps to a real input in edit mode, and
+ * tinted --ivory, the token reserved for read-only inputs.
+ */
+function ReadOnlyValue({ children }: { children?: React.ReactNode }) {
+  const isEmpty =
+    children === null ||
+    children === undefined ||
+    (typeof children === 'string' && children.trim() === '');
+
+  return (
+    <div className="flex min-h-8 items-center rounded-lg border border-line bg-ivory px-2.5 py-1 text-sm text-charcoal">
+      {isEmpty ? <NAValue /> : children}
+    </div>
+  );
 }
 
 export default function ProfilePage() {
@@ -90,219 +114,230 @@ export default function ProfilePage() {
     });
   };
 
+  const fullName = [user?.first_name, user?.last_name].filter(Boolean).join(' ').trim();
+  const avatarSeed = fullName || user?.email || '?';
+
   return (
-    <div className="space-y-6  pb-8 max-w-4xl">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-ink">Profile</h1>
-          <p className="text-moon mt-1">Manage your account settings</p>
-        </div>
-      </div>
+    <div className="space-y-6 pb-8">
+      <PageHeader title="Profile" />
 
-      {/* Profile Info Card */}
-      <div className="bg-surface rounded-xl shadow-sm border border-line overflow-hidden">
-        <div className="p-8 border-b border-line flex items-center gap-6">
-          <div className="h-24 w-24 rounded-full bg-tint flex items-center justify-center text-gold-press">
-            <UserCircle className="h-16 w-16" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-ink">{user?.first_name} {user?.last_name}</h2>
-            <p className="text-moon">{user?.email}</p>
-            <div className="mt-2 flex gap-2">
-              <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-tint text-gold-press">
-                {user?.is_superuser ? 'Admin' : 'User'}
-              </span>
-              <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${user?.is_active ? 'bg-success-tint text-success-ink' : 'bg-cosmos text-charcoal'
-                }`}>
-                {user?.is_active ? 'Active' : 'Inactive'}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit(onSubmit)} className="p-8">
-          <h3 className="text-lg font-semibold text-ink mb-6">Personal Information</h3>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-2">
-              <Label htmlFor="firstName">First Name</Label>
-              {isEditing ? (
-                <>
-                  <Input
-                    id="firstName"
-                    {...register('firstName', { required: 'First name is required' })}
-                    className="bg-surface"
-                  />
-                  {errors.firstName && <p className="text-sm text-danger">{errors.firstName.message}</p>}
-                </>
-              ) : (
-                <p className="text-base text-ink py-2 border-b border-transparent">{user?.first_name || '-'}</p>
+      {/* Identity beside the name form. No `h-fit` on either card: grid items
+          stretch by default, so the two share the row's height. The identity
+          content then centres itself in whatever height the form dictates. */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <Card>
+          <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-8 text-center">
+            <div
+              className={cn(
+                'flex h-20 w-20 items-center justify-center rounded-full text-2xl font-bold',
+                avatarTone(avatarSeed)
               )}
+              aria-hidden
+            >
+              {initialsFromName(avatarSeed)}
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="lastName">Last Name</Label>
-              {isEditing ? (
-                <>
-                  <Input
-                    id="lastName"
-                    {...register('lastName', { required: 'Last name is required' })}
-                    className="bg-surface"
-                  />
-                  {errors.lastName && <p className="text-sm text-danger">{errors.lastName.message}</p>}
-                </>
-              ) : (
-                <p className="text-base text-ink py-2 border-b border-transparent">{user?.last_name || '-'}</p>
-              )}
+            <div className="min-w-0">
+              <h2 className="text-lg font-bold tracking-tight text-ink">
+                {fullName || 'Unnamed user'}
+              </h2>
+              <p className="mt-0.5 break-all text-sm text-moon">{user?.email}</p>
             </div>
-
-            <div className="space-y-2">
-              <Label>Email Address</Label>
-              <p className="text-base text-moon py-2 border-b border-transparent bg-cream px-3 rounded-lg border border-line cursor-default">{user?.email}</p>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Phone Number</Label>
-              <p className="text-base text-moon py-2 border-b border-transparent bg-cream px-3 rounded-lg border border-line cursor-default">{user?.phone_number || '-'}</p>
+            <div className="flex flex-wrap justify-center gap-2">
+              <StatusBadge status={user?.is_superuser ? 'admin' : 'user'} type="role" />
+              <StatusBadge status={user?.is_active} type="active" />
             </div>
           </div>
+        </Card>
 
-          <div className="mt-8 pt-8 border-t border-line flex justify-end gap-2">
-            {isEditing ? (
-              <>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setIsEditing(false);
-                    reset();
-                  }}
-                  disabled={isPending}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={isPending}
-                >
-                  {isPending ? (
+        {/* Personal information */}
+        <Card className="lg:col-span-2">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex flex-1 flex-col divide-y divide-line/70"
+          >
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <UserPen className="h-4 w-4 text-moon" aria-hidden />
+                  Personal information
+                </CardTitle>
+              </CardHeader>
+
+              {/* flex-1 so the footer stays pinned to the bottom of the card if
+                  the identity card beside it ever turns out to be the taller. */}
+              <CardContent className="grid flex-1 grid-cols-1 content-start gap-5 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName">First name</Label>
+                  {isEditing ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Saving...
+                      <Input
+                        id="firstName"
+                        {...register('firstName', { required: 'First name is required' })}
+                        className="bg-surface"
+                      />
+                      {errors.firstName && (
+                        <p className="text-sm text-danger">{errors.firstName.message}</p>
+                      )}
                     </>
                   ) : (
-                    'Save Changes'
+                    <ReadOnlyValue>{user?.first_name}</ReadOnlyValue>
                   )}
-                </Button>
-              </>
-            ) : (
-              <Button
-                type="button"
-                onClick={() => setIsEditing(true)}
-              >
-                Edit Profile
-              </Button>
-            )}
-          </div>
-        </form>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="lastName">Last name</Label>
+                  {isEditing ? (
+                    <>
+                      <Input
+                        id="lastName"
+                        {...register('lastName', { required: 'Last name is required' })}
+                        className="bg-surface"
+                      />
+                      {errors.lastName && (
+                        <p className="text-sm text-danger">{errors.lastName.message}</p>
+                      )}
+                    </>
+                  ) : (
+                    <ReadOnlyValue>{user?.last_name}</ReadOnlyValue>
+                  )}
+                </div>
+
+                {/* Neither is editable here — the update payload only carries the
+                    name fields — so they stay read-only in both modes. */}
+                <div className="space-y-2">
+                  <Label>Email address</Label>
+                  <ReadOnlyValue>{user?.email}</ReadOnlyValue>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Phone number</Label>
+                  <ReadOnlyValue>{user?.phone_number}</ReadOnlyValue>
+                </div>
+
+                {isEditing && (
+                  <p className="text-xs text-moon sm:col-span-2">
+                    Email and phone number can only be changed by an administrator.
+                  </p>
+                )}
+              </CardContent>
+
+              <CardFooter>
+                {isEditing ? (
+                  <>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setIsEditing(false);
+                        reset();
+                      }}
+                      disabled={isPending}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit" size="sm" disabled={isPending}>
+                      {isPending ? (
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          Saving…
+                        </>
+                      ) : (
+                        'Save changes'
+                      )}
+                    </Button>
+                  </>
+                ) : (
+                  <Button type="button" size="sm" onClick={() => setIsEditing(true)}>
+                    Edit profile
+                  </Button>
+                )}
+              </CardFooter>
+          </form>
+        </Card>
       </div>
 
-      {/* Change Password Card */}
-      <div className="bg-surface rounded-xl shadow-sm border border-line overflow-hidden">
-        <form onSubmit={handleSubmitPassword(onSubmitPassword)} className="p-8">
-          <h3 className="text-lg font-semibold text-ink mb-6">Change Password</h3>
+      {/* Change password — full width, outside the grid above. */}
+      <Card>
+        <form
+          onSubmit={handleSubmitPassword(onSubmitPassword)}
+          className="divide-y divide-line/70"
+        >
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <KeyRound className="h-4 w-4 text-moon" aria-hidden />
+              Change password
+            </CardTitle>
+          </CardHeader>
 
-          <div className="max-w-xl space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="old_password">Old Password</Label>
-              <div className="relative">
-                <Input
-                  id="old_password"
-                  type={showOldPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  className="bg-surface pr-10"
-                  {...registerPassword("old_password")}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowOldPassword(!showOldPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-moon hover:text-charcoal focus:outline-none transition-colors"
-                  title={showOldPassword ? "Hide password" : "Show password"}
-                >
-                  {showOldPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </button>
+          {/* Three across on desktop: the card is full width now, so a single
+              max-w-md column would have stranded most of it. */}
+          <CardContent className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {([
+              {
+                id: 'old_password' as const,
+                label: 'Old password',
+                shown: showOldPassword,
+                toggle: () => setShowOldPassword((v) => !v),
+              },
+              {
+                id: 'new_password' as const,
+                label: 'New password',
+                shown: showNewPassword,
+                toggle: () => setShowNewPassword((v) => !v),
+              },
+              {
+                id: 'confirm_password' as const,
+                label: 'Confirm new password',
+                shown: showConfirmPassword,
+                toggle: () => setShowConfirmPassword((v) => !v),
+              },
+            ]).map((field) => (
+              <div key={field.id} className="space-y-2">
+                <Label htmlFor={field.id}>{field.label}</Label>
+                <div className="relative">
+                  <Input
+                    id={field.id}
+                    type={field.shown ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    className="bg-surface pr-9"
+                    {...registerPassword(field.id)}
+                  />
+                  <button
+                    type="button"
+                    onClick={field.toggle}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-moon transition-colors hover:text-ink focus-visible:outline-none"
+                    title={field.shown ? 'Hide password' : 'Show password'}
+                  >
+                    {field.shown ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+                {passwordErrors[field.id] && (
+                  <p className="text-sm text-danger">
+                    {passwordErrors[field.id]?.message}
+                  </p>
+                )}
               </div>
-              {passwordErrors.old_password && (
-                <p className="text-sm text-danger">{passwordErrors.old_password.message}</p>
-              )}
-            </div>
+            ))}
+          </CardContent>
 
-            <div className="space-y-2">
-              <Label htmlFor="new_password">New Password</Label>
-              <div className="relative">
-                <Input
-                  id="new_password"
-                  type={showNewPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  className="bg-surface pr-10"
-                  {...registerPassword("new_password")}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowNewPassword(!showNewPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-moon hover:text-charcoal focus:outline-none transition-colors"
-                  title={showNewPassword ? "Hide password" : "Show password"}
-                >
-                  {showNewPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </button>
-              </div>
-              {passwordErrors.new_password && (
-                <p className="text-sm text-danger">{passwordErrors.new_password.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="confirm_password">Confirm New Password</Label>
-              <div className="relative">
-                <Input
-                  id="confirm_password"
-                  type={showConfirmPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  className="bg-surface pr-10"
-                  {...registerPassword("confirm_password")}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-moon hover:text-charcoal focus:outline-none transition-colors"
-                  title={showConfirmPassword ? "Hide password" : "Show password"}
-                >
-                  {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </button>
-              </div>
-              {passwordErrors.confirm_password && (
-                <p className="text-sm text-danger">{passwordErrors.confirm_password.message}</p>
-              )}
-            </div>
-          </div>
-
-          <div className="mt-8 pt-8 border-t border-line flex justify-end">
-            <Button
-              type="submit"
-              disabled={changePasswordMutation.isPending}
-            >
+          <CardFooter>
+            <Button type="submit" size="sm" disabled={changePasswordMutation.isPending}>
               {changePasswordMutation.isPending ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Updating Password...
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Updating…
                 </>
               ) : (
-                'Update Password'
+                'Update password'
               )}
             </Button>
-          </div>
+          </CardFooter>
         </form>
-      </div>
+      </Card>
     </div>
   );
 }

@@ -77,7 +77,6 @@ export default function AiReadingsPage() {
     <div className="space-y-6 pb-8">
       <PageHeader
         title="AI Readings"
-        description="Monitor all users' AI Face & Palm readings and unlock status"
       />
 
       <Card>

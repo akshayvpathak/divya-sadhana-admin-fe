@@ -2,7 +2,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { RowActions } from '@/components/common/RowActions';
 import { ColumnConfig } from '@/components/common/DataTable/types';
 import { formatINR } from '@/lib/currency';
-import { formatDate, formatDateTime } from '@/lib/datetime';
+import { DateTimeCell } from '@/components/common/DateTimeCell';
 
 export interface ServiceBookingRow {
   id: string;
@@ -49,28 +49,30 @@ export const useServiceBookingTableColumns = (): ColumnConfig<ServiceBookingRow>
       accessorKey: 'status',
       header: 'Status',
       sortable: true,
+      headerAlign: 'center',
+      cellAlign: 'center',
       renderCell: (row) => <StatusBadge status={row.status} type="service_booking_status" />,
     },
     {
       id: 'scheduled_at',
       accessorKey: 'scheduled_at',
       header: 'Muhurat',
-      cellClassName: 'text-moon',
-      renderCell: (row) => (formatDateTime(row.scheduled_at)),
+      cellClassName: 'whitespace-nowrap',
+      renderCell: (row) => <DateTimeCell value={row.scheduled_at} />,
     },
     {
       id: 'created_at',
       accessorKey: 'created_at',
       header: 'Created',
       sortable: true,
-      cellClassName: 'text-moon',
-      renderCell: (row) => (formatDate(row.created_at)),
+      cellClassName: 'whitespace-nowrap',
+      renderCell: (row) => <DateTimeCell value={row.created_at} />,
     },
     {
       id: 'actions',
       header: 'Actions',
-      headerAlign: 'right',
-      cellAlign: 'right',
+      headerAlign: 'center',
+      cellAlign: 'center',
       renderCell: (row) => (
         <RowActions actions={[{ kind: 'view', href: `/service-bookings/${row.id}` }]} />
       ),

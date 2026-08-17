@@ -44,13 +44,9 @@ export default function HoroscopeAdminPage() {
       <PageHeader
         title={
           <span className="flex items-center gap-3">
-            <span className="rounded-xl bg-tint p-2 text-gold-deep">
-              <Moon className="h-5 w-5" />
-            </span>
             Horoscope SEO
           </span>
         }
-        description="Manage meta tags, indexability, OG images, and FAQ for each sign and period."
       />
 
       {error ? (

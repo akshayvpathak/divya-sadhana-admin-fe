@@ -23,7 +23,6 @@ export default function CreateDonationCampaignPage() {
       <PageHeader
         backHref="/donation-campaigns"
         title="Create Donation Campaign"
-        description="Add a new fundraising campaign to the platform"
       />
 
       <div className="bg-surface rounded-xl shadow-sm border border-line p-6">

@@ -48,7 +48,6 @@ export default function PaymentsPage() {
     <div className="space-y-6  pb-8">
       <PageHeader
         title="Payments"
-        description="Manage platform payments"
       />
 
       <Card>

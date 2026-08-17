@@ -46,10 +46,10 @@ export function DataTableHeader<T>({ columns, sort, onSort }: DataTableHeaderPro
     if (sort === `-${field}`) {
       return <ArrowDown className="h-3.5 w-3.5 text-gold-deep" />;
     }
-    // Faint until hovered, so unsorted columns don't shout for attention.
-    return (
-      <ArrowUpDown className="h-3.5 w-3.5 text-line transition-colors group-hover/th:text-moon" />
-    );
+    // Always visible at --moon, never hover-gated: the affordance is useless if
+    // you have to hover a column to discover it is sortable. --line was almost
+    // invisible against the header band.
+    return <ArrowUpDown className="h-3.5 w-3.5 text-moon" />;
   };
 
   return (
@@ -60,6 +60,7 @@ export function DataTableHeader<T>({ columns, sort, onSort }: DataTableHeaderPro
           const alignmentClass = getAlignmentClass(column.headerAlign);
           const stickyClass = getStickyClass(column.sticky);
           const sorted = isSorted(column);
+          const sortIcon = getSortIcon(column);
 
           return (
             <TableHead
@@ -72,7 +73,7 @@ export function DataTableHeader<T>({ columns, sort, onSort }: DataTableHeaderPro
                   : undefined
               }
               className={cn(
-                "group/th h-auto px-5 py-3.5 text-[11px] font-bold uppercase tracking-[0.08em] text-moon",
+                "h-auto px-5 py-3.5 text-[11px] font-bold uppercase tracking-[0.08em] text-moon",
                 column.sortable
                   ? "cursor-pointer select-none transition-colors hover:bg-ivory hover:text-ink"
                   : "",
@@ -85,6 +86,12 @@ export function DataTableHeader<T>({ columns, sort, onSort }: DataTableHeaderPro
               )}
               onClick={() => handleSortClick(column)}
             >
+              {/* The sort arrow must never shift the label, or the header stops
+                  lining up with the cells under it:
+                    left   → label, then arrow   (label already flush left)
+                    centre → arrow-width spacer, label, arrow (label centred)
+                    right  → arrow, then label   (label flush right, so it sits
+                             directly over right-aligned numbers) */}
               <div
                 className={cn(
                   "flex items-center gap-1.5",
@@ -92,8 +99,20 @@ export function DataTableHeader<T>({ columns, sort, onSort }: DataTableHeaderPro
                   column.headerAlign === "right" && "justify-end"
                 )}
               >
-                {column.renderHeader ? column.renderHeader() : column.header}
-                {getSortIcon(column)}
+                {column.headerAlign === "right" ? (
+                  <>
+                    {sortIcon}
+                    {column.renderHeader ? column.renderHeader() : column.header}
+                  </>
+                ) : (
+                  <>
+                    {column.headerAlign === "center" && sortIcon && (
+                      <span aria-hidden className="h-3.5 w-3.5 shrink-0" />
+                    )}
+                    {column.renderHeader ? column.renderHeader() : column.header}
+                    {sortIcon}
+                  </>
+                )}
               </div>
             </TableHead>
           );

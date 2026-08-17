@@ -70,7 +70,6 @@ export default function CategoriesPage() {
     <div className="space-y-6  pb-8">
       <PageHeader
         title="Categories"
-        description="Manage product categories and taxonomy"
         actions={
           <Link href="/categories/create">
             <Button>

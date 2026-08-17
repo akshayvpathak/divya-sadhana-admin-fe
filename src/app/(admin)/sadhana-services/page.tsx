@@ -74,7 +74,6 @@ export default function SadhanaServicesPage() {
     <div className="space-y-6 pb-8">
       <PageHeader
         title="Sadhana Services"
-        description="Manage seva / anushthan service catalog"
         actions={
           <Link href="/sadhana-services/create">
             <Button>

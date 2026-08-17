@@ -51,8 +51,8 @@ export function ProductVariantsTable({
     {
       id: 'is_active',
       header: 'Status',
-      headerAlign: 'right',
-      cellAlign: 'right',
+      headerAlign: 'center',
+      cellAlign: 'center',
       renderCell: (row) => <StatusBadge status={row.is_active} type="active" />,
     },
   ];

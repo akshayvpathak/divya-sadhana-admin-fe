@@ -30,7 +30,6 @@ export default function ViewSadhanaServicePage() {
       <PageHeader
         backHref="/sadhana-services"
         title={isEdit ? 'Edit Service' : 'Service Details'}
-        description={isEdit ? 'Update the sadhana service' : 'Sadhana service configuration'}
       />
 
       <div className="rounded-xl border border-line bg-surface p-6 shadow-sm">

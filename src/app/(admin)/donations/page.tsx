@@ -77,7 +77,6 @@ export default function DonationsPage() {
     <div className="space-y-6 pb-8">
       <PageHeader
         title="Donations"
-        description="Manage platform donations"
       />
 
       <Card>

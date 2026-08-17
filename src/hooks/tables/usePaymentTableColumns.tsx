@@ -4,7 +4,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { RowActions } from '@/components/common/RowActions';
 import { ColumnConfig } from '@/components/common/DataTable/types';
 import { formatINR } from '@/lib/currency';
-import { formatDate } from '@/lib/datetime';
+import { DateTimeCell } from '@/components/common/DateTimeCell';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export interface PaymentRow {
@@ -66,11 +66,10 @@ export const usePaymentTableColumns = (): ColumnConfig<PaymentRow>[] => {
       accessorKey: 'provider',
       header: 'Provider',
       sortable: true,
-      renderCell: (row) => (
-        <span className="px-2 py-0.5 rounded bg-cosmos text-charcoal text-[10px] font-bold uppercase">
-          {row.provider || 'N/A'}
-        </span>
-      ),
+      cellClassName: 'capitalize',
+      // Plain text, no chip. Returning null (not 'N/A') lets the table's shared
+      // N/A chip stand in for a missing provider.
+      renderCell: (row) => row.provider || null,
     },
     {
       id: 'amount',
@@ -85,6 +84,8 @@ export const usePaymentTableColumns = (): ColumnConfig<PaymentRow>[] => {
       accessorKey: 'status',
       header: 'Status',
       sortable: true,
+      headerAlign: 'center',
+      cellAlign: 'center',
       renderCell: (row) => <StatusBadge status={row.status || ''} type="transaction_status" />,
     },
     {
@@ -92,14 +93,14 @@ export const usePaymentTableColumns = (): ColumnConfig<PaymentRow>[] => {
       accessorKey: 'created_at',
       header: 'Date',
       sortable: true,
-      cellClassName: 'text-moon',
-      renderCell: (row) => formatDate(row.created_at),
+      cellClassName: 'whitespace-nowrap',
+      renderCell: (row) => <DateTimeCell value={row.created_at} />,
     },
     {
       id: 'actions',
       header: 'Actions',
-      headerAlign: 'right',
-      cellAlign: 'right',
+      headerAlign: 'center',
+      cellAlign: 'center',
       renderCell: (row) => (
         <RowActions actions={[{ kind: 'view', href: `/payments/${row.id}` }]} />
       ),

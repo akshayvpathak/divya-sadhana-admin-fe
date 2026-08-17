@@ -18,6 +18,7 @@ import {
   useStatesListQuery,
 } from '@/hooks/queries/useTerritoryQuery';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { DateTimeCell } from '@/components/common/DateTimeCell';
 
 function formatINR(value: unknown): string {
   const n = Number(value ?? 0);
@@ -306,16 +307,15 @@ export function RetentionReport() {
                   <th className="px-3 py-2">Amount</th>
                   <th className="px-3 py-2">Beneficiary</th>
                   <th className="px-3 py-2">Reason</th>
-                  <th className="px-3 py-2">Status</th>
+                  {/* Centred to match every other status-badge column in the app. */}
+                  <th className="px-3 py-2 text-center">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {entries.map((row) => (
                   <tr key={row.id} className="border-t border-line/60">
-                    <td className="px-3 py-2 text-charcoal">
-                      {row.created_at
-                        ? new Date(row.created_at).toLocaleDateString('en-IN')
-                        : '—'}
+                    <td className="px-3 py-2 whitespace-nowrap text-charcoal">
+                      {row.created_at ? <DateTimeCell value={row.created_at} /> : '—'}
                     </td>
                     <td className="px-3 py-2">
                       <div className="font-medium text-ink">
@@ -343,7 +343,7 @@ export function RetentionReport() {
                         ? REASON_LABEL[row.retention_reason] ?? row.retention_reason
                         : '—'}
                     </td>
-                    <td className="px-3 py-2">
+                    <td className="px-3 py-2 text-center">
                       {row.status ? <StatusBadge status={row.status} type="commission_status" /> : "—"}
                     </td>
                   </tr>

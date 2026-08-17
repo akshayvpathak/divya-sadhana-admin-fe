@@ -1,14 +1,13 @@
 'use client';
 
-import Link from 'next/link';
-import { ChevronLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useEffect } from 'react';
+import { useSetAtom } from 'jotai';
 import { cn } from '@/lib/utils';
 import { Breadcrumbs } from './Breadcrumbs';
+import { pageHeaderAtom } from '@/store/page-header';
 
 export interface PageHeaderProps {
   title: React.ReactNode;
-  description?: React.ReactNode;
   /** Present => detail variant: renders the back button. */
   backHref?: string;
   /** Right-hand CTA slot. */
@@ -28,13 +27,20 @@ export interface PageHeaderProps {
 }
 
 /**
- * List variant by default; passing `backHref` gives the detail variant.
- * Titles step `text-2xl sm:text-3xl` — Inter's x-height runs large, and a flat
- * `text-3xl` reads heavy on narrow viewports.
+ * Publishes `title` / `backHref` to the top bar (see pageHeaderAtom) and renders
+ * what stays on the page: the breadcrumb trail, the record meta chips, and the
+ * right-hand action buttons.
+ *
+ * The title deliberately does NOT render here — it lives in <Navbar>, which was
+ * otherwise an empty strip. Pages keep declaring it through this component, so
+ * nothing at the call site changed.
+ *
+ * There is no `description`: the "Manage platform payments" style subtitle was
+ * removed everywhere. The breadcrumb trail already says where you are, so it was
+ * pure filler — and it does not fit a 64px-tall bar.
  */
 export function PageHeader({
   title,
-  description,
   backHref,
   actions,
   meta,
@@ -44,46 +50,40 @@ export function PageHeader({
   showBreadcrumbs = true,
   className,
 }: PageHeaderProps) {
+  const setPageHeader = useSetAtom(pageHeaderAtom);
+
+  useEffect(() => {
+    setPageHeader({ title, backHref });
+    // Clear on unmount so a route without a PageHeader never inherits the
+    // previous page's title.
+    return () => setPageHeader(null);
+  }, [title, backHref, setPageHeader]);
+
+  // Nothing left to render once title/description have moved out — skip the
+  // wrapper entirely rather than leaving an empty spacer div in the flow.
+  if (!showBreadcrumbs && !meta && !actions) return null;
+
   return (
     <div className={cn('space-y-3', className)}>
-      {showBreadcrumbs && (
-        <Breadcrumbs
-          identifier={identifier}
-          currentLabel={currentLabel}
-          loading={loading}
-        />
-      )}
-
-      <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-        <div className="flex min-w-0 items-start gap-3">
-          {backHref && (
-            <Link href={backHref} className="mt-0.5 shrink-0">
-              <Button
-                variant="outline"
-                size="icon"
-                aria-label="Back"
-                className="border-line bg-surface text-charcoal hover:border-gold/40 hover:bg-tint hover:text-gold-press"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-            </Link>
-          )}
-
-          <div className="min-w-0">
-            <h1 className="truncate text-2xl font-bold tracking-tight text-ink sm:text-3xl">
-              {title}
-            </h1>
-            {description && <p className="mt-1 text-sm text-moon">{description}</p>}
-            {meta && (
-              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-moon sm:text-sm">
-                {meta}
-              </div>
-            )}
-          </div>
-        </div>
+      <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
+        {showBreadcrumbs ? (
+          <Breadcrumbs
+            identifier={identifier}
+            currentLabel={currentLabel}
+            loading={loading}
+          />
+        ) : (
+          <span />
+        )}
 
         {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
       </div>
+
+      {meta && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-moon sm:text-sm">
+          {meta}
+        </div>
+      )}
     </div>
   );
 }

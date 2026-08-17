@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatDate } from '@/lib/datetime';
+import { DateTimeCell } from '@/components/common/DateTimeCell';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { ModuleStatus } from '@/components/ui/badges/ModuleStatus';
 import { ColumnConfig } from '@/components/common/DataTable/types';
@@ -34,6 +34,8 @@ export const useCommissionLedgerColumns = (): ColumnConfig<CommissionEntry>[] =>
       id: 'kind',
       accessorKey: 'kind',
       header: 'Kind',
+      headerAlign: 'center',
+      cellAlign: 'center',
       cellClassName: 'text-charcoal',
       renderCell: (row) => (row.kind ? <StatusBadge status={row.kind} /> : null),
     },
@@ -50,15 +52,16 @@ export const useCommissionLedgerColumns = (): ColumnConfig<CommissionEntry>[] =>
       id: 'status',
       accessorKey: 'status',
       header: 'Status',
+      headerAlign: 'center',
+      cellAlign: 'center',
       renderCell: (row) => <ModuleStatus status={row.status} module="commission" />,
     },
     {
       id: 'matures_at',
       accessorKey: 'matures_at',
       header: 'Unlocks',
-      cellClassName: 'text-moon text-sm',
-      renderCell: (row) =>
-        formatDate(row.matures_at),
+      cellClassName: 'whitespace-nowrap',
+      renderCell: (row) => <DateTimeCell value={row.matures_at} />,
     },
   ];
 };

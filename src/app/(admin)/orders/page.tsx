@@ -65,7 +65,6 @@ export default function OrdersPage() {
     <div className="space-y-6 pb-8">
       <PageHeader
         title="Orders"
-        description="Manage platform orders and manual fulfillment"
         actions={
           <Button
             variant="outline"

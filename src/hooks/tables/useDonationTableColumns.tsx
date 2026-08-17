@@ -67,6 +67,8 @@ export const useDonationTableColumns = (): ColumnConfig<DonationRow>[] => {
       accessorKey: 'status',
       header: 'Status',
       sortable: true,
+      headerAlign: 'center',
+      cellAlign: 'center',
       renderCell: (row) => <StatusBadge status={row.status || ''} type="transaction_status" />,
     },
     {

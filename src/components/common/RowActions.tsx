@@ -64,7 +64,10 @@ export function RowActions({
   if (!visible.length) return null;
 
   return (
-    <div className={cn('flex flex-wrap items-center justify-end gap-1.5', className)}>
+    // justify-center, not -end: Actions columns are centre-aligned, and this
+    // flex row spans the full cell, so text-center on the <td> alone would not
+    // move the buttons.
+    <div className={cn('flex flex-wrap items-center justify-center gap-1.5', className)}>
       {visible.map((action, index) => {
         const preset = PRESETS[action.kind];
         const label = action.label ?? preset.label;

@@ -36,7 +36,6 @@ export default function UserDetailPage() {
       <PageHeader
         backHref="/users"
         title={isEdit ? 'Edit User' : displayName || 'User'}
-        description={isEdit ? 'Update user details and roles' : undefined}
         identifier={displayName}
         currentLabel={isEdit ? 'Edit' : undefined}
         loading={isLoading}

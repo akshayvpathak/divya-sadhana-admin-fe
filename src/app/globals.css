@@ -16,56 +16,75 @@
    hex via color-mix() exactly as it does on oklch.
    =========================================================================== */
 :root {
-  /* Surfaces — lightest to heaviest */
-  --page: #fbf8f3; /* app shell / "void"                        */
+  /* Surfaces — lightest to heaviest. Lilac-neutral base: the whole app sits on
+     a faint violet cast so the amethyst shell and the page read as one system
+     rather than a dark chrome bolted onto a grey dashboard. */
+  --page: #faf7fb; /* app shell / "void"                        */
   --surface: #ffffff; /* cards, table body                         */
-  --tint: #fff0d4; /* saffron wash: row hover, chips, callouts  */
-  --cream: #f7f1e8; /* bands: filter bars, card footers, zebra   */
-  --cosmos: #f3ece2; /* chips, icon tiles, skeletons              */
-  --ivory: #efe7db; /* read-only inputs, mono/code blocks        */
-  --line: #e6ddd0; /* every border in the app                   */
+  --tint: #f3e9fb; /* lilac wash: row hover, chips, callouts    */
+  --cream: #f6f1f9; /* bands: filter bars, card footers, zebra   */
+  --cosmos: #ece3f3; /* chips, icon tiles, skeletons              */
+  --ivory: #f1eaf6; /* read-only inputs, mono/code blocks        */
+  --line: #e5dced; /* every border in the app                   */
 
-  /* Brand — saffron / gold */
-  --saffron: #ff9933; /* focus ring, hover rail, active nav pill   */
-  --gold-soft: #f5a623;
-  --gold: #e8890c; /* filled-button HOVER                       */
-  --gold-deep: #c26e00; /* filled-button REST, sort arrows, icons    */
-  --gold-press: #a85f00; /* gold TEXT on light surfaces (4.62:1 AA)   */
+  /* Brand — starlight gold. Names kept from the saffron era on purpose: every
+     component in src/components/* already reads `gold-deep` / `saffron`, so
+     re-pointing the values here re-themes the app with no component edits. */
+  --saffron: #e0b458; /* focus ring, hover rail, active nav pill   */
+  --gold-soft: #c4952f;
+  --gold: #ac7c1c; /* filled-button HOVER                       */
+  --gold-deep: #966a16; /* filled-button REST, sort arrows, icons    */
+  --gold-press: #7d5810; /* gold TEXT on light surfaces (6.41:1 AA)   */
 
-  /* Brand — royal indigo: shell, sidebar, headings, form-commit actions */
-  --royal: #2f2a5a; /* spec: "secondary" */
-  --royal-soft: #3d3a6b; /* spec: "purple"    */
-  --royal-deep: #252248; /* spec: "violet"    */
+  /* Brand — cosmic amethyst: shell, sidebar, headings, form-commit actions.
+     Still spelled `royal` for the same no-edit-cascade reason as above. */
+  --royal: #4a2e73; /* spec: "secondary" */
+  --royal-soft: #5c3d8a; /* spec: "purple"    */
+  --royal-deep: #2b1b45; /* spec: "violet"    */
 
-  /* Ink ramp */
-  --ink: #1a1624; /* headings, primary values */
-  --charcoal: #4a433c; /* body copy, table cells   */
-  --moon: #7a7166; /* labels, hints, secondary */
+  /* Ink ramp — carries a violet cast so text sits in the same family as the
+     shell instead of reading as a separate grey system. */
+  --ink: #1e1526; /* headings, primary values */
+  --charcoal: #463d52; /* body copy, table cells   */
+  --moon: #6f6579; /* labels, hints, secondary  (4.95:1 on --cream) */
 
   /* Status tones — solid / tint / ink triples. Every ink clears AA on its own
      tint and on --surface. Replaces the emerald/amber/rose/sky/indigo/violet/
-     orange Tailwind scales scattered through badge.tsx and the pages. */
+     orange Tailwind scales scattered through badge.tsx and the pages.
+
+     The tints run a shade deeper than a white-background theme would need:
+     they have to hold an edge against the lilac zebra band (--cream) and the
+     lilac row hover (--tint), not just against --surface. Both violet-family
+     badge hues below are also pushed off the brand amethyst so a status chip
+     never reads as brand chrome. */
   --success: #1f7a4c; /* jade */
-  --success-tint: #e6f2eb;
+  --success-tint: #dcefe2; /* success-ink on this = 6.33:1 */
   --success-ink: #14603a;
   --warning: #b8720a;
-  --warning-tint: #fdefd0;
+  --warning-tint: #fceac4; /* amber, so it never blends into the lilac bands */
   --warning-ink: #8a5200;
   --danger: #b3261e;
-  --danger-tint: #fbeae9;
+  --danger-tint: #fbe4e2;
   --danger-ink: #8c1d16;
-  --info: #106b7a;
-  --info-tint: #e3f1f4;
-  --info-ink: #0d5461;
-  --royal-tint: #ecebf6;
-  --royal-ink: #2f2a5a;
-  --neutral-tint: #f0ebe3;
-  --neutral-ink: #57504a;
-  --plum: #6b2d6e;
-  --plum-tint: #f4e9f4;
-  --plum-ink: #5a2560;
+  --info: #0e6b78;
+  --info-tint: #ddeff2;
+  --info-ink: #0b5461;
+  /* Amethyst brand chip — used for brand-tinted hovers (RowActions "edit"),
+     NOT the `indigo` badge variant: on a violet-brand app an amethyst badge is
+     indistinguishable from the chrome, so badges use the azure --indigo-* pair
+     below. Badge hue vocabulary, deliberately separate from theme colour. */
+  --royal-tint: #ede4f7;
+  --royal-ink: #4a2e73;
+  --indigo: #33559e; /* azure — reads as its own state, not as brand */
+  --indigo-tint: #e4eaf7;
+  --indigo-ink: #29457f; /* 7.73:1 on its tint */
+  --neutral-tint: #e8e4ee; /* must not vanish into --cream (6.17:1) */
+  --neutral-ink: #565061;
+  --plum: #a02574; /* magenta, not purple: --royal already owns purple */
+  --plum-tint: #fbe4f2;
+  --plum-ink: #851e60; /* 7.43:1 on its tint */
   --copper: #a2510f;
-  --copper-tint: #fbe9dc;
+  --copper-tint: #fbe6d8;
   --copper-ink: #8a430b;
 
   /* =========================================================================
@@ -80,13 +99,13 @@
   --popover: var(--surface);
   --popover-foreground: var(--ink);
 
-  /* White on #c26e00 is 3.80:1 — clears the 3:1 UI-component bar and AA-large.
-     Swap to #b06400 (exactly 4.50:1) if AA on 14px button labels is required;
-     it is visually indistinguishable at that size. */
+  /* White on #966a16 is 4.80:1 — full AA on 14px button labels, so no
+     large-text caveat is needed here any more. */
   --primary: var(--gold-deep);
   --primary-foreground: #ffffff;
 
-  /* Royal: form-commit actions, so a save reads differently from a gold CTA. */
+  /* Amethyst: form-commit actions, so a save reads differently from a gold CTA.
+     White on #4a2e73 is 10.88:1. */
   --secondary: var(--royal);
   --secondary-foreground: #ffffff;
 
@@ -115,20 +134,21 @@
 
   --radius: 0.625rem;
 
-  /* Sidebar: violet shell, saffron active pill (ink on saffron = 8.3:1). */
+  /* Sidebar: amethyst night shell, starlight-gold active pill (amethyst on gold
+     = 8.06:1, pale-lilac idle labels on the shell = 10.84:1). */
   --sidebar: var(--royal-deep);
-  --sidebar-foreground: #d8d3ea;
+  --sidebar-foreground: #ddd3ea;
   --sidebar-primary: var(--saffron);
   --sidebar-primary-foreground: var(--royal-deep);
-  --sidebar-accent: #322d63;
+  --sidebar-accent: #3a2659;
   --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #332f60;
+  --sidebar-border: #3d2a5e;
   --sidebar-ring: var(--saffron);
 
   /* Elevation — tinted with the ink hue; neutral black reads dirty on cream. */
-  --elev-card: 0 1px 2px 0 rgb(26 22 36 / 0.04), 0 1px 3px 0 rgb(26 22 36 / 0.06);
-  --elev-hover: 0 4px 14px -3px rgb(26 22 36 / 0.1), 0 2px 5px -3px rgb(26 22 36 / 0.06);
-  --elev-pop: 0 12px 34px -12px rgb(37 34 72 / 0.28);
+  --elev-card: 0 1px 2px 0 rgb(30 21 38 / 0.04), 0 1px 3px 0 rgb(30 21 38 / 0.06);
+  --elev-hover: 0 4px 14px -3px rgb(30 21 38 / 0.1), 0 2px 5px -3px rgb(30 21 38 / 0.06);
+  --elev-pop: 0 12px 34px -12px rgb(43 27 69 / 0.28);
   --elev-band: inset 0 -1px 0 0 var(--line);
   --elev-rail: inset 3px 0 0 0 var(--saffron);
 }
@@ -182,6 +202,9 @@
   --color-info-ink: var(--info-ink);
   --color-royal-tint: var(--royal-tint);
   --color-royal-ink: var(--royal-ink);
+  --color-indigo: var(--indigo);
+  --color-indigo-tint: var(--indigo-tint);
+  --color-indigo-ink: var(--indigo-ink);
   --color-neutral-tint: var(--neutral-tint);
   --color-neutral-ink: var(--neutral-ink);
   --color-plum: var(--plum);
@@ -273,34 +296,34 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgb(122 113 102 / 0.28);
+  background: rgb(111 101 121 / 0.28);
   border: 3px solid transparent;
   background-clip: content-box;
   border-radius: 9999px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgb(122 113 102 / 0.45);
+  background: rgb(111 101 121 / 0.45);
   background-clip: content-box;
 }
 
 /* Firefox has no per-axis control, so `thin` is the closest equivalent. */
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: rgb(122 113 102 / 0.28) transparent;
+  scrollbar-color: rgb(111 101 121 / 0.28) transparent;
 }
 
-/* The sidebar scrollbar lives on a dark violet surface. */
+/* The sidebar scrollbar lives on the amethyst shell, so it goes gold. */
 .custom-scrollbar-dark::-webkit-scrollbar-thumb {
-  background: rgb(255 153 51 / 0.28);
+  background: rgb(224 180 88 / 0.28);
 }
 
 .custom-scrollbar-dark::-webkit-scrollbar-thumb:hover {
-  background: rgb(255 153 51 / 0.45);
+  background: rgb(224 180 88 / 0.45);
 }
 
 .custom-scrollbar-dark {
-  scrollbar-color: rgb(255 153 51 / 0.28) transparent;
+  scrollbar-color: rgb(224 180 88 / 0.28) transparent;
 }
 
 /* Rich-text rendering for ReactQuill HTML (product descriptions, campaign

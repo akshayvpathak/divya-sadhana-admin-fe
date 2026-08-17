@@ -19,7 +19,9 @@ const badgeVariants = cva(
         warning: "border-warning/25 bg-warning-tint text-warning-ink font-medium",
         danger: "border-danger/20 bg-danger-tint text-danger-ink font-medium",
         info: "border-info/20 bg-info-tint text-info-ink font-medium",
-        indigo: "border-royal/15 bg-royal-tint text-royal-ink font-medium",
+        // Deliberately NOT --royal-*: the brand is emerald now, so a royal tint
+        // would be indistinguishable from `success`. Badges need hue contrast.
+        indigo: "border-indigo/20 bg-indigo-tint text-indigo-ink font-medium",
         slate: "border-line bg-neutral-tint text-neutral-ink font-medium",
         purple: "border-plum/20 bg-plum-tint text-plum-ink font-medium",
         orange: "border-copper/20 bg-copper-tint text-copper-ink font-medium",

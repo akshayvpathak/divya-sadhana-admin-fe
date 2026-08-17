@@ -107,7 +107,6 @@ export default function ServiceBookingDetailPage() {
       <PageHeader
         backHref="/service-bookings"
         title={isLoading ? <Skeleton className="h-9 w-64" /> : 'Booking Details'}
-        description="Review and manage this service booking"
       />
 
       {isLoading || !booking ? (

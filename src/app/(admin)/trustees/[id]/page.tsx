@@ -92,7 +92,6 @@ export default function TrusteeDetailPage() {
       <PageHeader
         backHref="/trustees"
         title={dashboardLoading ? <Skeleton className="h-8 w-64" /> : name}
-        description={meta.email || meta.user_email || undefined}
         identifier={name}
         loading={dashboardLoading}
         meta={

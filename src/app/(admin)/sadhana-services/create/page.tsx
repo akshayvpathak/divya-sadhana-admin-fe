@@ -19,7 +19,6 @@ export default function CreateSadhanaServicePage() {
       <PageHeader
         backHref="/sadhana-services"
         title="Create Sadhana Service"
-        description="Add a new seva / anushthan service"
       />
 
       <div className="rounded-xl border border-line bg-surface p-6 shadow-sm">

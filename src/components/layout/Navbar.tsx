@@ -1,8 +1,11 @@
 'use client';
 
 import { useAuth } from '@/context/AuthContext';
-import { UserCircle } from 'lucide-react';
+import { ChevronLeft, UserCircle } from 'lucide-react';
 import { useState } from 'react';
+import Link from 'next/link';
+import { useAtomValue } from 'jotai';
+import { pageHeaderAtom } from '@/store/page-header';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { Button } from '../ui/button';
 import {
@@ -18,14 +21,33 @@ import {
 export default function Navbar() {
   const { user, logout } = useAuth();
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const pageHeader = useAtomValue(pageHeaderAtom);
 
   return (
-    <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-line bg-surface/90 px-6 backdrop-blur-sm">
-      <div className="flex items-center gap-4">
-        {/* Left slot: mobile menu / page-context actions */}
+    <header className="sticky top-0 z-10 flex h-16 items-center justify-between gap-4 border-b border-line bg-surface/90 px-6 backdrop-blur-sm">
+      {/* The page title lives here rather than in the page body — this strip was
+          empty otherwise. Published by <PageHeader> via pageHeaderAtom. */}
+      <div className="flex min-w-0 items-center gap-3">
+        {pageHeader?.backHref && (
+          <Link href={pageHeader.backHref} className="shrink-0">
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Back"
+              className="h-8 w-8 border-line bg-surface text-charcoal hover:border-gold/40 hover:bg-tint hover:text-gold-press"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+        )}
+        {pageHeader && (
+          <h1 className="truncate text-lg font-bold tracking-tight text-ink sm:text-xl">
+            {pageHeader.title}
+          </h1>
+        )}
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex shrink-0 items-center gap-3">
         <DropdownMenu>
           <DropdownMenuTrigger
             render={

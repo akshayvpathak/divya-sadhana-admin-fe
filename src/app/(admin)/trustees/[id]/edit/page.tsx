@@ -2,10 +2,9 @@
 
 import { useMemo } from 'react';
 import { useParams } from 'next/navigation';
-import Link from 'next/link';
-import { ChevronLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PageHeader } from '@/components/common/PageHeader';
+import { Card } from '@/components/ui/card';
 import { PromoteTrusteeForm, type TrusteeFormInitial } from '@/components/forms/PromoteTrusteeForm';
 import { useTrusteeDashboardQuery } from '@/hooks/queries/useTrusteesQuery';
 import { useAssignmentsListQuery } from '@/hooks/queries/useTerritoryQuery';
@@ -81,21 +80,16 @@ export default function EditTrusteePage() {
 
   return (
     <div className="space-y-6 pb-8">
-      <div className="flex items-center gap-4">
-        <Link href="/trustees">
-          <Button variant="outline" size="icon">
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div className="min-w-0">
-          <h1 className="text-3xl font-bold text-ink">Edit network member</h1>
-          <p className="text-moon mt-1 truncate">
-            {initial ? initial.userName : 'Loading member…'}
-          </p>
-        </div>
-      </div>
+      {/* The member's name rides in the breadcrumb trail via `identifier`, which
+          is where it lives on every other detail route. */}
+      <PageHeader
+        backHref="/trustees"
+        title="Edit network member"
+        identifier={initial?.userName}
+        loading={!initial}
+      />
 
-      <div className="bg-surface rounded-xl shadow-sm border border-line p-6">
+      <Card padding="padded">
         {initial ? (
           // Keyed on the record so the form remounts — and re-seeds its
           // defaults — if the underlying member changes.
@@ -110,7 +104,7 @@ export default function EditTrusteePage() {
             <Skeleton className="h-24 max-w-2xl rounded-lg" />
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

@@ -2,7 +2,16 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
-import { CheckCircle2, RefreshCcw, RotateCcw, Save, Truck, XCircle } from 'lucide-react';
+import {
+  CheckCircle2,
+  PackageCheck,
+  RefreshCcw,
+  RotateCcw,
+  Save,
+  Truck,
+  Undo2,
+  XCircle,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -280,9 +289,29 @@ export default function OrderFulfillmentPanel({ order, embedded = false }: Props
         </div>
       </div>
 
-      {/* Quick actions sit in their own tray: progression on the left, the two
+      {/* Save belongs to the form above it, so it sits directly under it rather
+          than below the quick-action tray. Right-aligned at its natural width —
+          a full-bleed solid bar read as the loudest thing on the page. */}
+      <div className="flex flex-wrap items-center justify-end gap-3 border-t border-line/60 pt-4">
+        <p className="mr-auto text-xs text-moon">
+          Saves the courier, tracking number and status above.
+        </p>
+        <Button
+          variant="secondary"
+          size="sm"
+          className="gap-1.5"
+          disabled={isPending}
+          onClick={handleSave}
+        >
+          <Save className="h-3.5 w-3.5" />
+          {isPending ? 'Saving…' : 'Save shipping details'}
+        </Button>
+      </div>
+
+      {/* Quick actions sit in their own tray: progression first, the two
           exception paths after a divider, and the rarely-wanted reset pushed to
-          the far end so it can't be hit by accident. */}
+          the far end so it can't be hit by accident. Every button is size="sm"
+          — mixing sizes here left the row visibly ragged. */}
       <div className="space-y-2.5 rounded-xl border border-line border-l-2 border-l-saffron bg-cream p-3.5">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <p className="text-[11px] font-bold uppercase tracking-wider text-moon">
@@ -297,6 +326,7 @@ export default function OrderFulfillmentPanel({ order, embedded = false }: Props
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button
+            size="sm"
             className="gap-1.5 shadow-sm shadow-gold/20"
             disabled={isPending || !canDispatch}
             onClick={handleDispatch}
@@ -305,6 +335,7 @@ export default function OrderFulfillmentPanel({ order, embedded = false }: Props
             Mark dispatched
           </Button>
           <Button
+            size="sm"
             variant="outline"
             className="gap-1.5 border-success/30 bg-surface text-success-ink hover:bg-success-tint"
             disabled={isPending}
@@ -350,29 +381,29 @@ export default function OrderFulfillmentPanel({ order, embedded = false }: Props
         </div>
       </div>
 
-      <Button
-        variant="secondary"
-        className="w-full gap-1.5"
-        disabled={isPending}
-        onClick={handleSave}
-      >
-        <Save className="h-4 w-4" />
-        {isPending ? 'Saving…' : 'Save shipping details'}
-      </Button>
-
-      <dl className="grid gap-3 border-t border-line/60 pt-4 text-xs sm:grid-cols-2">
+      {/* Fulfillment milestones as one hairline-divided strip. The old version
+          was four label/value pairs floating in a 2-column grid, which at this
+          width left a canyon of whitespace between the two halves.
+          `gap-px` over a `bg-line` parent draws the 1px rules. */}
+      <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line lg:grid-cols-4">
         {([
-          ['Dispatched at', formatDateTime(order.dispatched_at)],
-          ['Delivered at', formatDateTime(order.delivered_at)],
-          ['Returned at', formatDateTime(order.returned_at)],
+          ['Dispatched at', formatDateTime(order.dispatched_at), Truck],
+          ['Delivered at', formatDateTime(order.delivered_at), PackageCheck],
+          ['Returned at', formatDateTime(order.returned_at), Undo2],
           [
             'Courier name',
             order.courier_name || PARTNER_LABEL[order.courier_partner || ''] || null,
+            Truck,
           ],
-        ] as const).map(([label, value]) => (
-          <div key={label}>
-            <dt className="font-semibold uppercase tracking-wide text-moon">{label}</dt>
-            <dd className="mt-0.5 text-sm text-ink">{value ?? <NAValue />}</dd>
+        ] as const).map(([label, value, Icon]) => (
+          <div key={label} className="bg-surface px-3.5 py-3">
+            <dt className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-moon">
+              <Icon className="h-3 w-3 shrink-0" aria-hidden />
+              {label}
+            </dt>
+            <dd className="mt-1.5 text-sm font-medium text-ink">
+              {value ?? <NAValue />}
+            </dd>
           </div>
         ))}
       </dl>

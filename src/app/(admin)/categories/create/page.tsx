@@ -29,7 +29,6 @@ export default function CreateCategoryPage() {
       <PageHeader
         backHref="/categories"
         title="Create New Category"
-        description="Add a new product category"
       />
 
       <div className="bg-surface rounded-xl shadow-sm border border-line p-6">

@@ -17,7 +17,6 @@ export default function ViewOrderPage() {
       <PageHeader
         backHref="/orders"
         title={<>{isLoading ? <Skeleton className="h-9 w-48" /> : `Order #${order?.order_number}`}</>}
-        description="Detailed order information and fulfillment"
       />
 
       {isLoading ? (

@@ -5,7 +5,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { RowActions } from '@/components/common/RowActions';
 import { ColumnConfig } from '@/components/common/DataTable/types';
 import { formatINR } from '@/lib/currency';
-import { formatDate } from '@/lib/datetime';
+import { DateTimeCell } from '@/components/common/DateTimeCell';
 
 export interface DonationCampaignRow {
   id: string;
@@ -90,6 +90,8 @@ export const useDonationCampaignTableColumns = ({
       accessorKey: 'status',
       header: 'Status',
       sortable: true,
+      headerAlign: 'center',
+      cellAlign: 'center',
       renderCell: (row) => <StatusBadge status={row.status} type="campaign_status" />,
     },
     {
@@ -97,14 +99,14 @@ export const useDonationCampaignTableColumns = ({
       accessorKey: 'ends_at',
       header: 'Ends At',
       sortable: true,
-      cellClassName: 'text-moon',
-      renderCell: (row) => formatDate(row.ends_at),
+      cellClassName: 'whitespace-nowrap',
+      renderCell: (row) => <DateTimeCell value={row.ends_at} />,
     },
     {
       id: 'actions',
       header: 'Actions',
-      headerAlign: 'right',
-      cellAlign: 'right',
+      headerAlign: 'center',
+      cellAlign: 'center',
       renderCell: (row) => (
         <RowActions
           actions={[

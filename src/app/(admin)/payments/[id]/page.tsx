@@ -49,7 +49,6 @@ export default function ViewPaymentPage() {
       <PageHeader
         backHref="/payments"
         title="Payment Details"
-        description="Transaction reference and processing information"
       />
 
       {isLoading ? (

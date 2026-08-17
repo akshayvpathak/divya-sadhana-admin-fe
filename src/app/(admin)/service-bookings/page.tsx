@@ -63,7 +63,6 @@ export default function ServiceBookingsPage() {
     <div className="space-y-6 pb-8">
       <PageHeader
         title="Service Bookings"
-        description="Manage seva / anushthan bookings and scheduling"
       />
 
       <Card>

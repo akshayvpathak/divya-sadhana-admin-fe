@@ -28,7 +28,6 @@ export default function CreateUserPage() {
       <PageHeader
         backHref="/users"
         title="Create New User"
-        description="Add a new user to the platform"
       />
 
       <div className="bg-surface rounded-xl shadow-sm border border-line p-6">

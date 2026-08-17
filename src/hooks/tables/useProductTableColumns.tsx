@@ -66,11 +66,8 @@ export const useProductTableColumns = ({
       header: 'Category',
       sortable: true,
       sortKey: 'category',
-      renderCell: (row) => (
-        <span className="px-2.5 py-1 rounded-md bg-cosmos text-charcoal text-xs">
-          {getCategoryName(row.categoryId)}
-        </span>
-      ),
+      // Plain text, no chip.
+      renderCell: (row) => getCategoryName(row.categoryId) || null,
     },
     {
       id: 'price',
@@ -98,6 +95,8 @@ export const useProductTableColumns = ({
       header: 'Status',
       sortable: true,
       sortKey: 'is_active',
+      headerAlign: 'center',
+      cellAlign: 'center',
       renderCell: (row) => <StatusBadge status={row.is_active} type="active" />,
     },
     {
@@ -106,13 +105,15 @@ export const useProductTableColumns = ({
       header: 'Published',
       sortable: true,
       sortKey: 'is_published',
+      headerAlign: 'center',
+      cellAlign: 'center',
       renderCell: (row) => <StatusBadge status={row.is_published} type="published" />,
     },
     {
       id: 'actions',
       header: 'Actions',
-      headerAlign: 'right',
-      cellAlign: 'right',
+      headerAlign: 'center',
+      cellAlign: 'center',
       renderCell: (row) => (
         <RowActions
           actions={[

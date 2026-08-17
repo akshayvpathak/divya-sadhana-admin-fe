@@ -87,7 +87,6 @@ export default function ProductsPage() {
     <div className="space-y-6  pb-8">
       <PageHeader
         title="Products"
-        description="Manage your inventory and pricing"
         actions={
           <Link href="/products/create">
             <Button>

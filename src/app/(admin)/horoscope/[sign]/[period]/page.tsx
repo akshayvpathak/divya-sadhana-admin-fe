@@ -70,7 +70,6 @@ export default function HoroscopeSeoEditPage() {
             ) : (
               `${SIGN_LABELS[sign]} · ${PERIOD_LABELS[period]} SEO`
             )}</>}
-        description="Edit search metadata without changing generated reading content."
       />
 
       <div className="bg-surface rounded-xl shadow-sm border border-line p-6">

@@ -368,15 +368,19 @@ export default function AiReadingDetailPage() {
                               <html>
                                 <head>
                                   <style>
-                                    body { 
-                                      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-                                      line-height: 1.6; 
-                                      color: #334155; 
-                                      padding: 16px; 
-                                      margin: 0; 
+                                    /* Literal hex, not var(--charcoal): srcDoc is a
+                                       separate document, so the app's custom
+                                       properties do not cascade in. Keep these in
+                                       sync with the ink ramp in globals.css. */
+                                    body {
+                                      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                                      line-height: 1.6;
+                                      color: #463d52;
+                                      padding: 16px;
+                                      margin: 0;
                                     }
-                                    h1, h2, h3, h4 { color: #0f172a; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.5rem; }
-                                    h1 { font-size: 1.5rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; }
+                                    h1, h2, h3, h4 { color: #1e1526; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+                                    h1 { font-size: 1.5rem; border-bottom: 2px solid #e5dced; padding-bottom: 0.5rem; }
                                     h2 { font-size: 1.25rem; }
                                     p { margin-bottom: 1rem; }
                                     ul, ol { margin-bottom: 1rem; padding-left: 1.25rem; }
@@ -408,14 +412,16 @@ export default function AiReadingDetailPage() {
                               <html>
                                 <head>
                                   <style>
-                                    body { 
-                                      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-                                      line-height: 1.6; 
-                                      color: #334155; 
-                                      padding: 16px; 
-                                      margin: 0; 
+                                    /* Literal hex — see the note on the full-report
+                                       iframe above. */
+                                    body {
+                                      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                                      line-height: 1.6;
+                                      color: #463d52;
+                                      padding: 16px;
+                                      margin: 0;
                                     }
-                                    h1, h2, h3, h4 { color: #0f172a; font-weight: 700; margin-top: 1.25rem; margin-bottom: 0.5rem; }
+                                    h1, h2, h3, h4 { color: #1e1526; font-weight: 700; margin-top: 1.25rem; margin-bottom: 0.5rem; }
                                     h1 { font-size: 1.25rem; }
                                     p { margin-bottom: 1rem; }
                                   </style>

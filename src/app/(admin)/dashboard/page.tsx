@@ -55,7 +55,6 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <PageHeader
         title="Dashboard Overview"
-        description="Welcome to your admin control panel"
         showBreadcrumbs={false}
       />
 

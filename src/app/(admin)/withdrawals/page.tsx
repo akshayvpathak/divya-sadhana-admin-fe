@@ -59,7 +59,6 @@ export default function WithdrawalsPage() {
     <div className="space-y-6 pb-8">
       <PageHeader
         title="Withdrawals"
-        description="Review and process trustee payout requests"
       />
 
       <Card>

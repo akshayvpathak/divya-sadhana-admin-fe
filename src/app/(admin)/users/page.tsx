@@ -74,7 +74,6 @@ export default function UsersPage() {
     <div className="space-y-6 pb-8">
       <PageHeader
         title="Users"
-        description="Manage platform users and their roles"
         actions={
           <Link href="/users/create">
             <Button>

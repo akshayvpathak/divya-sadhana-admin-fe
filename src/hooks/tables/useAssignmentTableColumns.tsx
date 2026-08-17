@@ -67,6 +67,8 @@ export const useAssignmentTableColumns = ({
       id: 'is_active',
       accessorKey: 'is_active',
       header: 'Status',
+      headerAlign: 'center',
+      cellAlign: 'center',
       renderCell: (row) => <StatusBadge status={row.is_active} type="active" />,
     },
   ];
@@ -75,8 +77,8 @@ export const useAssignmentTableColumns = ({
     columns.push({
       id: 'actions',
       header: 'Actions',
-      headerAlign: 'right',
-      cellAlign: 'right',
+      headerAlign: 'center',
+      cellAlign: 'center',
       renderCell: (row) => (
         <RowActions
           actions={[

@@ -2,7 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { RowActions } from '@/components/common/RowActions';
 import { ColumnConfig } from '@/components/common/DataTable/types';
-import { formatDate } from '@/lib/datetime';
+import { DateTimeCell } from '@/components/common/DateTimeCell';
 import { ModuleStatus } from '@/components/ui/badges/ModuleStatus';
 import { FAILURE_CLASS_META, describeFailure } from '@/lib/reading-failures';
 
@@ -69,13 +69,15 @@ export const useAiReadingsTableColumns = (): ColumnConfig<AiReadingRow>[] => {
       accessorKey: 'status',
       header: 'Status',
       sortable: true,
+      headerAlign: 'center',
+      cellAlign: 'center',
       // Why it failed, inline — so a run of pre-check rejections is visible
       // without opening every row.
       renderCell: (row) => {
         if (row.status !== 'failed') return <ReadingStatusBadge status={row.status} />;
         const meta = describeFailure(row.failure_code);
         return (
-          <div className="flex flex-col items-start gap-1">
+          <div className="flex flex-col items-center gap-1">
             <ReadingStatusBadge status={row.status} />
             <span
               className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold ${FAILURE_CLASS_META[meta.klass].badgeClass}`}
@@ -92,14 +94,14 @@ export const useAiReadingsTableColumns = (): ColumnConfig<AiReadingRow>[] => {
       accessorKey: 'created_at',
       header: 'Created Date',
       sortable: true,
-      cellClassName: 'text-moon text-sm',
-      renderCell: (row) => formatDate(row.created_at),
+      cellClassName: 'whitespace-nowrap',
+      renderCell: (row) => <DateTimeCell value={row.created_at} />,
     },
     {
       id: 'actions',
       header: 'Actions',
-      headerAlign: 'right',
-      cellAlign: 'right',
+      headerAlign: 'center',
+      cellAlign: 'center',
       renderCell: (row) => (
         <RowActions actions={[{ kind: 'view', href: `/ai-readings/${row.id}` }]} />
       ),

@@ -9,7 +9,6 @@ export default function CreateTrusteePage() {
       <PageHeader
         backHref="/trustees"
         title="Appoint network member"
-        description="Select a user, role, and territory. Referral code and wallet are created automatically."
       />
 
       <div className="bg-surface rounded-xl shadow-sm border border-line p-6">

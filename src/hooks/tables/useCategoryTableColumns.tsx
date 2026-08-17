@@ -39,14 +39,16 @@ export const useCategoryTableColumns = ({
       header: 'Status',
       sortable: true,
       sortKey: 'is_active',
+      headerAlign: 'center',
+      cellAlign: 'center',
       renderCell: (row) => <StatusBadge status={row.isActive} type="active" />,
     },
 
     {
       id: 'actions',
       header: 'Actions',
-      headerAlign: 'right',
-      cellAlign: 'right',
+      headerAlign: 'center',
+      cellAlign: 'center',
       renderCell: (row) => (
         <RowActions
           actions={[

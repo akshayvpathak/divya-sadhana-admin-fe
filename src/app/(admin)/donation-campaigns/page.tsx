@@ -85,7 +85,6 @@ export default function DonationCampaignsPage() {
     <div className="space-y-6  pb-8">
       <PageHeader
         title="Donation Campaigns"
-        description="Manage platform donation campaigns"
         actions={
           <Link href="/donation-campaigns/create">
             <Button>

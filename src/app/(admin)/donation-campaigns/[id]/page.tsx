@@ -51,7 +51,6 @@ export default function ViewDonationCampaignPage() {
       <PageHeader
         backHref="/donation-campaigns"
         title={isLoading ? <Skeleton className="h-9 w-64" /> : isEdit ? 'Edit Campaign' : 'Campaign Details'}
-        description={isEdit ? 'Update fundraising campaign details' : 'Fundraising progress and campaign information'}
       />
 
       {isLoading ? (

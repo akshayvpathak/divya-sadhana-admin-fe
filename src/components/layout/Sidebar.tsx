@@ -53,8 +53,8 @@ export default function Sidebar() {
                   className={cn(
                     'group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
                     isActive
-                      // Ink on saffron is 8.3:1 — the pill can carry real weight.
-                      ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-[0_1px_8px_0_rgb(255_153_51_/_0.35)]'
+                      // Amethyst on gold is 8.06:1 — the pill can carry real weight.
+                      ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-[0_1px_8px_0_rgb(224_180_88_/_0.35)]'
                       : 'text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-white'
                   )}
                   title={!isOpen ? item.name : undefined}

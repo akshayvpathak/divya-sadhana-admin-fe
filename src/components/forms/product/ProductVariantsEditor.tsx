@@ -783,8 +783,10 @@ export default function ProductVariantsEditor({
                     <th className="px-3 py-2 font-semibold">SKU</th>
                     <th className="px-3 py-2 font-semibold">Price (₹)</th>
                     <th className="px-3 py-2 font-semibold">Stock</th>
-                    <th className="px-3 py-2 font-semibold">Active</th>
-                    <th className="px-3 py-2 font-semibold w-[100px]">
+                    {/* Status toggle and row actions centre-aligned, matching the
+                        shared DataTable columns. */}
+                    <th className="px-3 py-2 font-semibold text-center">Active</th>
+                    <th className="px-3 py-2 font-semibold w-[100px] text-center">
                         Actions
                       </th>
                   </tr>
@@ -842,7 +844,7 @@ export default function ProductVariantsEditor({
                               }
                             />
                         </td>
-                        <td className="px-3 py-2">
+                        <td className="px-3 py-2 text-center">
                           <Switch
                               checked={draft.is_active}
                               onCheckedChange={(val) =>
@@ -851,7 +853,7 @@ export default function ProductVariantsEditor({
                             />
                         </td>
                         <td className="px-3 py-2">
-                            <div className="flex gap-1">
+                            <div className="flex justify-center gap-1">
                               <Button
                                 type="button"
                                 variant="ghost"

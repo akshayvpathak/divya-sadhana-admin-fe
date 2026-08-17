@@ -39,7 +39,6 @@ export default function ProductDetailPage() {
       <PageHeader
         backHref="/products"
         title={isEdit ? 'Edit Product' : product?.name || 'Product'}
-        description={isEdit ? 'Update product details and pricing' : undefined}
         identifier={product?.name ?? null}
         currentLabel={isEdit ? 'Edit' : undefined}
         loading={isLoading}

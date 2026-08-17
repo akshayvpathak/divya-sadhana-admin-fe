@@ -1,7 +1,7 @@
 import { StatusBadge } from '@/components/ui/status-badge';
 import { RowActions } from '@/components/common/RowActions';
 import { ColumnConfig } from '@/components/common/DataTable/types';
-import { formatDate, formatDateTime } from '@/lib/datetime';
+import { DateTimeCell } from '@/components/common/DateTimeCell';
 
 export interface ServiceBatchRow {
   id: string;
@@ -36,15 +36,15 @@ export const useServiceBatchTableColumns = ({ openDeleteModal }: Props): ColumnC
       accessorKey: 'starts_at',
       header: 'Starts',
       sortable: true,
-      cellClassName: 'text-moon',
-      renderCell: (row) => (formatDateTime(row.starts_at)),
+      cellClassName: 'whitespace-nowrap',
+      renderCell: (row) => <DateTimeCell value={row.starts_at} />,
     },
     {
       id: 'ends_at',
       accessorKey: 'ends_at',
       header: 'Ends',
-      cellClassName: 'text-moon',
-      renderCell: (row) => (formatDate(row.ends_at)),
+      cellClassName: 'whitespace-nowrap',
+      renderCell: (row) => <DateTimeCell value={row.ends_at} />,
     },
     {
       id: 'capacity',
@@ -56,13 +56,15 @@ export const useServiceBatchTableColumns = ({ openDeleteModal }: Props): ColumnC
       id: 'is_open',
       accessorKey: 'is_open',
       header: 'Open',
+      headerAlign: 'center',
+      cellAlign: 'center',
       renderCell: (row) => <StatusBadge status={row.is_open} type="active" />,
     },
     {
       id: 'actions',
       header: 'Actions',
-      headerAlign: 'right',
-      cellAlign: 'right',
+      headerAlign: 'center',
+      cellAlign: 'center',
       renderCell: (row) => (
         <RowActions
           actions={[

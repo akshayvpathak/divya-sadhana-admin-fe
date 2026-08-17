@@ -49,6 +49,8 @@ export const useUserTableColumns = ({
       header: 'Role',
       sortable: true,
       sortKey: 'is_active',
+      headerAlign: 'center',
+      cellAlign: 'center',
       renderCell: (row) => <StatusBadge status={row.role} type="role" />,
     },
     {
@@ -57,6 +59,8 @@ export const useUserTableColumns = ({
       header: 'Status',
       sortable: true,
       sortKey: 'is_active',
+      headerAlign: 'center',
+      cellAlign: 'center',
       renderCell: (row) => <StatusBadge status={row.is_active} type="active" />,
     },
     // {
@@ -70,8 +74,8 @@ export const useUserTableColumns = ({
     {
       id: 'actions',
       header: 'Actions',
-      headerAlign: 'right',
-      cellAlign: 'right',
+      headerAlign: 'center',
+      cellAlign: 'center',
       renderCell: (row) => (
         <RowActions
           actions={[

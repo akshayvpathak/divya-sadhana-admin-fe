@@ -30,7 +30,6 @@ export default function ViewServiceBatchPage() {
       <PageHeader
         backHref="/service-batches"
         title={isEdit ? 'Edit Batch' : 'Batch Details'}
-        description={isEdit ? 'Update the batch schedule' : 'Batch configuration'}
       />
 
       <div className="rounded-xl border border-line bg-surface p-6 shadow-sm">

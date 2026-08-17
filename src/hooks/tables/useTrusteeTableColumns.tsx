@@ -70,6 +70,8 @@ export const useTrusteeTableColumns = ({
     {
       id: 'role',
       header: 'Role',
+      headerAlign: 'center',
+      cellAlign: 'center',
       headerClassName: 'min-w-[240px]',
       cellClassName: 'min-w-[240px]',
       renderCell: (row) => {
@@ -154,13 +156,15 @@ export const useTrusteeTableColumns = ({
       header: 'Status',
       sortable: true,
       sortKey: 'is_active',
+      headerAlign: 'center',
+      cellAlign: 'center',
       renderCell: (row) => <StatusBadge status={row.is_active} type="active" />,
     },
     {
       id: 'actions',
       header: 'Actions',
-      headerAlign: 'right',
-      cellAlign: 'right',
+      headerAlign: 'center',
+      cellAlign: 'center',
       renderCell: (row) => (
         <RowActions
           actions={[

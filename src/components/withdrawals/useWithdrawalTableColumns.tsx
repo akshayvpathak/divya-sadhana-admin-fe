@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatDate } from '@/lib/datetime';
+import { DateTimeCell } from '@/components/common/DateTimeCell';
 import { ColumnConfig } from '@/components/common/DataTable/types';
 import { Withdrawal } from '@/schemas/withdrawals.schema';
 import { formatINR } from '@/lib/currency';
@@ -100,21 +100,22 @@ export const useWithdrawalTableColumns = (): ColumnConfig<Withdrawal>[] => {
       id: 'status',
       accessorKey: 'status',
       header: 'Status',
+      headerAlign: 'center',
+      cellAlign: 'center',
       renderCell: (row) => <WithdrawalStatusBadge status={row.status} />,
     },
     {
       id: 'created_at',
       accessorKey: 'created_at',
       header: 'Requested',
-      cellClassName: 'text-moon',
-      renderCell: (row) =>
-        formatDate(row.created_at),
+      cellClassName: 'whitespace-nowrap',
+      renderCell: (row) => <DateTimeCell value={row.created_at} />,
     },
     {
       id: 'actions',
       header: 'Actions',
-      headerAlign: 'right',
-      cellAlign: 'right',
+      headerAlign: 'center',
+      cellAlign: 'center',
       renderCell: (row) => <WithdrawalActionsCell withdrawal={row} />,
     },
   ];

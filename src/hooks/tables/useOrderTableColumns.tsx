@@ -3,7 +3,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { RowActions } from '@/components/common/RowActions';
 import { ColumnConfig } from '@/components/common/DataTable/types';
 import { formatINR } from '@/lib/currency';
-import { formatDate } from '@/lib/datetime';
+import { DateTimeCell } from '@/components/common/DateTimeCell';
 import { courierPartnerOptions } from '@/schemas/orders.schema';
 
 const PARTNER_LABEL: Record<string, string> = Object.fromEntries(
@@ -50,6 +50,8 @@ export const useOrderTableColumns = (): ColumnConfig<OrderRow>[] => {
       accessorKey: 'status',
       header: 'Status',
       sortable: true,
+      headerAlign: 'center',
+      cellAlign: 'center',
       renderCell: (row) => <StatusBadge status={row.status || ''} type="order_status" />,
     },
     {
@@ -57,6 +59,8 @@ export const useOrderTableColumns = (): ColumnConfig<OrderRow>[] => {
       accessorKey: 'payment_status',
       header: 'Payment Status',
       sortable: true,
+      headerAlign: 'center',
+      cellAlign: 'center',
       renderCell: (row) => (
         <StatusBadge status={row.payment_status || ''} type="payment_status" />
       ),
@@ -66,6 +70,8 @@ export const useOrderTableColumns = (): ColumnConfig<OrderRow>[] => {
       accessorKey: 'shipping_status',
       header: 'Shipping',
       sortable: true,
+      headerAlign: 'center',
+      cellAlign: 'center',
       renderCell: (row) => (
         <StatusBadge status={row.shipping_status || ''} type="shipping_status" />
       ),
@@ -106,15 +112,14 @@ export const useOrderTableColumns = (): ColumnConfig<OrderRow>[] => {
       accessorKey: 'created_at',
       header: 'Order Date',
       sortable: true,
-      cellClassName: 'text-moon',
-      renderCell: (row) =>
-        formatDate(row.created_at),
+      cellClassName: 'whitespace-nowrap',
+      renderCell: (row) => <DateTimeCell value={row.created_at} />,
     },
     {
       id: 'actions',
       header: 'Actions',
-      headerAlign: 'right',
-      cellAlign: 'right',
+      headerAlign: 'center',
+      cellAlign: 'center',
       renderCell: (row) => (
         <RowActions actions={[{ kind: 'view', href: `/orders/${row.id}` }]} />
       ),

@@ -56,7 +56,8 @@ export function WithdrawalActionsCell({ withdrawal }: WithdrawalActionsCellProps
   }
 
   return (
-    <div className="flex justify-end gap-2">
+    // Centred to match the centre-aligned Actions column; see RowActions.
+    <div className="flex justify-center gap-2">
       {isPending && (
         <>
           <Button

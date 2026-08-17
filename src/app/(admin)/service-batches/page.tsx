@@ -66,7 +66,6 @@ export default function ServiceBatchesPage() {
     <div className="space-y-6 pb-8">
       <PageHeader
         title="Service Batches"
-        description="Schedule batches for class-type services"
         actions={
           <Link href="/service-batches/create">
             <Button>

@@ -19,7 +19,6 @@ export default function CreateServiceBatchPage() {
       <PageHeader
         backHref="/service-batches"
         title="Create Service Batch"
-        description="Schedule a new batch for a class service"
       />
 
       <div className="rounded-xl border border-line bg-surface p-6 shadow-sm">

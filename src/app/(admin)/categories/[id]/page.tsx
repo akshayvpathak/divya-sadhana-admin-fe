@@ -32,7 +32,6 @@ export default function CategoryDetailPage() {
       <PageHeader
         backHref="/categories"
         title={isEdit ? 'Edit Category' : 'View Category'}
-        description={isEdit ? 'Update category details' : 'Detailed information about the category'}
       />
 
       <div className="bg-surface rounded-xl shadow-sm border border-line p-6">
