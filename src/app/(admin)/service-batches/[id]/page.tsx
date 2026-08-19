@@ -32,7 +32,7 @@ export default function ViewServiceBatchPage() {
         title={isEdit ? 'Edit Batch' : 'Batch Details'}
       />
 
-      <div className="rounded-xl border border-line bg-surface p-6 shadow-sm">
+      <div className="rounded-2xl border border-line bg-surface p-4 shadow-card sm:p-6">
         {isLoading ? (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (

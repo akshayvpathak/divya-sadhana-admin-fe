@@ -50,9 +50,43 @@ function CoverageDetailPanel({ stateId }: { stateId: string }) {
     return <p className="px-4 py-3 text-sm text-moon">No districts seeded for this state.</p>;
   }
 
+  const presidentCell = (d: (typeof districts)[number]) =>
+    d.president ? (
+      <>
+        {d.president.name || '—'}
+        {d.president.referral_code ? (
+          <span className="ml-2 text-xs text-moon">{d.president.referral_code}</span>
+        ) : null}
+      </>
+    ) : (
+      <span className="text-warning">Vacant → 8% to Admin</span>
+    );
+
+  const pincodeCell = (d: (typeof districts)[number]) =>
+    d.pincode_linked === false ? (
+      <span className="inline-flex items-center gap-1 text-warning-ink">
+        <AlertTriangle className="h-3.5 w-3.5" />
+        Unlinked
+      </span>
+    ) : (
+      <span className="text-moon">Linked</span>
+    );
+
   return (
     <div className="border-t border-line/60 bg-cream">
-      <table className="w-full text-sm">
+      {/* Three columns of prose do not survive a 320px viewport, so phones get a
+          stacked block per district instead. */}
+      <ul className="divide-y divide-line/60 sm:hidden">
+        {districts.map((d) => (
+          <li key={d.district_id} className="px-4 py-3 text-sm">
+            <p className="font-medium text-ink">{d.district_name}</p>
+            <p className="mt-1 text-charcoal">{presidentCell(d)}</p>
+            <p className="mt-1">{pincodeCell(d)}</p>
+          </li>
+        ))}
+      </ul>
+
+      <table className="hidden w-full text-sm sm:table">
         <thead>
           <tr className="text-left text-xs uppercase tracking-wide text-moon">
             <th className="px-4 py-2 font-semibold">District</th>
@@ -64,28 +98,8 @@ function CoverageDetailPanel({ stateId }: { stateId: string }) {
           {districts.map((d) => (
             <tr key={d.district_id} className="border-t border-line/60">
               <td className="px-4 py-2 font-medium text-ink">{d.district_name}</td>
-              <td className="px-4 py-2">
-                {d.president ? (
-                  <span>
-                    {d.president.name || '—'}
-                    {d.president.referral_code ? (
-                      <span className="ml-2 text-xs text-moon">{d.president.referral_code}</span>
-                    ) : null}
-                  </span>
-                ) : (
-                  <span className="text-warning">Vacant → 8% to Admin</span>
-                )}
-              </td>
-              <td className="px-4 py-2">
-                {d.pincode_linked === false ? (
-                  <span className="inline-flex items-center gap-1 text-warning-ink">
-                    <AlertTriangle className="h-3.5 w-3.5" />
-                    Unlinked
-                  </span>
-                ) : (
-                  <span className="text-moon">Linked</span>
-                )}
-              </td>
+              <td className="px-4 py-2">{presidentCell(d)}</td>
+              <td className="px-4 py-2">{pincodeCell(d)}</td>
             </tr>
           ))}
         </tbody>
@@ -105,7 +119,7 @@ export function CoverageTerritory() {
 
   if (isLoading) {
     return (
-      <div className="rounded-xl border border-line bg-surface p-8 text-center text-sm text-moon">
+      <div className="rounded-2xl border border-line bg-surface p-6 text-center text-sm text-moon sm:p-8">
         Loading coverage…
       </div>
     );
@@ -113,7 +127,7 @@ export function CoverageTerritory() {
 
   if (error) {
     return (
-      <div className="rounded-xl border border-danger/25 bg-danger-tint p-6 text-sm text-danger-ink">
+      <div className="rounded-2xl border border-danger/25 bg-danger-tint p-4 text-sm text-danger-ink sm:p-6">
         {error instanceof Error ? error.message : 'Failed to load coverage'}
       </div>
     );
@@ -121,7 +135,7 @@ export function CoverageTerritory() {
 
   if (!rows.length) {
     return (
-      <div className="rounded-xl border border-line bg-surface p-8 text-center text-sm text-moon">
+      <div className="rounded-2xl border border-line bg-surface p-6 text-center text-sm text-moon sm:p-8">
         <MapPin className="mx-auto mb-2 h-8 w-8 text-line" />
         No coverage data yet. Seed districts on the server first.
       </div>
@@ -129,7 +143,7 @@ export function CoverageTerritory() {
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-sm">
+    <div className="overflow-hidden rounded-2xl border border-line bg-surface shadow-card">
       <div className="border-b border-line bg-cream px-4 py-3">
         <p className="text-sm text-charcoal">
           Seat occupancy by state. Expand a row for district presidents. Unlinked pincodes cannot

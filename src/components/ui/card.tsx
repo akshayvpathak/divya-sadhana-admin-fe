@@ -11,7 +11,7 @@ const cardVariants = cva(
   {
     variants: {
       /** `flush` = edge-to-edge (tables, banded detail cards). */
-      padding: { flush: "", padded: "p-6", tight: "p-4" },
+      padding: { flush: "", padded: "p-4 sm:p-6", tight: "p-3 sm:p-4" },
       /** Hairlines between direct children — the detail-card shape. */
       divided: { true: "divide-y divide-line/70", false: "" },
       /** Lifts on hover; clickable summary cards only. */
@@ -45,7 +45,7 @@ function CardBand({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-band"
-      className={cn("bg-cream px-5 py-4", className)}
+      className={cn("bg-cream px-4 py-3.5 sm:px-5 sm:py-4", className)}
       {...props}
     />
   );
@@ -56,7 +56,7 @@ function CardSection({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-section"
-      className={cn("px-6 py-5", className)}
+      className={cn("px-4 py-4 sm:px-6 sm:py-5", className)}
       {...props}
     />
   );
@@ -66,7 +66,10 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-header"
-      className={cn("flex items-start justify-between gap-4 px-6 pt-6 pb-4", className)}
+      className={cn(
+        "flex items-start justify-between gap-4 px-4 pt-5 pb-4 sm:px-6 sm:pt-6",
+        className
+      )}
       {...props}
     />
   );
@@ -96,7 +99,7 @@ function CardContent({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-content"
-      className={cn("px-6 py-5", className)}
+      className={cn("px-4 py-4 sm:px-6 sm:py-5", className)}
       {...props}
     />
   );
@@ -106,7 +109,10 @@ function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-footer"
-      className={cn("flex items-center justify-end gap-2 bg-cream px-6 py-4", className)}
+      className={cn(
+        "flex flex-wrap items-center justify-end gap-2 bg-cream px-4 py-3.5 sm:px-6 sm:py-4",
+        className
+      )}
       {...props}
     />
   );

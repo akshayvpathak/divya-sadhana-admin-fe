@@ -21,7 +21,7 @@ export function UserDetailView({ userId }: { userId: string }) {
 
   return (
     <Card divided>
-      <div className="flex flex-wrap items-center gap-4 p-6">
+      <div className="flex flex-wrap items-center gap-4 p-4 sm:p-6">
         <TableAvatar
           name={displayName || user.email || '?'}
           className="h-14 w-14 text-base"

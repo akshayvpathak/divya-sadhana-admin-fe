@@ -1,22 +1,14 @@
-import React from 'react';
-import { Filter } from 'lucide-react';
-import { TableFilter } from './TableFilter';
 import { useState } from 'react';
-import { ClearFiltersButton } from './ClearFiltersButton';
 
-export interface FilterOption {
-  value: string;
-  label: string;
-}
-
-export interface FilterConfig {
-  key: string;
-  options: FilterOption[];
-  placeholder: string;
-  widthClass?: string;
-}
-
-// Custom hook to manage table filter states and formatting parameters for API calls
+/**
+ * Filter state for a list page: the current values, an API-param projection
+ * that maps the sentinel `'all'` to `undefined`, and a reset.
+ *
+ * The rendering half of this file is gone — filter controls now live in
+ * <ListToolbar>, which draws them inline on desktop and inside a bottom sheet
+ * below `lg`. Pages that already used this hook keep their state logic
+ * unchanged and just hand the values to the toolbar.
+ */
 export function useFilterManager<T extends Record<string, string>>(
   initialFilters: T,
   onResetPage?: () => void
@@ -64,45 +56,3 @@ export function useFilterManager<T extends Record<string, string>>(
     hasActiveFilters,
   };
 }
-
-interface FilterManagerProps {
-  configs: FilterConfig[];
-  values: Record<string, string>;
-  onFilterChange: (key: string, value: string) => void;
-  /** Pass the resetFilters fn from useFilterManager to show the clear button */
-  onClear?: () => void;
-  /** When true, a red "Clear Filters" button is shown at the right end */
-  hasActiveFilters?: boolean;
-  className?: string;
-}
-
-export function FilterManager({
-  configs,
-  values,
-  onFilterChange,
-  onClear,
-  hasActiveFilters = false,
-  className = "",
-}: FilterManagerProps) {
-  if (!configs || configs.length === 0) return null;
-
-  return (
-    <div className={`flex flex-wrap sm:flex-nowrap gap-2 items-center w-full md:w-auto justify-end ${className}`}>
-      <Filter className="h-4 w-4 text-moon shrink-0" />
-      {configs.map((config) => (
-        <TableFilter
-          key={config.key}
-          value={values[config.key] || 'all'}
-          onValueChange={(val) => onFilterChange(config.key, val)}
-          options={config.options}
-          placeholder={config.placeholder}
-          widthClass={config.widthClass}
-        />
-      ))}
-      {hasActiveFilters && onClear && (
-        <ClearFiltersButton onClear={onClear} />
-      )}
-    </div>
-  );
-}
-

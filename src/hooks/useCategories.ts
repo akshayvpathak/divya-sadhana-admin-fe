@@ -2,10 +2,33 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 import { getCategoriesList, createCategory, updateCategory, deleteCategory, getCategory } from '../services/product-categories.service';
 import { useAuth } from '../context/AuthContext';
+import { useInfiniteListQuery } from './queries/useInfiniteListQuery';
 
-export const useCategories = (page = 1, limit = 10, search = '', sort = '', status = 'all') => {
+type ApiCategory = Awaited<ReturnType<typeof getCategoriesList>>['data']['results'][number];
+
+/** The row shape both the desktop table and the mobile cards render. */
+const toCategoryRow = (c: ApiCategory) => ({
+  id: c.id,
+  name: c.name,
+  description: c.description,
+  isActive: c.is_active,
+  image: `https://picsum.photos/seed/${c.id}/400/400`,
+});
+
+const isActiveParamFor = (status: string) =>
+  status === 'all' ? undefined : status === 'active' ? 'true' : 'false';
+
+export const useCategories = (
+  page = 1,
+  limit = 10,
+  search = '',
+  sort = '',
+  status = 'all',
+  options: { enabled?: boolean } = {}
+) => {
   const { accessToken } = useAuth();
-  const isActiveParam = status === 'all' ? undefined : status === 'active' ? 'true' : 'false';
+  const { enabled = true } = options;
+  const isActiveParam = isActiveParamFor(status);
   return useQuery({
     queryKey: ['categories', { page, limit, search, sort, status }],
     queryFn: async () => {
@@ -13,20 +36,44 @@ export const useCategories = (page = 1, limit = 10, search = '', sort = '', stat
       const response = await getCategoriesList({ page, paginate: limit, search, sort, is_active: isActiveParam }, accessToken);
       
       return {
-        data: response.data.results.map(c => ({
-          id: c.id,
-          name: c.name,
-          description: c.description,
-          isActive: c.is_active,
-          image: `https://picsum.photos/seed/${c.id}/400/400`,
-        })),
+        data: response.data.results.map(toCategoryRow),
         meta: {
           total: response.data.count,
           totalPages: Math.ceil(response.data.count / limit),
         }
       };
     },
-    enabled: !!accessToken,
+    enabled: !!accessToken && enabled,
+  });
+};
+
+/** Mobile card list: same endpoint and filters, appended page by page. */
+export const useCategoriesInfinite = (
+  limit = 10,
+  search = '',
+  sort = '',
+  status = 'all',
+  options: { enabled?: boolean } = {}
+) => {
+  const { accessToken } = useAuth();
+  const { enabled = true } = options;
+  const isActiveParam = isActiveParamFor(status);
+
+  return useInfiniteListQuery({
+    queryKey: ['categories', 'infinite', { limit, search, sort, status }],
+    pageSize: limit,
+    enabled: !!accessToken && enabled,
+    fetchPage: async (page) => {
+      if (!accessToken) throw new Error('No access token');
+      const response = await getCategoriesList(
+        { page, paginate: limit, search, sort, is_active: isActiveParam },
+        accessToken
+      );
+      return {
+        count: response.data.count,
+        results: response.data.results.map(toCategoryRow),
+      };
+    },
   });
 };
 

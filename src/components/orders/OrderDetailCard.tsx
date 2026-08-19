@@ -1,7 +1,8 @@
 'use client';
 
 import { User, IndianRupee, ShoppingBag } from 'lucide-react';
-import { DataTable } from '@/components/common/DataTable/DataTable';
+import { ResponsiveDataView } from '@/components/common/ResponsiveDataView';
+import { staticListState } from '@/hooks/queries/useInfiniteListQuery';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { formatINR } from '@/lib/currency';
 import OrderFulfillmentPanel from '@/components/orders/OrderFulfillmentPanel';
@@ -38,6 +39,7 @@ const ITEM_COLUMNS = [
   {
     id: 'product',
     header: 'Product',
+    mobile: 'title' as const,
     headerClassName: 'px-6 py-3 text-xs font-bold uppercase text-moon',
     cellClassName: 'px-6 py-3',
     renderCell: (row: OrderItem) => (
@@ -47,6 +49,7 @@ const ITEM_COLUMNS = [
   {
     id: 'quantity',
     header: 'Quantity',
+    mobile: 'field' as const,
     headerAlign: 'center' as const,
     cellAlign: 'center' as const,
     headerClassName: 'px-6 py-3 text-xs font-bold uppercase text-moon text-center',
@@ -56,6 +59,7 @@ const ITEM_COLUMNS = [
   {
     id: 'line_total',
     header: 'Line Total',
+    mobile: 'field' as const,
     headerAlign: 'right' as const,
     cellAlign: 'right' as const,
     headerClassName: 'px-6 py-3 text-xs font-bold uppercase text-moon text-right',
@@ -73,7 +77,7 @@ export default function OrderDetailCard({ order }: { order: Order }) {
   return (
     <Card divided>
       {/* At-a-glance: the two statuses and the headline total */}
-      <div className="flex flex-wrap items-center gap-x-10 gap-y-4 bg-cream px-6 py-4">
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-4 bg-cream px-4 py-4 sm:gap-x-10 sm:px-6">
         <div className="space-y-1.5">
           <p className="text-[10px] font-bold uppercase tracking-wide text-moon">
             Payment Status
@@ -90,7 +94,7 @@ export default function OrderDetailCard({ order }: { order: Order }) {
           <p className="text-[10px] font-bold uppercase tracking-wide text-moon">
             Total Amount
           </p>
-          <p className="text-2xl font-black tracking-tight text-gold-press">
+          <p className="text-xl font-black tracking-tight text-gold-press sm:text-2xl">
             {formatINR(order.total_amount)}
           </p>
         </div>
@@ -98,20 +102,22 @@ export default function OrderDetailCard({ order }: { order: Order }) {
 
       {/* What was bought */}
       <div>
-        <div className="px-6 pt-5 pb-3">
+        <div className="px-4 pt-5 pb-3 sm:px-6">
           <SectionHeading icon={<ShoppingBag className="h-3.5 w-3.5" />}>
             Order Items ({order.items?.length || 0})
           </SectionHeading>
         </div>
-        <DataTable
+        <ResponsiveDataView
           columns={ITEM_COLUMNS}
           data={order.items || []}
+          mobile={staticListState(order.items || [])}
           emptyMessage="No items found"
+          emptyHint="This order has no line items."
         />
       </div>
 
       {/* Who it ships to, and what it comes to */}
-      <div className="grid grid-cols-1 gap-x-10 gap-y-6 px-6 py-5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-x-10 gap-y-6 px-4 py-5 sm:px-6 lg:grid-cols-2">
         <div className="space-y-3">
           <SectionHeading icon={<User className="h-3.5 w-3.5" />}>
             Customer Details
@@ -167,12 +173,12 @@ export default function OrderDetailCard({ order }: { order: Order }) {
 
       {/* Act on the shipment. Both panels carry their own heading and status
           badge, so this section adds none of its own. */}
-      <div className="px-6 py-5">
+      <div className="px-4 py-5 sm:px-6">
         <OrderFulfillmentPanel order={order} embedded />
       </div>
 
       {/* Then confirm what the customer will see */}
-      <div className="bg-cream px-6 py-5">
+      <div className="bg-cream px-4 py-5 sm:px-6">
         <OrderTrackingPreview orderId={order.id} embedded />
       </div>
     </Card>

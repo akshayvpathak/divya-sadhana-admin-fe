@@ -22,17 +22,20 @@ export const useAssignmentTableColumns = ({
       id: 'member_email',
       header: 'Member',
       cellClassName: 'font-medium text-ink',
+      mobile: 'title',
       renderCell: (row) => row.member_email || row.trustee_email || null,
     },
     {
       id: 'member_referral_code',
       header: 'Code',
+      mobile: 'subtitle',
       cellClassName: 'font-mono text-xs text-moon',
       renderCell: (row) => row.member_referral_code || row.trustee_referral_code || null,
     },
     {
       id: 'role',
       header: 'Role',
+      mobile: 'field',
       renderCell: (row) => (
         <span className="text-sm text-charcoal">
           {row.role_display || (row.role ? row.role.replace(/_/g, ' ') : '—')}
@@ -44,6 +47,7 @@ export const useAssignmentTableColumns = ({
       accessorKey: 'state_name',
       header: 'Territory',
       cellClassName: 'text-charcoal',
+      mobile: 'field',
       renderCell: (row) => {
         const state = row.state_name || '—';
         return row.district_name ? `${state} · ${row.district_name}` : state;
@@ -53,6 +57,7 @@ export const useAssignmentTableColumns = ({
       id: 'area_commission_percent',
       accessorKey: 'area_commission_percent',
       header: 'Rate override',
+      mobile: 'field',
       headerAlign: 'right',
       cellAlign: 'right',
       cellClassName: 'font-medium text-ink',
@@ -67,6 +72,7 @@ export const useAssignmentTableColumns = ({
       id: 'is_active',
       accessorKey: 'is_active',
       header: 'Status',
+      mobile: 'status',
       headerAlign: 'center',
       cellAlign: 'center',
       renderCell: (row) => <StatusBadge status={row.is_active} type="active" />,
@@ -77,6 +83,7 @@ export const useAssignmentTableColumns = ({
     columns.push({
       id: 'actions',
       header: 'Actions',
+      mobile: 'actions',
       headerAlign: 'center',
       cellAlign: 'center',
       renderCell: (row) => (

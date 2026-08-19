@@ -8,15 +8,22 @@ import {
 } from "@/services/wallet.service";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
+import { useInfiniteListQuery } from "./useInfiniteListQuery";
+
+const WITHDRAWALS_PAGE_SIZE = 10;
+
+export interface WithdrawalsListFilters {
+  page?: number;
+  page_size?: number;
+  status?: string;
+}
 
 export const useWithdrawalsListQuery = (
-  filters: {
-    page?: number;
-    page_size?: number;
-    status?: string;
-  } = {}
+  filters: WithdrawalsListFilters = {},
+  options: { enabled?: boolean } = {}
 ) => {
   const { accessToken } = useAuth();
+  const { enabled = true } = options;
 
   return useQuery({
     queryKey: ["withdrawals", filters],
@@ -24,11 +31,36 @@ export const useWithdrawalsListQuery = (
       if (!accessToken) throw new Error("No access token");
       return getWithdrawalsList(accessToken, {
         page: filters.page ?? 1,
-        page_size: filters.page_size ?? 10,
+        page_size: filters.page_size ?? WITHDRAWALS_PAGE_SIZE,
         status: filters.status,
       });
     },
-    enabled: !!accessToken,
+    enabled: !!accessToken && enabled,
+  });
+};
+
+/** Mobile card list: same endpoint and filters, appended page by page. */
+export const useWithdrawalsInfiniteQuery = (
+  filters: WithdrawalsListFilters = {},
+  options: { enabled?: boolean } = {}
+) => {
+  const { accessToken } = useAuth();
+  const { enabled = true } = options;
+  const pageSize = filters.page_size ?? WITHDRAWALS_PAGE_SIZE;
+
+  return useInfiniteListQuery({
+    queryKey: ["withdrawals", "infinite", { ...filters, page: undefined }],
+    pageSize,
+    enabled: !!accessToken && enabled,
+    fetchPage: async (page) => {
+      if (!accessToken) throw new Error("No access token");
+      const response = await getWithdrawalsList(accessToken, {
+        page,
+        page_size: pageSize,
+        status: filters.status,
+      });
+      return response.data;
+    },
   });
 };
 

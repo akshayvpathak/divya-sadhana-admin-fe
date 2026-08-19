@@ -52,13 +52,13 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       <PageHeader
         title="Dashboard Overview"
         showBreadcrumbs={false}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-6">
         {stats.map((stat) => (
           <StatCard
             key={stat.name}
@@ -71,7 +71,7 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* <div className="bg-surface rounded-xl shadow-sm border border-line p-6 mt-8 h-96 flex items-center justify-center">
+      {/* <div className="bg-surface rounded-2xl shadow-card border border-line p-4 sm:p-6 mt-8 h-96 flex items-center justify-center">
         <p className="text-moon">Charts and more detailed analytics would go here.</p>
       </div> */}
     </div>

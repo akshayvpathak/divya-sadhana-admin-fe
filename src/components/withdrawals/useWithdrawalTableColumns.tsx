@@ -54,6 +54,19 @@ export const useWithdrawalTableColumns = (): ColumnConfig<Withdrawal>[] => {
       id: 'trustee',
       header: 'Trustee',
       cellClassName: 'font-medium text-ink',
+      mobile: 'title',
+      renderMobile: (row) => {
+        const name = withdrawalTrusteeName(row);
+        const email = row.trustee_email;
+        return (
+          <span className="block">
+            <span className="block break-words">{name}</span>
+            {email && email !== name ? (
+              <span className="mt-0.5 block break-all text-xs font-normal text-moon">{email}</span>
+            ) : null}
+          </span>
+        );
+      },
       renderCell: (row) => {
         const name = withdrawalTrusteeName(row);
         const email = row.trustee_email;
@@ -71,6 +84,7 @@ export const useWithdrawalTableColumns = (): ColumnConfig<Withdrawal>[] => {
       id: 'amount',
       accessorKey: 'amount',
       header: 'Amount',
+      mobile: 'field',
       headerAlign: 'right',
       cellAlign: 'right',
       cellClassName: 'font-medium text-ink',
@@ -82,6 +96,7 @@ export const useWithdrawalTableColumns = (): ColumnConfig<Withdrawal>[] => {
     {
       id: 'method',
       header: 'Method',
+      mobile: 'field',
       renderCell: (row) => {
         const detail = payoutDetail(row);
         return (
@@ -100,6 +115,7 @@ export const useWithdrawalTableColumns = (): ColumnConfig<Withdrawal>[] => {
       id: 'status',
       accessorKey: 'status',
       header: 'Status',
+      mobile: 'status',
       headerAlign: 'center',
       cellAlign: 'center',
       renderCell: (row) => <WithdrawalStatusBadge status={row.status} />,
@@ -108,12 +124,14 @@ export const useWithdrawalTableColumns = (): ColumnConfig<Withdrawal>[] => {
       id: 'created_at',
       accessorKey: 'created_at',
       header: 'Requested',
+      mobile: 'field',
       cellClassName: 'whitespace-nowrap',
       renderCell: (row) => <DateTimeCell value={row.created_at} />,
     },
     {
       id: 'actions',
       header: 'Actions',
+      mobile: 'actions',
       headerAlign: 'center',
       cellAlign: 'center',
       renderCell: (row) => <WithdrawalActionsCell withdrawal={row} />,

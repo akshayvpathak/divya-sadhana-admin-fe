@@ -18,6 +18,20 @@ import {
 } from "@/services/territory.service";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
+import { useInfiniteListQuery } from "./useInfiniteListQuery";
+
+const ASSIGNMENTS_PAGE_SIZE = 10;
+
+export interface AssignmentsListFilters {
+  page?: number;
+  page_size?: number;
+  search?: string;
+  state?: string;
+  trustee?: string;
+  member?: string;
+  is_active?: string;
+  sort?: string;
+}
 
 export const useStatesListQuery = (filters: {
   page?: number;
@@ -44,17 +58,12 @@ export const useStatesListQuery = (filters: {
   });
 };
 
-export const useAssignmentsListQuery = (filters: {
-  page?: number;
-  page_size?: number;
-  search?: string;
-  state?: string;
-  trustee?: string;
-  member?: string;
-  is_active?: string;
-  sort?: string;
-} = {}) => {
+export const useAssignmentsListQuery = (
+  filters: AssignmentsListFilters = {},
+  options: { enabled?: boolean } = {}
+) => {
   const { accessToken } = useAuth();
+  const { enabled = true } = options;
 
   return useQuery({
     queryKey: ["territory-assignments", filters],
@@ -62,7 +71,7 @@ export const useAssignmentsListQuery = (filters: {
       if (!accessToken) throw new Error("No access token");
       return getAssignmentsList(accessToken, {
         page: filters.page ?? 1,
-        page_size: filters.page_size ?? 10,
+        page_size: filters.page_size ?? ASSIGNMENTS_PAGE_SIZE,
         search: filters.search,
         state: filters.state,
         member: filters.member ?? filters.trustee,
@@ -70,7 +79,36 @@ export const useAssignmentsListQuery = (filters: {
         sort: filters.sort,
       });
     },
-    enabled: !!accessToken,
+    enabled: !!accessToken && enabled,
+  });
+};
+
+/** Mobile card list for the trustees "Coverage" tab. */
+export const useAssignmentsInfiniteQuery = (
+  filters: AssignmentsListFilters = {},
+  options: { enabled?: boolean } = {}
+) => {
+  const { accessToken } = useAuth();
+  const { enabled = true } = options;
+  const pageSize = filters.page_size ?? ASSIGNMENTS_PAGE_SIZE;
+
+  return useInfiniteListQuery({
+    queryKey: ["territory-assignments", "infinite", { ...filters, page: undefined }],
+    pageSize,
+    enabled: !!accessToken && enabled,
+    fetchPage: async (page) => {
+      if (!accessToken) throw new Error("No access token");
+      const response = await getAssignmentsList(accessToken, {
+        page,
+        page_size: pageSize,
+        search: filters.search,
+        state: filters.state,
+        member: filters.member ?? filters.trustee,
+        is_active: filters.is_active,
+        sort: filters.sort,
+      });
+      return response.data;
+    },
   });
 };
 

@@ -2,52 +2,106 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 import { getUsersList, getUser, createUser, updateUser, deleteUser } from '../services/users.service';
 import { useAuth } from '../context/AuthContext';
+import { useInfiniteListQuery } from './queries/useInfiniteListQuery';
 
-export const useUsers = (page = 1, limit = 10, search = '', role = 'all', status = 'all', sort = '') => {
+type ApiUser = Awaited<ReturnType<typeof getUsersList>>['data']['results'][number];
+
+/** The row shape both the desktop table and the mobile cards render. */
+const toUserRow = (u: ApiUser) => ({
+  id: u.id,
+  // Trim: a user with no names would otherwise yield a lone space,
+  // which renders as a blank cell rather than as missing data.
+  name: `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim(),
+  email: u.email,
+  role: u.is_superuser ? 'admin' : 'user',
+  is_active: u.is_active,
+  createdAt: new Date().toISOString(), // Mocking date since it's missing in new API
+});
+
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+const userListParams = (page: number, limit: number, search: string, role: string, status: string, sort: string): any => {
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  const apiParams: any = { page, paginate: limit, search };
+
+  if (role === 'admin') {
+    apiParams.is_superuser = true;
+  } else if (role === 'user') {
+    apiParams.is_superuser = false;
+  }
+
+  if (status === 'active') {
+    apiParams.is_active = true;
+  } else if (status === 'inactive') {
+    apiParams.is_active = false;
+  }
+
+  if (sort) {
+    apiParams.sort = sort;
+  }
+
+  return apiParams;
+};
+
+export const useUsers = (
+  page = 1,
+  limit = 10,
+  search = '',
+  role = 'all',
+  status = 'all',
+  sort = '',
+  options: { enabled?: boolean } = {}
+) => {
   const { accessToken } = useAuth();
+  const { enabled = true } = options;
   return useQuery({
     queryKey: ['users', { page, limit, search, role, status, sort }],
     queryFn: async () => {
       if (!accessToken) throw new Error('No access token');
-      
-      const apiParams: any = { page, paginate: limit, search };
-      
-      if (role === 'admin') {
-        apiParams.is_superuser = true;
-      } else if (role === 'user') {
-        apiParams.is_superuser = false;
-      }
 
-      if (status === 'active') {
-        apiParams.is_active = true;
-      } else if (status === 'inactive') {
-        apiParams.is_active = false;
-      }
+      const response = await getUsersList(
+        userListParams(page, limit, search, role, status, sort),
+        accessToken
+      );
 
-      if (sort) {
-        apiParams.sort = sort;
-      }
-
-      const response = await getUsersList(apiParams, accessToken);
-      
       return {
-        data: response.data.results.map(u => ({
-          id: u.id,
-          // Trim: a user with no names would otherwise yield a lone space,
-          // which renders as a blank cell rather than as missing data.
-          name: `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim(),
-          email: u.email,
-          role: u.is_superuser ? 'admin' : 'user',
-          is_active: u.is_active,
-          createdAt: new Date().toISOString(), // Mocking date since it's missing in new API
-        })),
+        data: response.data.results.map(toUserRow),
         meta: {
           total: response.data.count,
           totalPages: Math.ceil(response.data.count / limit),
         }
       };
     },
-    enabled: !!accessToken,
+    enabled: !!accessToken && enabled,
+  });
+};
+
+/** Mobile card list: same endpoint and filters, appended page by page. */
+export const useUsersInfinite = (
+  limit = 10,
+  search = '',
+  role = 'all',
+  status = 'all',
+  sort = '',
+  options: { enabled?: boolean } = {}
+) => {
+  const { accessToken } = useAuth();
+  const { enabled = true } = options;
+
+  return useInfiniteListQuery({
+    queryKey: ['users', 'infinite', { limit, search, role, status, sort }],
+    pageSize: limit,
+    enabled: !!accessToken && enabled,
+    fetchPage: async (page) => {
+      if (!accessToken) throw new Error('No access token');
+      const response = await getUsersList(
+        userListParams(page, limit, search, role, status, sort),
+        accessToken
+      );
+      return {
+        count: response.data.count,
+        results: response.data.results.map(toUserRow),
+      };
+    },
   });
 };
 

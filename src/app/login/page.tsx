@@ -82,11 +82,11 @@ export default function LoginPage() {
   if (isAuthenticated) return null;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-page p-4">
+    <div className="flex min-h-dvh items-center justify-center bg-page p-4 sm:p-6">
       <div className="w-full max-w-md overflow-hidden rounded-2xl border border-line bg-surface shadow-pop transition-all duration-300">
         {/* Saffron rule ties the sign-in card to the sidebar's wordmark. */}
         <div className="h-1 bg-gradient-to-r from-saffron via-gold to-gold-deep" />
-        <div className="p-8">
+        <div className="p-6 sm:p-8">
 
           {mode === "login" ? (
             <>
@@ -94,7 +94,7 @@ export default function LoginPage() {
                 <p className="mb-3 text-lg font-bold tracking-tight text-ink">
                   Divya <span className="text-gold-deep">Sadhana</span>
                 </p>
-                <h1 className="mb-2 text-3xl font-bold tracking-tight text-ink">
+                <h1 className="mb-2 text-2xl font-bold tracking-tight text-ink sm:text-3xl">
                   Welcome Back
                 </h1>
                 <p className="text-moon">Sign in to your admin dashboard</p>
@@ -109,7 +109,7 @@ export default function LoginPage() {
                       id="email"
                       type="email"
                       placeholder="admin@example.com"
-                      className="pl-10"
+                      className="h-11 pl-10"
                       {...registerLogin("email")}
                     />
                   </div>
@@ -128,13 +128,13 @@ export default function LoginPage() {
                       id="password"
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
-                      className="pl-10 pr-10"
+                      className="h-11 pl-10 pr-10"
                       {...registerLogin("password")}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-moon hover:text-charcoal focus:outline-none transition-colors"
+                      className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md text-moon transition-colors hover:text-charcoal focus:outline-none"
                       title={showPassword ? "Hide password" : "Show password"}
                     >
                       {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -156,7 +156,7 @@ export default function LoginPage() {
 
                 <Button
                   type="submit"
-                  className="w-full h-10 bg-gold-deep hover:bg-gold-deep"
+                  className="h-11 w-full bg-gold-deep hover:bg-gold-deep"
                   disabled={loginMutation.isPending}
                 >
                   {loginMutation.isPending ? "Logging in..." : "Log In"}
@@ -166,7 +166,7 @@ export default function LoginPage() {
           ) : (
             <>
               <div className="text-center mb-8">
-                <h1 className="text-3xl font-bold text-ink mb-2">
+                <h1 className="mb-2 text-2xl font-bold text-ink sm:text-3xl">
                   Reset Password
                 </h1>
                 <p className="text-moon">Enter your email to receive reset instructions</p>
@@ -181,7 +181,7 @@ export default function LoginPage() {
                       id="forgot-email"
                       type="email"
                       placeholder="admin@example.com"
-                      className="pl-10"
+                      className="h-11 pl-10"
                       {...registerForgot("email")}
                     />
                   </div>
@@ -192,7 +192,7 @@ export default function LoginPage() {
 
                 <Button
                   type="submit"
-                  className="w-full h-10 bg-gold-deep hover:bg-gold-deep"
+                  className="h-11 w-full bg-gold-deep hover:bg-gold-deep"
                   disabled={forgotMutation.isPending}
                 >
                   {forgotMutation.isPending ? "Sending..." : "Send Reset Instructions"}

@@ -61,7 +61,7 @@ export default function ViewPaymentPage() {
 
           {/* Hero: the amount is what this page is about. Royal rather than
               gold — a gold amount on a gold band has no figure/ground. */}
-          <div className="bg-gradient-to-br from-royal via-royal-soft to-royal-deep px-6 py-7 text-white">
+          <div className="bg-gradient-to-br from-royal via-royal-soft to-royal-deep px-4 py-6 text-white sm:px-6 sm:py-7">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-white/60">
@@ -103,7 +103,7 @@ export default function ViewPaymentPage() {
           </div>
 
           {/* References + who paid */}
-          <div className="grid grid-cols-1 gap-x-10 gap-y-6 px-6 py-5 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-x-10 gap-y-6 px-4 py-5 sm:px-6 lg:grid-cols-2">
             <div className="space-y-4">
               <SectionHeading icon={<ReceiptText className="h-3.5 w-3.5" />}>
                 Transaction Info
@@ -142,7 +142,7 @@ export default function ViewPaymentPage() {
 
           {/* What the payment is for */}
           {(orderObj || donationObj) && (
-            <div className="grid grid-cols-1 gap-x-10 gap-y-6 px-6 py-5 lg:grid-cols-2">
+            <div className="grid grid-cols-1 gap-x-10 gap-y-6 px-4 py-5 sm:px-6 lg:grid-cols-2">
               {orderObj && (
                 <div className="space-y-4">
                   <SectionHeading icon={<ShoppingBag className="h-3.5 w-3.5" />}>
@@ -225,7 +225,7 @@ export default function ViewPaymentPage() {
           )}
 
           {/* Timeline */}
-          <div className="bg-cream px-6 py-5">
+          <div className="bg-cream px-4 py-5 sm:px-6">
             <SectionHeading icon={<Clock className="h-3.5 w-3.5" />}>Timeline</SectionHeading>
             <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
               <Field label="Created At">

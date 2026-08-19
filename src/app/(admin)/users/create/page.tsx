@@ -30,7 +30,7 @@ export default function CreateUserPage() {
         title="Create New User"
       />
 
-      <div className="bg-surface rounded-xl shadow-sm border border-line p-6">
+      <div className="bg-surface rounded-2xl shadow-card border border-line p-4 sm:p-6">
         <UserForm 
           onSubmit={onSubmit}
           isPending={isPending}

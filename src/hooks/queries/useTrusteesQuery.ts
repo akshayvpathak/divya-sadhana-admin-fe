@@ -19,16 +19,26 @@ import {
 } from "@/services/territory.service";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
+import { useInfiniteListQuery } from "./useInfiniteListQuery";
 
-export const useTrusteesListQuery = (filters: {
+const TRUSTEES_PAGE_SIZE = 10;
+const TRUSTEE_COMMISSIONS_PAGE_SIZE = 10;
+
+export interface TrusteesListFilters {
   page?: number;
   page_size?: number;
   search?: string;
   is_active?: string;
   sort?: string;
   state_id?: string;
-} = {}) => {
+}
+
+export const useTrusteesListQuery = (
+  filters: TrusteesListFilters = {},
+  options: { enabled?: boolean } = {}
+) => {
   const { accessToken } = useAuth();
+  const { enabled = true } = options;
 
   return useQuery({
     queryKey: ["trustees", filters],
@@ -36,14 +46,42 @@ export const useTrusteesListQuery = (filters: {
       if (!accessToken) throw new Error("No access token");
       return getTrusteesList(accessToken, {
         page: filters.page ?? 1,
-        page_size: filters.page_size ?? 10,
+        page_size: filters.page_size ?? TRUSTEES_PAGE_SIZE,
         search: filters.search,
         is_active: filters.is_active,
         sort: filters.sort,
         state_id: filters.state_id,
       });
     },
-    enabled: !!accessToken,
+    enabled: !!accessToken && enabled,
+  });
+};
+
+/** Mobile card list: same endpoint and filters, appended page by page. */
+export const useTrusteesInfiniteQuery = (
+  filters: TrusteesListFilters = {},
+  options: { enabled?: boolean } = {}
+) => {
+  const { accessToken } = useAuth();
+  const { enabled = true } = options;
+  const pageSize = filters.page_size ?? TRUSTEES_PAGE_SIZE;
+
+  return useInfiniteListQuery({
+    queryKey: ["trustees", "infinite", { ...filters, page: undefined }],
+    pageSize,
+    enabled: !!accessToken && enabled,
+    fetchPage: async (page) => {
+      if (!accessToken) throw new Error("No access token");
+      const response = await getTrusteesList(accessToken, {
+        page,
+        page_size: pageSize,
+        search: filters.search,
+        is_active: filters.is_active,
+        sort: filters.sort,
+        state_id: filters.state_id,
+      });
+      return response.data;
+    },
   });
 };
 
@@ -62,9 +100,11 @@ export const useTrusteeDashboardQuery = (trusteeId: string | null) => {
 
 export const useTrusteeCommissionsQuery = (
   trusteeId: string | null,
-  filters: { status?: string; kind?: string; page?: number } = {}
+  filters: { status?: string; kind?: string; page?: number } = {},
+  options: { enabled?: boolean } = {}
 ) => {
   const { accessToken } = useAuth();
+  const { enabled = true } = options;
 
   return useQuery({
     queryKey: ["trustee-commissions", trusteeId, filters],
@@ -74,10 +114,36 @@ export const useTrusteeCommissionsQuery = (
         status: filters.status,
         kind: filters.kind,
         page: filters.page ?? 1,
-        page_size: 10,
+        page_size: TRUSTEE_COMMISSIONS_PAGE_SIZE,
       });
     },
-    enabled: !!accessToken && !!trusteeId,
+    enabled: !!accessToken && !!trusteeId && enabled,
+  });
+};
+
+/** Mobile card list on the trustee detail page. */
+export const useTrusteeCommissionsInfiniteQuery = (
+  trusteeId: string | null,
+  filters: { status?: string; kind?: string } = {},
+  options: { enabled?: boolean } = {}
+) => {
+  const { accessToken } = useAuth();
+  const { enabled = true } = options;
+
+  return useInfiniteListQuery({
+    queryKey: ["trustee-commissions", "infinite", trusteeId, filters],
+    pageSize: TRUSTEE_COMMISSIONS_PAGE_SIZE,
+    enabled: !!accessToken && !!trusteeId && enabled,
+    fetchPage: async (page) => {
+      if (!accessToken || !trusteeId) throw new Error("Missing required data");
+      const response = await getTrusteeCommissions(trusteeId, accessToken, {
+        status: filters.status,
+        kind: filters.kind,
+        page,
+        page_size: TRUSTEE_COMMISSIONS_PAGE_SIZE,
+      });
+      return response.data;
+    },
   });
 };
 

@@ -1,23 +1,27 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   useOrdersListQuery,
+  useOrdersInfiniteQuery,
   useExportOrdersCsvMutation,
   useShippingInfoQuery,
 } from '@/hooks/queries/useOrdersQuery';
-import { Search, Filter, Download, Truck } from 'lucide-react';
-import { ClearFiltersButton } from '@/components/common/ClearFiltersButton';
+import { Download, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { DataTable } from '@/components/common/DataTable/DataTable';
+import { ResponsiveDataView } from '@/components/common/ResponsiveDataView';
+import { ListToolbar, ToolbarFilter } from '@/components/common/ListToolbar';
 import { useOrderTableColumns } from '@/hooks/tables/useOrderTableColumns';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useIsCompact } from '@/hooks/useMediaQuery';
 import { DataTablePagination } from '@/components/common/DataTablePagination';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { orderStatusOptions, orderPaymentOptions, orderShippingOptions } from '@/components/ui/badges/badge-status';
+import {
+  orderStatusOptions,
+  orderPaymentOptions,
+  orderShippingOptions,
+} from '@/components/ui/badges/badge-status';
 import { PageHeader } from '@/components/common/PageHeader';
-import { Card, CardBand } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 
 export default function OrdersPage() {
   const [page, setPage] = useState(1);
@@ -44,10 +48,23 @@ export default function OrdersPage() {
     setSort('');
   };
 
-  const { data, isLoading } = useOrdersListQuery(page, debouncedSearch, sort, {
-    status: status === 'all' ? undefined : status,
-    payment_status: paymentStatus === 'all' ? undefined : paymentStatus,
-    shipping_status: shippingStatus === 'all' ? undefined : shippingStatus,
+  const filters = useMemo(
+    () => ({
+      status: status === 'all' ? undefined : status,
+      payment_status: paymentStatus === 'all' ? undefined : paymentStatus,
+      shipping_status: shippingStatus === 'all' ? undefined : shippingStatus,
+    }),
+    [status, paymentStatus, shippingStatus]
+  );
+
+  // Exactly one of the two runs: the table's page query above `lg`, the card
+  // list's infinite query below it.
+  const isCompact = useIsCompact();
+  const { data, isLoading } = useOrdersListQuery(page, debouncedSearch, sort, filters, {
+    enabled: isCompact === false,
+  });
+  const mobile = useOrdersInfiniteQuery(debouncedSearch, sort, filters, {
+    enabled: isCompact === true,
   });
 
   const { data: shippingInfo } = useShippingInfoQuery();
@@ -61,8 +78,47 @@ export default function OrdersPage() {
   const totalPages = data?.data?.count ? Math.ceil(data.data.count / 10) : 1;
   const columns = useOrderTableColumns();
 
+  const toolbarFilters: ToolbarFilter[] = [
+    {
+      key: 'status',
+      label: 'Order status',
+      value: status,
+      options: orderStatusOptions,
+      placeholder: 'All Statuses',
+      widthClass: 'w-[150px]',
+      onChange: (val) => {
+        setStatus(val);
+        setPage(1);
+      },
+    },
+    {
+      key: 'payment_status',
+      label: 'Payment status',
+      value: paymentStatus,
+      options: orderPaymentOptions,
+      placeholder: 'All Payment',
+      widthClass: 'w-[155px]',
+      onChange: (val) => {
+        setPaymentStatus(val);
+        setPage(1);
+      },
+    },
+    {
+      key: 'shipping_status',
+      label: 'Shipping status',
+      value: shippingStatus,
+      options: orderShippingOptions,
+      placeholder: 'All Shipping',
+      widthClass: 'w-[190px]',
+      onChange: (val) => {
+        setShippingStatus(val);
+        setPage(1);
+      },
+    },
+  ];
+
   return (
-    <div className="space-y-6 pb-8">
+    <div className="space-y-5 pb-8 sm:space-y-6">
       <PageHeader
         title="Orders"
         actions={
@@ -81,7 +137,7 @@ export default function OrdersPage() {
       {shippingInfo ? (
         <div className="flex items-start gap-3 rounded-xl border border-gold/25 bg-tint px-4 py-3 text-sm text-ink">
           <Truck className="mt-0.5 h-4 w-4 shrink-0 text-gold-press" />
-          <div>
+          <div className="min-w-0">
             <p className="font-semibold">Customer delivery estimate</p>
             <p className="mt-0.5 text-ink/80">
               {shippingInfo.delivery_estimate_text}
@@ -99,109 +155,42 @@ export default function OrdersPage() {
       ) : null}
 
       <Card>
-        <CardBand className="flex flex-col items-center justify-between gap-4 border-b border-line md:flex-row">
-          <div className="relative w-full max-w-sm flex-1">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-moon" />
-            <Input
-              placeholder="Search Orders..."
-              className="w-full bg-surface pl-9"
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-            />
-          </div>
+        <ListToolbar
+          search={{
+            value: search,
+            placeholder: 'Search Orders...',
+            onChange: (val) => {
+              setSearch(val);
+              setPage(1);
+            },
+          }}
+          filters={toolbarFilters}
+          onClear={clearAllFilters}
+          hasActiveFilters={hasActiveFilters}
+          sortColumns={columns}
+          sort={sort}
+          onSort={handleSort}
+        />
 
-          <div className="flex w-full flex-wrap items-center gap-2 sm:flex-nowrap md:w-auto">
-            <Filter className="h-4 w-4 shrink-0 text-moon" />
-            <Select
-              value={status}
-              onValueChange={(val) => {
-                setStatus(val || 'all');
-                setPage(1);
-              }}
-            >
-              <SelectTrigger className="w-[150px] bg-surface">
-                <SelectValue placeholder="All Statuses">
-                  {orderStatusOptions.find((o) => o.value === status)?.label || 'All Statuses'}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {orderStatusOptions.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={paymentStatus}
-              onValueChange={(val) => {
-                setPaymentStatus(val || 'all');
-                setPage(1);
-              }}
-            >
-              <SelectTrigger className="w-[155px] bg-surface">
-                <SelectValue placeholder="All Payment">
-                  {orderPaymentOptions.find((o) => o.value === paymentStatus)?.label ||
-                    'All Payment'}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {orderPaymentOptions.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={shippingStatus}
-              onValueChange={(val) => {
-                setShippingStatus(val || 'all');
-                setPage(1);
-              }}
-            >
-              <SelectTrigger className="w-[200px] bg-surface">
-                <SelectValue placeholder="All Shipping">
-                  {orderShippingOptions.find((o) => o.value === shippingStatus)?.label ||
-                    'All Shipping'}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {orderShippingOptions.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {hasActiveFilters && (
-              <ClearFiltersButton onClear={clearAllFilters} className="ml-auto" />
-            )}
-          </div>
-        </CardBand>
-
-        <DataTable
+        <ResponsiveDataView
           columns={columns}
           data={data?.data?.results || []}
           isLoading={isLoading}
           sort={sort}
           onSort={handleSort}
+          mobile={mobile}
           emptyMessage="No orders found"
+          pagination={
+            data?.data ? (
+              <DataTablePagination
+                currentPage={page}
+                totalPages={totalPages}
+                totalItems={data.data.count}
+                onPageChange={setPage}
+              />
+            ) : null
+          }
         />
-
-        {data?.data && (
-          <DataTablePagination
-            currentPage={page}
-            totalPages={totalPages}
-            totalItems={data.data.count}
-            onPageChange={setPage}
-          />
-        )}
       </Card>
     </div>
   );

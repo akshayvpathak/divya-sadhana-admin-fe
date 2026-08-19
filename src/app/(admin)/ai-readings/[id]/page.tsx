@@ -122,7 +122,7 @@ export default function AiReadingDetailPage() {
 
   if (error) {
     return (
-      <div className="max-w-6xl mx-auto p-8 text-center bg-danger-tint rounded-2xl border border-danger/25">
+      <div className="mx-auto max-w-6xl rounded-2xl border border-danger/25 bg-danger-tint p-6 text-center sm:p-8">
         <h2 className="text-xl font-bold text-danger-ink">Error Loading Reading Details</h2>
         <p className="text-danger mt-2">{error instanceof Error ? error.message : 'Unknown error'}</p>
         <Link href="/ai-readings" className="mt-4 inline-block text-gold-press font-medium hover:underline">
@@ -178,7 +178,7 @@ export default function AiReadingDetailPage() {
                 reading.processing_completed_at,
               );
               return (
-                <div className="bg-surface p-6 rounded-2xl border border-line shadow-sm">
+                <div className="bg-surface p-4 sm:p-6 rounded-2xl border border-line shadow-card">
                   <div className="flex items-center gap-2 mb-4 text-moon">
                     <AlertTriangle className="h-4 w-4 text-danger" />
                     <span className="text-xs font-bold uppercase tracking-wider">
@@ -237,7 +237,7 @@ export default function AiReadingDetailPage() {
             })()}
 
             <div className="bg-surface rounded-2xl border border-line shadow-sm overflow-hidden">
-              <div className="p-6 border-b border-line bg-cream flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div className="flex flex-col items-start justify-between gap-4 border-b border-line bg-cream p-4 sm:flex-row sm:items-center sm:p-6">
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-5 w-5 text-gold-press" />
                   <div>
@@ -249,7 +249,7 @@ export default function AiReadingDetailPage() {
                 </div>
                 
                 {reading.report && (
-                  <div className="flex items-center gap-3">
+                  <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:gap-3">
                     <div className="flex bg-line p-1 rounded-xl">
                       <button
                         onClick={() => setActiveTab('full')}
@@ -292,7 +292,7 @@ export default function AiReadingDetailPage() {
                 )}
               </div>
 
-              <div className="p-6">
+              <div className="p-4 sm:p-6">
                 {downloadError && (
                   <div className="mb-4 bg-danger-tint text-danger-ink p-3 rounded-lg border border-danger/25 text-xs flex gap-2 items-start">
                     <Info className="h-4 w-4 shrink-0 mt-0.5" />
@@ -452,7 +452,7 @@ export default function AiReadingDetailPage() {
             
             {/* User Inputs Card */}
             {reading.input_answers && Object.keys(reading.input_answers).length > 0 && (
-              <div className="bg-surface p-6 rounded-2xl border border-line shadow-sm">
+              <div className="bg-surface p-4 sm:p-6 rounded-2xl border border-line shadow-card">
                 <div className="flex items-center gap-2 mb-4 text-moon">
                   <Sparkles className="h-4 w-4 text-gold-deep" />
                   <span className="text-xs font-bold uppercase tracking-wider">User Inputs</span>
@@ -469,7 +469,7 @@ export default function AiReadingDetailPage() {
             )}
 
             {/* Actual Uploaded Image Card (Responsive 3:4 frame & download functionality) */}
-            <div className="bg-surface p-6 rounded-2xl border border-line shadow-sm flex flex-col justify-between">
+            <div className="bg-surface p-4 sm:p-6 rounded-2xl border border-line shadow-card flex flex-col justify-between">
               <div>
                 <div className="flex items-center gap-2 mb-4 text-moon">
                   <ImageIcon className="h-4 w-4" />

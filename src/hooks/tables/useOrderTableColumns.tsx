@@ -32,12 +32,15 @@ export const useOrderTableColumns = (): ColumnConfig<OrderRow>[] => {
       header: 'Order Number',
       sortable: true,
       cellClassName: 'font-medium',
+      mobile: 'title',
+      mobileLabel: 'Order',
     },
     {
       id: 'user',
       accessorKey: 'user',
       header: 'User',
       sortable: true,
+      mobile: 'subtitle',
       renderCell: (row) =>
         typeof row.user === 'string'
           ? row.user
@@ -52,6 +55,7 @@ export const useOrderTableColumns = (): ColumnConfig<OrderRow>[] => {
       sortable: true,
       headerAlign: 'center',
       cellAlign: 'center',
+      mobile: 'status',
       renderCell: (row) => <StatusBadge status={row.status || ''} type="order_status" />,
     },
     {
@@ -61,6 +65,7 @@ export const useOrderTableColumns = (): ColumnConfig<OrderRow>[] => {
       sortable: true,
       headerAlign: 'center',
       cellAlign: 'center',
+      mobile: 'status',
       renderCell: (row) => (
         <StatusBadge status={row.payment_status || ''} type="payment_status" />
       ),
@@ -72,6 +77,9 @@ export const useOrderTableColumns = (): ColumnConfig<OrderRow>[] => {
       sortable: true,
       headerAlign: 'center',
       cellAlign: 'center',
+      // A third badge in the card header would crowd it; fulfilment detail sits
+      // behind "More details" with the courier and tracking number.
+      mobile: 'detail',
       renderCell: (row) => (
         <StatusBadge status={row.shipping_status || ''} type="shipping_status" />
       ),
@@ -79,6 +87,7 @@ export const useOrderTableColumns = (): ColumnConfig<OrderRow>[] => {
     {
       id: 'courier',
       header: 'Courier',
+      mobile: 'detail',
       renderCell: (row) => {
         const label =
           row.courier_name ||
@@ -91,6 +100,7 @@ export const useOrderTableColumns = (): ColumnConfig<OrderRow>[] => {
     {
       id: 'tracking_number',
       header: 'Tracking',
+      mobile: 'detail',
       renderCell: (row) =>
         row.tracking_number ? (
           <span className="font-mono text-xs text-ink">{row.tracking_number}</span>
@@ -104,6 +114,8 @@ export const useOrderTableColumns = (): ColumnConfig<OrderRow>[] => {
       header: 'Total Amount',
       sortable: true,
       cellClassName: 'font-medium',
+      mobile: 'field',
+      mobileLabel: 'Total',
       renderCell: (row) =>
         row.total_amount !== undefined ? formatINR(row.total_amount) : null,
     },
@@ -113,11 +125,14 @@ export const useOrderTableColumns = (): ColumnConfig<OrderRow>[] => {
       header: 'Order Date',
       sortable: true,
       cellClassName: 'whitespace-nowrap',
+      mobile: 'field',
+      mobileLabel: 'Ordered',
       renderCell: (row) => <DateTimeCell value={row.created_at} />,
     },
     {
       id: 'actions',
       header: 'Actions',
+      mobile: 'actions',
       headerAlign: 'center',
       cellAlign: 'center',
       renderCell: (row) => (

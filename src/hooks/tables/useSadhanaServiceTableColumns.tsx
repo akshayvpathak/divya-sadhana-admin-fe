@@ -36,6 +36,21 @@ export const useSadhanaServiceTableColumns = ({
       accessorKey: 'name',
       header: 'Service',
       sortable: true,
+      mobile: 'title',
+      renderMobile: (row) => (
+        <span className="flex items-center gap-3">
+          <span className="relative block h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-line bg-cosmos">
+            {row.cover_image_url ? (
+              <Image src={row.cover_image_url} alt={row.name} fill className="object-cover" unoptimized />
+            ) : (
+              <span className="flex h-full w-full items-center justify-center">
+                <ImageIcon className="h-5 w-5 text-line" />
+              </span>
+            )}
+          </span>
+          <span className="min-w-0 flex-1 break-words">{row.name}</span>
+        </span>
+      ),
       renderCell: (row) => (
         <div className="flex items-center gap-3">
           <div className="relative h-10 w-10 rounded-md overflow-hidden bg-cosmos shrink-0 border border-line">
@@ -58,11 +73,13 @@ export const useSadhanaServiceTableColumns = ({
       sortable: true,
       headerAlign: 'center',
       cellAlign: 'center',
+      mobile: 'status',
       renderCell: (row) => <StatusBadge status={row.category} type="service_category" />,
     },
     {
       id: 'pricing',
       header: 'Pricing',
+      mobile: 'field',
       cellClassName: 'font-medium text-ink',
       renderCell: (row) => priceCell(row),
     },
@@ -73,6 +90,7 @@ export const useSadhanaServiceTableColumns = ({
       sortable: true,
       headerAlign: 'center',
       cellAlign: 'center',
+      mobile: 'status',
       renderCell: (row) => <StatusBadge status={row.is_active} type="active" />,
     },
     {
@@ -81,11 +99,14 @@ export const useSadhanaServiceTableColumns = ({
       header: 'Order',
       sortable: true,
       cellClassName: 'text-moon',
+      mobile: 'detail',
+      mobileLabel: 'Display order',
       renderCell: (row) => row.display_order ?? 0,
     },
     {
       id: 'actions',
       header: 'Actions',
+      mobile: 'actions',
       headerAlign: 'center',
       cellAlign: 'center',
       renderCell: (row) => (

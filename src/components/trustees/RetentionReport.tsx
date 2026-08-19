@@ -85,7 +85,7 @@ export function RetentionReport() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-line bg-surface p-4 shadow-sm">
+      <div className="rounded-2xl border border-line bg-surface p-4 shadow-card">
         <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-charcoal">
           <Filter className="h-4 w-4 text-moon" />
           Filters
@@ -181,16 +181,16 @@ export function RetentionReport() {
       </div>
 
       {summaryLoading ? (
-        <div className="rounded-xl border border-line bg-surface p-8 text-center text-sm text-moon">
+        <div className="rounded-2xl border border-line bg-surface p-6 text-center text-sm text-moon sm:p-8">
           Loading retention summary…
         </div>
       ) : summaryError ? (
-        <div className="rounded-xl border border-danger/25 bg-danger-tint p-6 text-sm text-danger-ink">
+        <div className="rounded-2xl border border-danger/25 bg-danger-tint p-4 text-sm text-danger-ink sm:p-6">
           {summaryError instanceof Error ? summaryError.message : 'Failed to load retention'}
         </div>
       ) : (
         <>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             <Stat label="Pool" value={formatINR(summary?.pool_amount)} />
             <Stat label="Paid to network" value={formatINR(summary?.paid_to_network_amount)} tone="green" />
             <Stat label="Retained by Admin" value={formatINR(summary?.retained_by_admin_amount)} tone="amber" />
@@ -276,8 +276,8 @@ export function RetentionReport() {
         </>
       )}
 
-      <div className="rounded-xl border border-line bg-surface shadow-sm">
-        <div className="flex items-center justify-between border-b border-line px-4 py-3">
+      <div className="overflow-hidden rounded-2xl border border-line bg-surface shadow-card">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3">
           <h3 className="text-sm font-semibold text-ink">Entry drilldown</h3>
           <button
             type="button"
@@ -296,7 +296,85 @@ export function RetentionReport() {
         ) : entries.length === 0 ? (
           <p className="px-4 py-6 text-sm text-moon">No retention entries for these filters.</p>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          {/* Phones and tablets get a card per entry; the eight-column table
+              below only makes sense once there is room for all of it. */}
+          <ul className="grid gap-3 p-4 md:grid-cols-2 lg:hidden">
+            {entries.map((row) => (
+              <li
+                key={row.id}
+                className="rounded-xl border border-line bg-surface p-3.5 shadow-card"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="break-words text-sm font-semibold text-ink">
+                      {row.source_reference || row.sale_id || '—'}
+                    </p>
+                    <p className="mt-0.5 text-xs text-moon">
+                      {[row.source_kind, KIND_LABEL[row.kind ?? ''] ?? row.kind]
+                        .filter(Boolean)
+                        .join(' · ') || '—'}
+                    </p>
+                  </div>
+                  {row.status ? (
+                    <StatusBadge status={row.status} type="commission_status" />
+                  ) : null}
+                </div>
+
+                <dl className="mt-3 flex flex-col gap-2 border-t border-line/70 pt-3 text-sm">
+                  <div className="flex items-start justify-between gap-3">
+                    <dt className="text-[11px] font-bold uppercase tracking-wide text-moon">
+                      Amount
+                    </dt>
+                    <dd className="text-right font-medium tabular-nums text-ink">
+                      {formatINR(row.amount)}
+                      {row.percent != null ? (
+                        <span className="ml-1 text-xs font-normal text-moon">
+                          ({row.percent}%)
+                        </span>
+                      ) : null}
+                    </dd>
+                  </div>
+                  <div className="flex items-start justify-between gap-3">
+                    <dt className="text-[11px] font-bold uppercase tracking-wide text-moon">
+                      Territory
+                    </dt>
+                    <dd className="text-right text-charcoal">
+                      {[row.state_name, row.district_name].filter(Boolean).join(' · ') || '—'}
+                    </dd>
+                  </div>
+                  <div className="flex items-start justify-between gap-3">
+                    <dt className="text-[11px] font-bold uppercase tracking-wide text-moon">
+                      Beneficiary
+                    </dt>
+                    <dd className="text-right text-charcoal">
+                      {row.beneficiary_name || row.beneficiary || '—'}
+                    </dd>
+                  </div>
+                  <div className="flex items-start justify-between gap-3">
+                    <dt className="text-[11px] font-bold uppercase tracking-wide text-moon">
+                      Reason
+                    </dt>
+                    <dd className="text-right text-charcoal">
+                      {row.retention_reason
+                        ? REASON_LABEL[row.retention_reason] ?? row.retention_reason
+                        : '—'}
+                    </dd>
+                  </div>
+                  <div className="flex items-start justify-between gap-3">
+                    <dt className="text-[11px] font-bold uppercase tracking-wide text-moon">
+                      Date
+                    </dt>
+                    <dd className="text-right text-charcoal">
+                      {row.created_at ? <DateTimeCell value={row.created_at} /> : '—'}
+                    </dd>
+                  </div>
+                </dl>
+              </li>
+            ))}
+          </ul>
+
+          <div className="custom-scrollbar hidden overflow-x-auto lg:block">
             <table className="w-full min-w-[900px] text-sm">
               <thead>
                 <tr className="bg-cream text-left text-xs uppercase tracking-wide text-moon">
@@ -351,6 +429,7 @@ export function RetentionReport() {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </div>
     </div>
@@ -373,9 +452,11 @@ function Stat({
         ? 'border-warning/25 bg-warning-tint'
         : 'border-line bg-surface';
   return (
-    <div className={`rounded-xl border p-4 shadow-sm ${toneClass}`}>
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-moon">{label}</p>
-      <p className="mt-1 text-2xl font-bold tabular-nums text-ink">{value}</p>
+    <div className={`rounded-2xl border p-3.5 shadow-card sm:p-4 ${toneClass}`}>
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-moon sm:text-[11px]">
+        {label}
+      </p>
+      <p className="mt-1 text-xl font-bold tabular-nums text-ink sm:text-2xl">{value}</p>
     </div>
   );
 }

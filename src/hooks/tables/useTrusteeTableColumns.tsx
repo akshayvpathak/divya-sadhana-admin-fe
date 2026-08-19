@@ -51,6 +51,19 @@ export const useTrusteeTableColumns = ({
       sortable: true,
       sortKey: 'name',
       cellClassName: 'whitespace-normal',
+      mobile: 'title',
+      renderMobile: (row) => {
+        const name = trusteeDisplayName(row);
+        const email = row.user_email || row.email || '';
+        return (
+          <span className="block">
+            <span className="block break-words">{name}</span>
+            {email ? (
+              <span className="mt-0.5 block break-all text-xs font-normal text-moon">{email}</span>
+            ) : null}
+          </span>
+        );
+      },
       renderCell: (row) => {
         const name = trusteeDisplayName(row);
         const email = row.user_email || row.email || '';
@@ -70,6 +83,7 @@ export const useTrusteeTableColumns = ({
     {
       id: 'role',
       header: 'Role',
+      mobile: 'status',
       headerAlign: 'center',
       cellAlign: 'center',
       headerClassName: 'min-w-[240px]',
@@ -92,6 +106,8 @@ export const useTrusteeTableColumns = ({
       id: 'referral_code',
       accessorKey: 'referral_code',
       header: 'Code',
+      mobile: 'field',
+      mobileLabel: 'Referral code',
       renderCell: (row) =>
         row.referral_code ? (
           <span className="inline-flex items-center rounded-md bg-cosmos px-2 py-1 font-mono text-xs font-medium text-charcoal ring-1 ring-inset ring-line/80">
@@ -105,6 +121,8 @@ export const useTrusteeTableColumns = ({
       id: 'commission_percent',
       accessorKey: 'commission_percent',
       header: 'Comm %',
+      mobile: 'field',
+      mobileLabel: 'Commission',
       headerAlign: 'right',
       cellAlign: 'right',
       cellClassName: 'font-semibold tabular-nums text-ink',
@@ -117,6 +135,7 @@ export const useTrusteeTableColumns = ({
       id: 'territory',
       header: 'Territory',
       cellClassName: 'whitespace-normal',
+      mobile: 'field',
       renderCell: (row) => {
         const labels = getTerritory(row);
         if (!labels.length) {
@@ -158,11 +177,13 @@ export const useTrusteeTableColumns = ({
       sortKey: 'is_active',
       headerAlign: 'center',
       cellAlign: 'center',
+      mobile: 'status',
       renderCell: (row) => <StatusBadge status={row.is_active} type="active" />,
     },
     {
       id: 'actions',
       header: 'Actions',
+      mobile: 'actions',
       headerAlign: 'center',
       cellAlign: 'center',
       renderCell: (row) => (

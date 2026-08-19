@@ -54,7 +54,7 @@ export function ProductDetailView({ productId }: { productId: string }) {
   return (
     <div className="space-y-6">
       <Card divided>
-        <div className="grid grid-cols-1 gap-6 p-6 lg:grid-cols-[minmax(0,380px)_1fr]">
+        <div className="grid grid-cols-1 gap-6 p-4 sm:p-6 lg:grid-cols-[minmax(0,380px)_1fr]">
           <ProductGallery images={images} alt={product.name || 'Product'} />
 
           <div className="min-w-0 space-y-4">
@@ -74,11 +74,11 @@ export function ProductDetailView({ productId }: { productId: string }) {
               </div>
             </div>
 
-            <p className="text-3xl font-black tracking-tight text-gold-press">
+            <p className="text-2xl font-black tracking-tight text-gold-press sm:text-3xl">
               {priceLabel}
             </p>
 
-            <dl className="grid grid-cols-2 gap-4 border-t border-line/60 pt-4">
+            <dl className="grid grid-cols-2 gap-4 border-t border-line/60 pt-4 [&_dd]:break-words">
               <Field label="Stock">
                 <span className="tabular-nums">{product.stock}</span>
               </Field>
@@ -128,7 +128,7 @@ export function ProductDetailView({ productId }: { productId: string }) {
 
         {product.has_variants && (
           <CardSection className="px-0 pb-0">
-            <div className="px-6">
+            <div className="px-4 sm:px-6">
               <SectionHeading icon={<Layers className="h-3.5 w-3.5" />}>
                 Variants
               </SectionHeading>
@@ -142,13 +142,13 @@ export function ProductDetailView({ productId }: { productId: string }) {
         {/* SEO is reference data, not something an operator reads every visit. */}
         <CardBand className="px-0 py-0">
           <details className="group">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-6 py-4">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-4 sm:px-6">
               <SectionHeading icon={<Search className="h-3.5 w-3.5" />}>
                 Search engine listing
               </SectionHeading>
               <ChevronDown className="h-4 w-4 text-moon transition-transform group-open:rotate-180" />
             </summary>
-            <div className="grid grid-cols-1 gap-4 border-t border-line/60 px-6 py-5 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 border-t border-line/60 px-4 py-5 sm:grid-cols-2 sm:px-6">
               <Field label="Meta title">{product.meta_title}</Field>
               <Field label="Meta description">{product.meta_description}</Field>
               <Field label="Meta keywords">{product.meta_keywords}</Field>

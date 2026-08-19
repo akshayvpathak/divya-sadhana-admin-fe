@@ -12,31 +12,66 @@ import {
 } from "@/services/service-batches.service";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
+import { useInfiniteListQuery } from "./useInfiniteListQuery";
+
+const SERVICE_BATCHES_PAGE_SIZE = 10;
+
+export interface ServiceBatchesListFilters {
+  page?: number;
+  service?: string;
+  search?: string;
+  ordering?: string;
+}
 
 const notifyError = (fallback: string) => (error: unknown) => {
   toast.error(error instanceof Error ? error.message : fallback);
 };
 
-export const useServiceBatchesListQuery = (filters: {
-  page?: number;
-  service?: string;
-  search?: string;
-  ordering?: string;
-}) => {
+export const useServiceBatchesListQuery = (
+  filters: ServiceBatchesListFilters,
+  options: { enabled?: boolean } = {}
+) => {
   const { accessToken } = useAuth();
+  const { enabled = true } = options;
   return useQuery({
     queryKey: ["service-batches", filters],
     queryFn: async () => {
       if (!accessToken) throw new Error("No access token");
       return getServiceBatchesList(accessToken, {
         page: filters.page ?? 1,
-        paginate: 10,
+        paginate: SERVICE_BATCHES_PAGE_SIZE,
         service: filters.service,
         search: filters.search ?? "",
         ordering: filters.ordering,
       });
     },
-    enabled: !!accessToken,
+    enabled: !!accessToken && enabled,
+  });
+};
+
+/** Mobile card list: same endpoint and filters, appended page by page. */
+export const useServiceBatchesInfiniteQuery = (
+  filters: ServiceBatchesListFilters,
+  options: { enabled?: boolean } = {}
+) => {
+  const { accessToken } = useAuth();
+  const { enabled = true } = options;
+
+  return useInfiniteListQuery({
+    queryKey: ["service-batches", "infinite", { ...filters, page: undefined }],
+    pageSize: SERVICE_BATCHES_PAGE_SIZE,
+    enabled: !!accessToken && enabled,
+    fetchPage: async (page) => {
+      if (!accessToken) throw new Error("No access token");
+      const response = await getServiceBatchesList(accessToken, {
+        page,
+        paginate: SERVICE_BATCHES_PAGE_SIZE,
+        service: filters.service,
+        search: filters.search ?? "",
+        ordering: filters.ordering,
+      });
+      return response.data;
+    },
   });
 };
 

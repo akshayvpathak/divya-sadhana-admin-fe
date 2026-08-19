@@ -27,6 +27,10 @@ export const useUserTableColumns = ({
       header: 'Name',
       sortable: true,
       sortKey: 'first_name',
+      mobile: 'title',
+      // The avatar earns its place in a 220px table cell; in a full-width card
+      // it is just an indent in front of the headline.
+      renderMobile: (row) => (row.name?.trim() ? row.name : null),
       // Returning null for a nameless user lets the table's N/A chip stand in.
       renderCell: (row) =>
         row.name?.trim() ? (
@@ -42,6 +46,7 @@ export const useUserTableColumns = ({
       header: 'Email',
       sortable: true,
       cellClassName: 'text-moon',
+      mobile: 'subtitle',
     },
     {
       id: 'role',
@@ -51,6 +56,7 @@ export const useUserTableColumns = ({
       sortKey: 'is_active',
       headerAlign: 'center',
       cellAlign: 'center',
+      mobile: 'status',
       renderCell: (row) => <StatusBadge status={row.role} type="role" />,
     },
     {
@@ -61,6 +67,7 @@ export const useUserTableColumns = ({
       sortKey: 'is_active',
       headerAlign: 'center',
       cellAlign: 'center',
+      mobile: 'status',
       renderCell: (row) => <StatusBadge status={row.is_active} type="active" />,
     },
     // {
@@ -74,6 +81,7 @@ export const useUserTableColumns = ({
     {
       id: 'actions',
       header: 'Actions',
+      mobile: 'actions',
       headerAlign: 'center',
       cellAlign: 'center',
       renderCell: (row) => (

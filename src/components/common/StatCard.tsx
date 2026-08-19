@@ -38,15 +38,15 @@ export function StatCard({
   return (
     <div
       className={cn(
-        'rounded-2xl border border-line bg-surface px-4 py-3.5 shadow-card',
+        'rounded-2xl border border-line bg-surface px-3.5 py-3 shadow-card sm:px-4 sm:py-3.5',
         className
       )}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5 sm:gap-3">
         {icon && (
           <div
             className={cn(
-              'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl',
+              'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl sm:h-10 sm:w-10',
               TONES[tone]
             )}
           >
@@ -54,13 +54,15 @@ export function StatCard({
           </div>
         )}
         <div className="min-w-0">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-moon">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-moon sm:text-[11px]">
             {label}
           </p>
           {loading ? (
             <Skeleton className="mt-1 h-6 w-16" />
           ) : (
-            <p className="text-xl font-semibold tabular-nums text-ink">{value}</p>
+            <p className="truncate text-lg font-semibold tabular-nums text-ink sm:text-xl">
+              {value}
+            </p>
           )}
           {hint && <p className="mt-0.5 text-xs text-moon">{hint}</p>}
         </div>

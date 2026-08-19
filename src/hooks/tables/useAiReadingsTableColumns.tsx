@@ -36,6 +36,17 @@ export const useAiReadingsTableColumns = (): ColumnConfig<AiReadingRow>[] => {
       accessorKey: 'user__email',
       header: 'User',
       sortable: true,
+      mobile: 'title',
+      // The whole card already carries a View action, so the card headline is
+      // plain text rather than a second link into the same record.
+      renderMobile: (row) => (
+        <span className="block">
+          <span className="block break-words">{row.user?.full_name || 'Unknown'}</span>
+          <span className="mt-0.5 block break-all text-xs font-normal text-moon">
+            {row.user?.email || 'N/A'}
+          </span>
+        </span>
+      ),
       renderCell: (row) => (
         <Link href={`/ai-readings/${row.id}`} className="flex flex-col group">
           <span className="font-medium text-ink group-hover:text-gold-press group-hover:underline">{row.user?.full_name || 'Unknown'}</span>
@@ -48,6 +59,15 @@ export const useAiReadingsTableColumns = (): ColumnConfig<AiReadingRow>[] => {
       accessorKey: 'service_name',
       header: 'Service',
       sortable: true,
+      mobile: 'field',
+      renderMobile: (row) => (
+        <span className="block">
+          <span className="block font-medium text-ink">{row.service_name}</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-moon">
+            {row.service_kind?.replace('_', ' ')}
+          </span>
+        </span>
+      ),
       renderCell: (row) => (
         <div className="flex flex-col">
           <span className="font-medium text-ink">{row.service_name}</span>
@@ -58,6 +78,7 @@ export const useAiReadingsTableColumns = (): ColumnConfig<AiReadingRow>[] => {
     {
       id: 'price',
       header: 'Price',
+      mobile: 'field',
       renderCell: (row) => (
         <span className="font-medium">
           {row.report_unlock_price} <span className="text-xs text-moon uppercase font-bold">{row.currency}</span>
@@ -71,6 +92,7 @@ export const useAiReadingsTableColumns = (): ColumnConfig<AiReadingRow>[] => {
       sortable: true,
       headerAlign: 'center',
       cellAlign: 'center',
+      mobile: 'status',
       // Why it failed, inline — so a run of pre-check rejections is visible
       // without opening every row.
       renderCell: (row) => {
@@ -95,11 +117,14 @@ export const useAiReadingsTableColumns = (): ColumnConfig<AiReadingRow>[] => {
       header: 'Created Date',
       sortable: true,
       cellClassName: 'whitespace-nowrap',
+      mobile: 'field',
+      mobileLabel: 'Created',
       renderCell: (row) => <DateTimeCell value={row.created_at} />,
     },
     {
       id: 'actions',
       header: 'Actions',
+      mobile: 'actions',
       headerAlign: 'center',
       cellAlign: 'center',
       renderCell: (row) => (

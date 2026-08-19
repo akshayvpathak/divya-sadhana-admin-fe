@@ -31,7 +31,7 @@ export default function CreateCategoryPage() {
         title="Create New Category"
       />
 
-      <div className="bg-surface rounded-xl shadow-sm border border-line p-6">
+      <div className="bg-surface rounded-2xl shadow-card border border-line p-4 sm:p-6">
         <CategoryForm 
           onSubmit={onSubmit}
           isPending={isPending}

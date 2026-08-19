@@ -23,6 +23,15 @@ export const useServiceBookingTableColumns = (): ColumnConfig<ServiceBookingRow>
       accessorKey: 'booking_number',
       header: 'Booking',
       sortable: true,
+      mobile: 'title',
+      renderMobile: (row) => (
+        <span className="block">
+          <span className="block break-words">{row.service_name ?? '—'}</span>
+          <span className="mt-0.5 block font-mono text-xs font-normal text-moon">
+            {row.booking_number}
+          </span>
+        </span>
+      ),
       renderCell: (row) => (
         <div className="flex flex-col">
           <span className="font-medium">{row.service_name ?? '—'}</span>
@@ -34,6 +43,7 @@ export const useServiceBookingTableColumns = (): ColumnConfig<ServiceBookingRow>
       id: 'booker_name',
       accessorKey: 'booker_name',
       header: 'Booker',
+      mobile: 'field',
       renderCell: (row) => row.booker_name ?? null,
     },
     {
@@ -42,6 +52,7 @@ export const useServiceBookingTableColumns = (): ColumnConfig<ServiceBookingRow>
       header: 'Amount',
       sortable: true,
       cellClassName: 'font-medium text-ink',
+      mobile: 'field',
       renderCell: (row) => formatINR(row.amount),
     },
     {
@@ -51,6 +62,7 @@ export const useServiceBookingTableColumns = (): ColumnConfig<ServiceBookingRow>
       sortable: true,
       headerAlign: 'center',
       cellAlign: 'center',
+      mobile: 'status',
       renderCell: (row) => <StatusBadge status={row.status} type="service_booking_status" />,
     },
     {
@@ -58,6 +70,7 @@ export const useServiceBookingTableColumns = (): ColumnConfig<ServiceBookingRow>
       accessorKey: 'scheduled_at',
       header: 'Muhurat',
       cellClassName: 'whitespace-nowrap',
+      mobile: 'field',
       renderCell: (row) => <DateTimeCell value={row.scheduled_at} />,
     },
     {
@@ -66,11 +79,13 @@ export const useServiceBookingTableColumns = (): ColumnConfig<ServiceBookingRow>
       header: 'Created',
       sortable: true,
       cellClassName: 'whitespace-nowrap',
+      mobile: 'detail',
       renderCell: (row) => <DateTimeCell value={row.created_at} />,
     },
     {
       id: 'actions',
       header: 'Actions',
+      mobile: 'actions',
       headerAlign: 'center',
       cellAlign: 'center',
       renderCell: (row) => (

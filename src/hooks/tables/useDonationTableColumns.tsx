@@ -25,6 +25,7 @@ export const useDonationTableColumns = (): ColumnConfig<DonationRow>[] => {
       header: 'Reference',
       sortable: true,
       cellClassName: 'font-medium text-xs text-moon',
+      mobile: 'detail',
       // null rather than '-' so the table's shared N/A chip stands in.
       renderCell: (row) => row.donation_number || null,
     },
@@ -33,6 +34,7 @@ export const useDonationTableColumns = (): ColumnConfig<DonationRow>[] => {
       accessorKey: 'donor_name',
       header: 'Donor',
       sortable: true,
+      mobile: 'title',
     },
     {
       id: 'campaign',
@@ -40,6 +42,7 @@ export const useDonationTableColumns = (): ColumnConfig<DonationRow>[] => {
       header: 'Campaign',
       sortable: true,
       cellClassName: 'text-charcoal',
+      mobile: 'subtitle',
       renderCell: (row) => {
         if (row.campaign_title) {
           return row.campaign_title;
@@ -60,6 +63,7 @@ export const useDonationTableColumns = (): ColumnConfig<DonationRow>[] => {
       header: 'Amount',
       sortable: true,
       cellClassName: 'font-semibold tabular-nums',
+      mobile: 'field',
       renderCell: (row) => (row.amount !== undefined ? formatINR(row.amount) : null),
     },
     {
@@ -69,6 +73,7 @@ export const useDonationTableColumns = (): ColumnConfig<DonationRow>[] => {
       sortable: true,
       headerAlign: 'center',
       cellAlign: 'center',
+      mobile: 'status',
       renderCell: (row) => <StatusBadge status={row.status || ''} type="transaction_status" />,
     },
     {
@@ -77,6 +82,8 @@ export const useDonationTableColumns = (): ColumnConfig<DonationRow>[] => {
       header: 'Date',
       sortable: true,
       cellClassName: 'text-moon whitespace-nowrap',
+      mobile: 'field',
+      mobileLabel: 'Paid on',
       renderCell: (row) => <DateTimeCell value={row.paid_at} />,
     },
   ];

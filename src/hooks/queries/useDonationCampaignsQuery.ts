@@ -12,12 +12,11 @@ import {
 } from "@/services/donation-campaigns.service";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
+import { useInfiniteListQuery } from "./useInfiniteListQuery";
 
-const notifyError = (fallback: string) => (error: unknown) => {
-  toast.error(error instanceof Error ? error.message : fallback);
-};
+const CAMPAIGNS_PAGE_SIZE = 10;
 
-export const useDonationCampaignsListQuery = (filters: {
+export interface DonationCampaignsListFilters {
   page?: number;
   search?: string;
   status?: string;
@@ -26,8 +25,18 @@ export const useDonationCampaignsListQuery = (filters: {
   target_amount_max?: string;
   ends_at?: string;
   sort?: string;
-}) => {
+}
+
+const notifyError = (fallback: string) => (error: unknown) => {
+  toast.error(error instanceof Error ? error.message : fallback);
+};
+
+export const useDonationCampaignsListQuery = (
+  filters: DonationCampaignsListFilters,
+  options: { enabled?: boolean } = {}
+) => {
   const { accessToken } = useAuth();
+  const { enabled = true } = options;
 
   return useQuery({
     queryKey: ["donation-campaigns", filters],
@@ -35,7 +44,7 @@ export const useDonationCampaignsListQuery = (filters: {
       if (!accessToken) throw new Error("No access token");
       return getDonationCampaignsList(accessToken, {
         page: filters.page ?? 1,
-        page_size: 10,
+        page_size: CAMPAIGNS_PAGE_SIZE,
         search: filters.search ?? "",
         status: filters.status,
         is_active: filters.is_active,
@@ -45,7 +54,37 @@ export const useDonationCampaignsListQuery = (filters: {
         sort: filters.sort,
       });
     },
-    enabled: !!accessToken,
+    enabled: !!accessToken && enabled,
+  });
+};
+
+/** Mobile card list: same endpoint and filters, appended page by page. */
+export const useDonationCampaignsInfiniteQuery = (
+  filters: DonationCampaignsListFilters,
+  options: { enabled?: boolean } = {}
+) => {
+  const { accessToken } = useAuth();
+  const { enabled = true } = options;
+
+  return useInfiniteListQuery({
+    queryKey: ["donation-campaigns", "infinite", { ...filters, page: undefined }],
+    pageSize: CAMPAIGNS_PAGE_SIZE,
+    enabled: !!accessToken && enabled,
+    fetchPage: async (page) => {
+      if (!accessToken) throw new Error("No access token");
+      const response = await getDonationCampaignsList(accessToken, {
+        page,
+        page_size: CAMPAIGNS_PAGE_SIZE,
+        search: filters.search ?? "",
+        status: filters.status,
+        is_active: filters.is_active,
+        target_amount_min: filters.target_amount_min,
+        target_amount_max: filters.target_amount_max,
+        ends_at: filters.ends_at,
+        sort: filters.sort,
+      });
+      return response.data;
+    },
   });
 };
 

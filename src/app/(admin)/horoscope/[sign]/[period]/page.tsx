@@ -35,7 +35,7 @@ export default function HoroscopeSeoEditPage() {
 
   if (!sign || !period) {
     return (
-      <div className="max-w-3xl mx-auto p-8 text-center bg-danger-tint rounded-2xl border border-danger/25">
+      <div className="mx-auto max-w-3xl rounded-2xl border border-danger/25 bg-danger-tint p-6 text-center sm:p-8">
         <h2 className="text-xl font-bold text-danger-ink">Invalid horoscope route</h2>
         <p className="text-danger mt-2">
           Sign must be one of the twelve zodiac signs and period must be daily, weekly, or monthly.
@@ -49,7 +49,7 @@ export default function HoroscopeSeoEditPage() {
 
   if (error) {
     return (
-      <div className="max-w-3xl mx-auto p-8 text-center bg-danger-tint rounded-2xl border border-danger/25">
+      <div className="mx-auto max-w-3xl rounded-2xl border border-danger/25 bg-danger-tint p-6 text-center sm:p-8">
         <h2 className="text-xl font-bold text-danger-ink">Error loading horoscope</h2>
         <p className="text-danger mt-2">
           {error instanceof Error ? error.message : "Unknown error"}
@@ -72,7 +72,7 @@ export default function HoroscopeSeoEditPage() {
             )}</>}
       />
 
-      <div className="bg-surface rounded-xl shadow-sm border border-line p-6">
+      <div className="bg-surface rounded-2xl shadow-card border border-line p-4 sm:p-6">
         {isLoading || !entry ? (
           <div className="space-y-6">
             <Skeleton className="h-32 w-full" />

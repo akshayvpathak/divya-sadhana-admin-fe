@@ -62,7 +62,7 @@ export default function ViewDonationCampaignPage() {
           </div>
         </div>
       ) : isEdit ? (
-        <div className="bg-surface rounded-xl shadow-sm border border-line p-6">
+        <div className="bg-surface rounded-2xl shadow-card border border-line p-4 sm:p-6">
           <DonationCampaignForm
             campaignId={id}
             onSubmit={onSubmit}
@@ -72,7 +72,7 @@ export default function ViewDonationCampaignPage() {
       ) : campaign && (
         <div className="space-y-8 mt-4">
           {/* Hero Section with Image & Stats */}
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:gap-8">
             <div className="lg:col-span-3 relative h-80 rounded-3xl overflow-hidden bg-cosmos border border-line shadow-inner">
               {campaign.cover_image_url ? (
                 <Image 
@@ -97,7 +97,7 @@ export default function ViewDonationCampaignPage() {
             </div>
 
             <div className="lg:col-span-2 flex flex-col justify-between space-y-6">
-              <div className="p-6 bg-gold-deep rounded-3xl shadow-xl shadow-gold/20 space-y-6 text-white">
+              <div className="p-5 sm:p-6 bg-gold-deep rounded-3xl shadow-xl shadow-gold/20 space-y-6 text-white">
                 <h3 className="text-xs font-bold text-white/60 uppercase tracking-widest">Fundraising Progress</h3>
                 
                 <div className="space-y-4">
@@ -132,16 +132,16 @@ export default function ViewDonationCampaignPage() {
           </div>
 
           {/* Content Section */}
-          <div className="space-y-4 p-8 bg-surface rounded-3xl border border-line shadow-sm">
+          <div className="space-y-4 p-5 sm:p-8 bg-surface rounded-3xl border border-line shadow-sm">
             <h2 className="text-2xl font-black text-ink tracking-tight">{campaign.title}</h2>
             <div 
-              className="prose prose-slate max-w-none text-charcoal leading-relaxed text-lg"
+              className="prose prose-slate max-w-none text-base leading-relaxed text-charcoal sm:text-lg"
               dangerouslySetInnerHTML={{ __html: campaign.description || '' }}
             />
           </div>
 
           {/* Donations Received Section */}
-          <div className="space-y-4 p-8 bg-surface rounded-3xl border border-line shadow-sm">
+          <div className="space-y-4 p-5 sm:p-8 bg-surface rounded-3xl border border-line shadow-sm">
             <div className="flex justify-between items-center">
               <div>
                 <h2 className="text-2xl font-black text-ink tracking-tight">Donations Received</h2>

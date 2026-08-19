@@ -12,19 +12,28 @@ import {
 } from "@/services/sadhana-services.service";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
+import { useInfiniteListQuery } from "./useInfiniteListQuery";
 
-const notifyError = (fallback: string) => (error: unknown) => {
-  toast.error(error instanceof Error ? error.message : fallback);
-};
+const SADHANA_SERVICES_PAGE_SIZE = 10;
 
-export const useSadhanaServicesListQuery = (filters: {
+export interface SadhanaServicesListFilters {
   page?: number;
   search?: string;
   category?: string;
   is_active?: string;
   ordering?: string;
-}) => {
+}
+
+const notifyError = (fallback: string) => (error: unknown) => {
+  toast.error(error instanceof Error ? error.message : fallback);
+};
+
+export const useSadhanaServicesListQuery = (
+  filters: SadhanaServicesListFilters,
+  options: { enabled?: boolean } = {}
+) => {
   const { accessToken } = useAuth();
+  const { enabled = true } = options;
 
   return useQuery({
     queryKey: ["sadhana-services", filters],
@@ -32,14 +41,41 @@ export const useSadhanaServicesListQuery = (filters: {
       if (!accessToken) throw new Error("No access token");
       return getSadhanaServicesList(accessToken, {
         page: filters.page ?? 1,
-        paginate: 10,
+        paginate: SADHANA_SERVICES_PAGE_SIZE,
         search: filters.search ?? "",
         category: filters.category,
         is_active: filters.is_active,
         ordering: filters.ordering,
       });
     },
-    enabled: !!accessToken,
+    enabled: !!accessToken && enabled,
+  });
+};
+
+/** Mobile card list: same endpoint and filters, appended page by page. */
+export const useSadhanaServicesInfiniteQuery = (
+  filters: SadhanaServicesListFilters,
+  options: { enabled?: boolean } = {}
+) => {
+  const { accessToken } = useAuth();
+  const { enabled = true } = options;
+
+  return useInfiniteListQuery({
+    queryKey: ["sadhana-services", "infinite", { ...filters, page: undefined }],
+    pageSize: SADHANA_SERVICES_PAGE_SIZE,
+    enabled: !!accessToken && enabled,
+    fetchPage: async (page) => {
+      if (!accessToken) throw new Error("No access token");
+      const response = await getSadhanaServicesList(accessToken, {
+        page,
+        paginate: SADHANA_SERVICES_PAGE_SIZE,
+        search: filters.search ?? "",
+        category: filters.category,
+        is_active: filters.is_active,
+        ordering: filters.ordering,
+      });
+      return response.data;
+    },
   });
 };
 

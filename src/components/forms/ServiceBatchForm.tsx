@@ -132,7 +132,7 @@ export function ServiceBatchForm({ batchId, onSubmit, isPending, readOnly = fals
         <Label htmlFor="is_open" className="cursor-pointer">Open for booking</Label>
       </div>
 
-      <div className="flex justify-end gap-2 pt-4">
+      <div className="flex flex-col-reverse gap-2 pt-4 sm:flex-row sm:justify-end [&>a]:w-full sm:[&>a]:w-auto [&_[data-slot=button]]:w-full sm:[&_[data-slot=button]]:w-auto">
         <Link href="/service-batches">
           <Button type="button" variant="outline">
             {readOnly ? 'Back' : 'Cancel'}

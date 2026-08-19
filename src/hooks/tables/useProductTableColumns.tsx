@@ -33,6 +33,25 @@ export const useProductTableColumns = ({
       accessorKey: 'name',
       header: 'Product',
       sortable: true,
+      mobile: 'title',
+      // Thumbnail plus the name, using the card's full width instead of the
+      // table's 250px cap.
+      renderMobile: (row) => (
+        <span className="flex items-start gap-3">
+          <span className="relative block h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-line bg-cosmos">
+            {row.image ? (
+              <Image src={row.image} alt={row.name || ''} fill className="object-cover" unoptimized />
+            ) : (
+              <span className="flex h-full w-full items-center justify-center text-moon">
+                <Package className="h-5 w-5" />
+              </span>
+            )}
+          </span>
+          {/* Name only — the HTML blurb is noise at card width, and the row
+              already links through to the full product. */}
+          <span className="min-w-0 flex-1 break-words">{row.name}</span>
+        </span>
+      ),
       renderCell: (row) => (
         <div className="flex items-center gap-3">
           <div className="relative h-10 w-10 rounded-md overflow-hidden bg-cosmos shrink-0 border border-line">
@@ -66,6 +85,7 @@ export const useProductTableColumns = ({
       header: 'Category',
       sortable: true,
       sortKey: 'category',
+      mobile: 'field',
       // Plain text, no chip.
       renderCell: (row) => getCategoryName(row.categoryId) || null,
     },
@@ -75,6 +95,7 @@ export const useProductTableColumns = ({
       header: 'Price',
       sortable: true,
       cellClassName: 'font-medium text-ink',
+      mobile: 'field',
       renderCell: (row) => formatINR(row.price),
     },
     {
@@ -83,6 +104,7 @@ export const useProductTableColumns = ({
       header: 'Stock',
       sortable: true,
       sortKey: 'stock_quantity',
+      mobile: 'field',
       renderCell: (row) => (
         <span className={`text-xs font-bold ${row.stock <= 10 ? 'text-danger' : 'text-charcoal'}`}>
           {row.stock}
@@ -97,6 +119,7 @@ export const useProductTableColumns = ({
       sortKey: 'is_active',
       headerAlign: 'center',
       cellAlign: 'center',
+      mobile: 'status',
       renderCell: (row) => <StatusBadge status={row.is_active} type="active" />,
     },
     {
@@ -107,11 +130,13 @@ export const useProductTableColumns = ({
       sortKey: 'is_published',
       headerAlign: 'center',
       cellAlign: 'center',
+      mobile: 'status',
       renderCell: (row) => <StatusBadge status={row.is_published} type="published" />,
     },
     {
       id: 'actions',
       header: 'Actions',
+      mobile: 'actions',
       headerAlign: 'center',
       cellAlign: 'center',
       renderCell: (row) => (

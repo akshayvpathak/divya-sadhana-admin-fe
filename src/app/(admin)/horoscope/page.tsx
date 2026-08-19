@@ -10,7 +10,7 @@ import {
 } from "@/schemas/horoscope.schema";
 import { useHoroscopeGridQuery } from "@/hooks/queries/useHoroscopeQuery";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Moon, ExternalLink } from "lucide-react";
+import { ChevronRight, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card } from '@/components/ui/card';
 import { PageHeader } from '@/components/common/PageHeader';
@@ -36,11 +36,28 @@ function StatusDot({ tone, label }: { tone: DotTone; label: string }) {
   );
 }
 
+type GridItem = NonNullable<ReturnType<typeof useHoroscopeGridQuery>["data"]>[number];
+
+/** The status markers a cell shows, shared by the table and the phone list. */
+function CellStatus({ entry }: { entry: NonNullable<GridItem["entry"]> }) {
+  const hasSeo = Boolean(entry.meta_title || entry.meta_description);
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+      <StatusDot tone={hasSeo ? "emerald" : "slate"} label={hasSeo ? "SEO set" : "No SEO"} />
+      {entry.stale ? <StatusDot tone="amber" label="Stale" /> : null}
+      {entry.is_indexable === false ? <StatusDot tone="slate" label="Noindex" /> : null}
+    </div>
+  );
+}
+
 export default function HoroscopeAdminPage() {
   const { data: gridItems, isLoading, error } = useHoroscopeGridQuery();
 
+  const cellFor = (sign: string, period: string) =>
+    gridItems?.find((item) => item.sign === sign && item.period === period);
+
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-5 pb-12 sm:space-y-6">
       <PageHeader
         title={
           <span className="flex items-center gap-3">
@@ -50,13 +67,65 @@ export default function HoroscopeAdminPage() {
       />
 
       {error ? (
-        <div className="rounded-xl border border-danger/25 bg-danger-tint p-6 text-danger-ink">
+        <div className="rounded-xl border border-danger/25 bg-danger-tint p-4 text-sm text-danger-ink sm:p-6">
           {error instanceof Error ? error.message : "Failed to load horoscope grid"}
         </div>
       ) : null}
 
-      <Card>
-        <div className="overflow-x-auto">
+      {/* Phones and tablets: a card per sign, its four periods as rows. The
+          12 × 4 grid below only works once a full-width table fits. */}
+      <div className="grid gap-3 md:grid-cols-2 lg:hidden">
+        {ZODIAC_SIGNS.map((sign) => (
+          <Card key={sign}>
+            <div className="border-b border-line bg-cream px-4 py-2.5">
+              <p className="text-sm font-bold text-ink">
+                {SIGN_LABELS[sign]}
+                <span className="ml-1.5 text-xs font-normal text-moon">
+                  ({SIGN_LABELS_HI[sign]})
+                </span>
+              </p>
+            </div>
+            <ul className="divide-y divide-line/60">
+              {HOROSCOPE_PERIODS.map((period) => {
+                const cell = cellFor(sign, period);
+                const entry = cell?.entry;
+                return (
+                  <li key={period}>
+                    <Link
+                      href={`/horoscope/${sign}/${period}`}
+                      className="flex min-h-12 items-center justify-between gap-3 px-4 py-2.5 transition-colors active:bg-tint/60"
+                    >
+                      <span className="min-w-0">
+                        <span className="block text-sm font-medium text-ink">
+                          {PERIOD_LABELS[period]}
+                        </span>
+                        {isLoading ? (
+                          <Skeleton className="mt-1 h-3 w-24 rounded-full" />
+                        ) : entry ? (
+                          <CellStatus entry={entry} />
+                        ) : (
+                          <span
+                            className={cn(
+                              'text-[11px] font-medium',
+                              cell?.error ? 'text-danger' : 'text-moon'
+                            )}
+                          >
+                            {cell?.error ? 'Not generated' : 'Edit SEO'}
+                          </span>
+                        )}
+                      </span>
+                      <ChevronRight className="h-4 w-4 shrink-0 text-line" aria-hidden />
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </Card>
+        ))}
+      </div>
+
+      <Card className="hidden lg:flex">
+        <div className="custom-scrollbar overflow-x-auto">
           <table className="w-full min-w-[760px] table-fixed border-collapse">
             <thead>
               <tr className="bg-cream">
@@ -85,12 +154,9 @@ export default function HoroscopeAdminPage() {
                     </div>
                   </td>
                   {HOROSCOPE_PERIODS.map((period) => {
-                    const cell = gridItems?.find(
-                      (item) => item.sign === sign && item.period === period
-                    );
+                    const cell = cellFor(sign, period);
                     const href = `/horoscope/${sign}/${period}`;
                     const entry = cell?.entry;
-                    const hasSeo = Boolean(entry?.meta_title || entry?.meta_description);
 
                     return (
                       <td key={period} className="border-l border-line/60 p-0 align-top">
@@ -120,16 +186,7 @@ export default function HoroscopeAdminPage() {
                               </p>
                             ) : null}
 
-                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                              <StatusDot
-                                tone={hasSeo ? "emerald" : "slate"}
-                                label={hasSeo ? "SEO set" : "No SEO"}
-                              />
-                              {entry.stale ? <StatusDot tone="amber" label="Stale" /> : null}
-                              {entry.is_indexable === false ? (
-                                <StatusDot tone="slate" label="Noindex" />
-                              ) : null}
-                            </div>
+                            <CellStatus entry={entry} />
                           </Link>
                         ) : (
                           <Link

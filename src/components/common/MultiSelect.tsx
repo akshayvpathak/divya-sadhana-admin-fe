@@ -148,7 +148,7 @@ export function MultiSelect({
           }
         }}
         className={cn(
-          'flex min-h-8 w-full cursor-pointer items-center justify-between gap-1.5 rounded-lg border border-input bg-transparent py-1.5 pr-2 pl-2.5 text-sm transition-colors outline-none',
+          'flex min-h-9 w-full cursor-pointer items-center justify-between gap-1.5 rounded-lg border border-input bg-transparent py-1.5 pr-2 pl-2.5 text-sm transition-colors outline-none sm:min-h-8',
           'focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50',
           disabled && 'pointer-events-none opacity-50',
           open && 'border-ring'
@@ -170,7 +170,7 @@ export function MultiSelect({
                     event.stopPropagation();
                     removeValue(optionValue);
                   }}
-                  className="rounded text-gold-deep transition-colors hover:text-danger"
+                  className="-mr-0.5 rounded p-1 text-gold-deep transition-colors hover:text-danger"
                   title={`Remove ${labelFor(optionValue)}`}
                 >
                   <X className="h-3 w-3" />
@@ -191,7 +191,7 @@ export function MultiSelect({
                 event.stopPropagation();
                 onChange([]);
               }}
-              className="rounded text-moon transition-colors hover:text-danger"
+              className="rounded p-1 text-moon transition-colors hover:text-danger"
               title="Clear selection"
             >
               <X className="h-3.5 w-3.5" />

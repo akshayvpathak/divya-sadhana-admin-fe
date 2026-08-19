@@ -375,7 +375,7 @@ export function DonationCampaignForm({ campaignId, initialData: propsInitialData
         {errors.cover_image_key && <p className="text-sm text-danger">{errors.cover_image_key.message}</p>}
       </div>
 
-      <div className="pt-4 flex justify-end gap-2">
+      <div className="flex flex-col-reverse gap-2 pt-4 sm:flex-row sm:justify-end [&>a]:w-full sm:[&>a]:w-auto [&_[data-slot=button]]:w-full sm:[&_[data-slot=button]]:w-auto">
         <Link href="/donation-campaigns">
           <Button type="button" variant="outline">
             {readOnly ? 'Back' : 'Cancel'}

@@ -57,7 +57,7 @@ export default function OrderTrackingPreview({ orderId, embedded = false }: Prop
             <>
               {/* Same hairline strip as the fulfillment milestones, so the two
                   stacked sections read as one system. */}
-              <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line">
+              <dl className="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2">
                 <div className="bg-surface px-3.5 py-3">
                   <dt className="text-[10px] font-bold uppercase tracking-wider text-moon">
                     Courier

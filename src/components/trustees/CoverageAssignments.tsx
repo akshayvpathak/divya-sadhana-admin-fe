@@ -1,23 +1,19 @@
 'use client';
 
-import { useState } from 'react';
-import { Filter } from 'lucide-react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { DataTable } from '@/components/common/DataTable/DataTable';
+import { useMemo, useState } from 'react';
+import { ResponsiveDataView } from '@/components/common/ResponsiveDataView';
+import { ListToolbar, ToolbarFilter } from '@/components/common/ListToolbar';
 import { DataTablePagination } from '@/components/common/DataTablePagination';
 import {
   useAssignmentsListQuery,
+  useAssignmentsInfiniteQuery,
   useStatesListQuery,
 } from '@/hooks/queries/useTerritoryQuery';
 import { useTrusteesListQuery } from '@/hooks/queries/useTrusteesQuery';
 import { useAssignmentTableColumns } from '@/hooks/tables/useAssignmentTableColumns';
 import { trusteeDisplayName } from '@/hooks/tables/useTrusteeTableColumns';
+import { useIsCompact } from '@/hooks/useMediaQuery';
+import { Card } from '@/components/ui/card';
 
 /**
  * Cross-trustee "who owns which state" coverage view (the former standalone
@@ -33,12 +29,22 @@ export function CoverageAssignments() {
   const { data: statesData } = useStatesListQuery({ is_active: 'true' });
   const { data: trusteesData } = useTrusteesListQuery({ page_size: 200 });
 
-  const { data, isLoading } = useAssignmentsListQuery({
-    page,
-    trustee: trusteeFilter === 'all' ? undefined : trusteeFilter,
-    state: stateFilter === 'all' ? undefined : stateFilter,
-    is_active: statusFilter === 'all' ? undefined : statusFilter === 'active' ? 'true' : 'false',
-  });
+  const queryFilters = useMemo(
+    () => ({
+      trustee: trusteeFilter === 'all' ? undefined : trusteeFilter,
+      state: stateFilter === 'all' ? undefined : stateFilter,
+      is_active:
+        statusFilter === 'all' ? undefined : statusFilter === 'active' ? 'true' : 'false',
+    }),
+    [trusteeFilter, stateFilter, statusFilter]
+  );
+
+  const isCompact = useIsCompact();
+  const { data, isLoading } = useAssignmentsListQuery(
+    { ...queryFilters, page },
+    { enabled: isCompact === false }
+  );
+  const mobile = useAssignmentsInfiniteQuery(queryFilters, { enabled: isCompact === true });
 
   const states = statesData?.data?.results ?? [];
   const trustees = trusteesData?.data?.results ?? [];
@@ -47,6 +53,65 @@ export function CoverageAssignments() {
 
   const columns = useAssignmentTableColumns({ readOnly: true });
 
+  const hasActiveFilters =
+    trusteeFilter !== 'all' || stateFilter !== 'all' || statusFilter !== 'all';
+
+  const clearAllFilters = () => {
+    setTrusteeFilter('all');
+    setStateFilter('all');
+    setStatusFilter('all');
+    setPage(1);
+  };
+
+  const toolbarFilters: ToolbarFilter[] = [
+    {
+      key: 'trustee',
+      label: 'Member',
+      value: trusteeFilter,
+      options: [
+        { value: 'all', label: 'All Trustees' },
+        ...trustees.map((t) => ({ value: t.id, label: trusteeDisplayName(t) })),
+      ],
+      placeholder: 'All Trustees',
+      widthClass: 'w-[180px]',
+      onChange: (val) => {
+        setTrusteeFilter(val);
+        setPage(1);
+      },
+    },
+    {
+      key: 'state',
+      label: 'State',
+      value: stateFilter,
+      options: [
+        { value: 'all', label: 'All States' },
+        ...states.map((s) => ({ value: s.id, label: s.name })),
+      ],
+      placeholder: 'All States',
+      widthClass: 'w-[160px]',
+      onChange: (val) => {
+        setStateFilter(val);
+        setPage(1);
+      },
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      value: statusFilter,
+      options: [
+        { value: 'all', label: 'All Statuses' },
+        { value: 'active', label: 'Active' },
+        { value: 'inactive', label: 'Inactive' },
+      ],
+      placeholder: 'All Statuses',
+      widthClass: 'w-[140px]',
+      onChange: (val) => {
+        setStatusFilter(val);
+        setPage(1);
+      },
+    },
+  ];
+
   return (
     <div className="space-y-4">
       <p className="text-sm text-moon">
@@ -54,91 +119,31 @@ export function CoverageAssignments() {
         assignments from a trustee&apos;s detail page.
       </p>
 
-      <div className="bg-surface rounded-xl shadow-sm border border-line overflow-hidden flex flex-col">
-        <div className="p-4 border-b border-line bg-cream flex flex-wrap gap-2 items-center">
-          <Filter className="h-4 w-4 text-moon shrink-0" />
-          <Select
-            value={trusteeFilter}
-            onValueChange={(val) => {
-              setTrusteeFilter(val || 'all');
-              setPage(1);
-            }}
-          >
-            <SelectTrigger className="bg-surface w-[180px]">
-              <SelectValue placeholder="All Trustees">
-                {trusteeFilter === 'all'
-                  ? 'All Trustees'
-                  : (() => {
-                      const t = trustees.find((x) => x.id === trusteeFilter);
-                      return t ? trusteeDisplayName(t) : 'Trustee';
-                    })()}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Trustees</SelectItem>
-              {trustees.map((t) => (
-                <SelectItem key={t.id} value={t.id}>
-                  {trusteeDisplayName(t)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <Card>
+        <ListToolbar
+          filters={toolbarFilters}
+          onClear={clearAllFilters}
+          hasActiveFilters={hasActiveFilters}
+        />
 
-          <Select
-            value={stateFilter}
-            onValueChange={(val) => {
-              setStateFilter(val || 'all');
-              setPage(1);
-            }}
-          >
-            <SelectTrigger className="bg-surface w-[160px]">
-              <SelectValue placeholder="All States">
-                {stateFilter === 'all'
-                  ? 'All States'
-                  : states.find((s) => s.id === stateFilter)?.name || 'State'}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All States</SelectItem>
-              {states.map((s) => (
-                <SelectItem key={s.id} value={s.id}>
-                  {s.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select
-            value={statusFilter}
-            onValueChange={(val) => {
-              setStatusFilter(val || 'all');
-              setPage(1);
-            }}
-          >
-            <SelectTrigger className="bg-surface w-[140px]">
-              <SelectValue placeholder="All Statuses">
-                {statusFilter === 'active' ? 'Active' : statusFilter === 'inactive' ? 'Inactive' : 'All Statuses'}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <DataTable columns={columns} data={rows} isLoading={isLoading} emptyMessage="No assignments found" />
-
-        {data?.data && (
-          <DataTablePagination
-            currentPage={page}
-            totalPages={totalPages}
-            totalItems={data.data.count ?? rows.length}
-            onPageChange={setPage}
-          />
-        )}
-      </div>
+        <ResponsiveDataView
+          columns={columns}
+          data={rows}
+          isLoading={isLoading}
+          mobile={mobile}
+          emptyMessage="No assignments found"
+          pagination={
+            data?.data ? (
+              <DataTablePagination
+                currentPage={page}
+                totalPages={totalPages}
+                totalItems={data.data.count ?? rows.length}
+                onPageChange={setPage}
+              />
+            ) : null
+          }
+        />
+      </Card>
     </div>
   );
 }

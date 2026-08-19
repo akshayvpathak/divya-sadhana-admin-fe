@@ -23,6 +23,16 @@ export const useCategoryTableColumns = ({
       accessorKey: 'name',
       header: 'Name',
       sortable: true,
+      mobile: 'title',
+      renderMobile: (row) => (
+        <span className="block">
+          <span className="block break-words">{row.name}</span>
+          <span
+            className="mt-0.5 line-clamp-2 block text-xs font-normal text-moon [&>*]:inline"
+            dangerouslySetInnerHTML={{ __html: row.description || '' }}
+          />
+        </span>
+      ),
       renderCell: (row) => (
         <div className="flex flex-col max-w-[250px]">
           <span className="font-medium truncate">{row.name}</span>
@@ -41,12 +51,14 @@ export const useCategoryTableColumns = ({
       sortKey: 'is_active',
       headerAlign: 'center',
       cellAlign: 'center',
+      mobile: 'status',
       renderCell: (row) => <StatusBadge status={row.isActive} type="active" />,
     },
 
     {
       id: 'actions',
       header: 'Actions',
+      mobile: 'actions',
       headerAlign: 'center',
       cellAlign: 'center',
       renderCell: (row) => (

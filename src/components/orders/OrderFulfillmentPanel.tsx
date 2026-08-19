@@ -385,7 +385,7 @@ export default function OrderFulfillmentPanel({ order, embedded = false }: Props
           was four label/value pairs floating in a 2-column grid, which at this
           width left a canyon of whitespace between the two halves.
           `gap-px` over a `bg-line` parent draws the 1px rules. */}
-      <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line lg:grid-cols-4">
+      <dl className="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
         {([
           ['Dispatched at', formatDateTime(order.dispatched_at), Truck],
           ['Delivered at', formatDateTime(order.delivered_at), PackageCheck],

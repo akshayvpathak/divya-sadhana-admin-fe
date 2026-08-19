@@ -24,6 +24,15 @@ export const useServiceBatchTableColumns = ({ openDeleteModal }: Props): ColumnC
       accessorKey: 'title',
       header: 'Batch',
       sortable: true,
+      mobile: 'title',
+      renderMobile: (row) => (
+        <span className="block">
+          <span className="block break-words">{row.title}</span>
+          <span className="mt-0.5 block text-xs font-normal text-moon">
+            {row.service_name ?? '—'}
+          </span>
+        </span>
+      ),
       renderCell: (row) => (
         <div className="flex flex-col">
           <span className="font-medium">{row.title}</span>
@@ -37,6 +46,7 @@ export const useServiceBatchTableColumns = ({ openDeleteModal }: Props): ColumnC
       header: 'Starts',
       sortable: true,
       cellClassName: 'whitespace-nowrap',
+      mobile: 'field',
       renderCell: (row) => <DateTimeCell value={row.starts_at} />,
     },
     {
@@ -44,12 +54,14 @@ export const useServiceBatchTableColumns = ({ openDeleteModal }: Props): ColumnC
       accessorKey: 'ends_at',
       header: 'Ends',
       cellClassName: 'whitespace-nowrap',
+      mobile: 'field',
       renderCell: (row) => <DateTimeCell value={row.ends_at} />,
     },
     {
       id: 'capacity',
       accessorKey: 'capacity',
       header: 'Capacity',
+      mobile: 'field',
       renderCell: (row) => (row.capacity != null ? row.capacity : '∞'),
     },
     {
@@ -58,11 +70,13 @@ export const useServiceBatchTableColumns = ({ openDeleteModal }: Props): ColumnC
       header: 'Open',
       headerAlign: 'center',
       cellAlign: 'center',
+      mobile: 'status',
       renderCell: (row) => <StatusBadge status={row.is_open} type="active" />,
     },
     {
       id: 'actions',
       header: 'Actions',
+      mobile: 'actions',
       headerAlign: 'center',
       cellAlign: 'center',
       renderCell: (row) => (

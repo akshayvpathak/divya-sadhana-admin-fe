@@ -1,22 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Search, Plus } from 'lucide-react';
-import { ClearFiltersButton } from '@/components/common/ClearFiltersButton';
+import { Plus } from 'lucide-react';
 import {
   useServiceBatchesListQuery,
+  useServiceBatchesInfiniteQuery,
   useDeleteServiceBatchMutation,
 } from '@/hooks/queries/useServiceBatchesQuery';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { DataTable } from '@/components/common/DataTable/DataTable';
+import { ResponsiveDataView } from '@/components/common/ResponsiveDataView';
+import { ListToolbar } from '@/components/common/ListToolbar';
 import { useServiceBatchTableColumns } from '@/hooks/tables/useServiceBatchTableColumns';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useIsCompact } from '@/hooks/useMediaQuery';
 import { DataTablePagination } from '@/components/common/DataTablePagination';
 import { PageHeader } from '@/components/common/PageHeader';
-import { Card, CardBand } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 
 export default function ServiceBatchesPage() {
   const [page, setPage] = useState(1);
@@ -24,7 +25,6 @@ export default function ServiceBatchesPage() {
   const debouncedSearch = useDebounce(search, 300);
   const [sort, setSort] = useState('');
 
-  // Button visible when search is active
   const hasActiveFilters = search !== '';
 
   const clearAllFilters = () => {
@@ -35,7 +35,17 @@ export default function ServiceBatchesPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [batchToDelete, setBatchToDelete] = useState<string | null>(null);
 
-  const { data, isLoading } = useServiceBatchesListQuery({ page, search: debouncedSearch, ordering: sort });
+  const queryFilters = useMemo(
+    () => ({ search: debouncedSearch, ordering: sort }),
+    [debouncedSearch, sort]
+  );
+
+  const isCompact = useIsCompact();
+  const { data, isLoading } = useServiceBatchesListQuery(
+    { ...queryFilters, page },
+    { enabled: isCompact === false }
+  );
+  const mobile = useServiceBatchesInfiniteQuery(queryFilters, { enabled: isCompact === true });
   const { mutate: deleteBatch, isPending: isDeleting } = useDeleteServiceBatchMutation();
 
   const openDeleteModal = (id: string) => {
@@ -63,7 +73,7 @@ export default function ServiceBatchesPage() {
   const columns = useServiceBatchTableColumns({ openDeleteModal });
 
   return (
-    <div className="space-y-6 pb-8">
+    <div className="space-y-5 pb-8 sm:space-y-6">
       <PageHeader
         title="Service Batches"
         actions={
@@ -76,41 +86,41 @@ export default function ServiceBatchesPage() {
       />
 
       <Card>
-        <CardBand className="flex flex-col items-center justify-between gap-4 border-b border-line md:flex-row">
-          <div className="relative w-full max-w-sm flex-1">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-moon" />
-            <Input
-              placeholder="Search batches..."
-              className="bg-surface pl-9 w-full"
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-            />
-          </div>
-          {hasActiveFilters && (
-            <ClearFiltersButton onClear={clearAllFilters} />
-          )}
-        </CardBand>
+        <ListToolbar
+          search={{
+            value: search,
+            placeholder: 'Search batches...',
+            onChange: (val) => {
+              setSearch(val);
+              setPage(1);
+            },
+          }}
+          onClear={clearAllFilters}
+          hasActiveFilters={hasActiveFilters}
+          sortColumns={columns}
+          sort={sort}
+          onSort={handleSort}
+        />
 
-        <DataTable
+        <ResponsiveDataView
           columns={columns}
           data={data?.data?.results || []}
           isLoading={isLoading}
           sort={sort}
           onSort={handleSort}
+          mobile={mobile}
           emptyMessage="No service batches found"
+          pagination={
+            data?.data ? (
+              <DataTablePagination
+                currentPage={page}
+                totalPages={totalPages}
+                totalItems={data.data.count}
+                onPageChange={setPage}
+              />
+            ) : null
+          }
         />
-
-        {data?.data && (
-          <DataTablePagination
-            currentPage={page}
-            totalPages={totalPages}
-            totalItems={data.data.count}
-            onPageChange={setPage}
-          />
-        )}
       </Card>
 
       <ConfirmModal

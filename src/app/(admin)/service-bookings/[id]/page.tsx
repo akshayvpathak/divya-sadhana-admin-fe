@@ -115,7 +115,7 @@ export default function ServiceBookingDetailPage() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {/* Left: booking info */}
           <div className="space-y-6 lg:col-span-2">
-            <div className="space-y-4 rounded-2xl border border-line bg-surface p-6 shadow-sm">
+            <div className="space-y-4 rounded-2xl border border-line bg-surface p-4 shadow-card sm:p-6">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <h2 className="text-xl font-bold text-ink">{booking.service_name ?? '—'}</h2>
@@ -124,7 +124,7 @@ export default function ServiceBookingDetailPage() {
                 <StatusBadge status={booking.status} type="service_booking_status" />
               </div>
 
-              <dl className="grid grid-cols-2 gap-4 text-sm">
+              <dl className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
                 <div>
                   <dt className="text-xs uppercase text-moon">Amount</dt>
                   <dd className="font-semibold text-ink">{formatINR(booking.amount)}</dd>
@@ -202,7 +202,7 @@ export default function ServiceBookingDetailPage() {
           </div>
 
           {/* Right: admin action panel */}
-          <div className="space-y-4 rounded-2xl border border-line bg-surface p-6 shadow-sm">
+          <div className="space-y-4 rounded-2xl border border-line bg-surface p-4 shadow-card sm:p-6">
             <h3 className="text-sm font-bold uppercase tracking-wide text-moon">Manage Booking</h3>
 
             {booking.status === 'application_review' && (

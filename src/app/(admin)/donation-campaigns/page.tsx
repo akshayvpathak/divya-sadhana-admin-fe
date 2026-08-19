@@ -1,45 +1,59 @@
 'use client';
 
-import { useState } from 'react';
-import { useDonationCampaignsListQuery, useDeleteDonationCampaignMutation } from '@/hooks/queries/useDonationCampaignsQuery';
-import { Search, Plus } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import {
+  useDonationCampaignsListQuery,
+  useDonationCampaignsInfiniteQuery,
+  useDeleteDonationCampaignMutation,
+} from '@/hooks/queries/useDonationCampaignsQuery';
+import { Plus } from 'lucide-react';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import Link from 'next/link';
-import { DataTable } from '@/components/common/DataTable/DataTable';
+import { ResponsiveDataView } from '@/components/common/ResponsiveDataView';
+import { ListToolbar, ToolbarFilter } from '@/components/common/ListToolbar';
 import { useDonationCampaignTableColumns } from '@/hooks/tables/useDonationCampaignTableColumns';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useIsCompact } from '@/hooks/useMediaQuery';
 import { DataTablePagination } from '@/components/common/DataTablePagination';
-import { FilterManager, useFilterManager } from '@/components/common/FilterManager';
+import { useFilterManager } from '@/components/common/FilterManager';
 import { campaignStatusOptions } from '@/components/ui/badges/badge-status';
 import { PageHeader } from '@/components/common/PageHeader';
-import { Card, CardBand } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 
 export default function DonationCampaignsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
   const [sort, setSort] = useState('');
-  
+
   // Deletion state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [campaignToDelete, setCampaignToDelete] = useState<string | null>(null);
 
-  const { filters, handleFilterChange, getApiParams, resetFilters, hasActiveFilters: filterManagerActive } = useFilterManager({
-    status: 'all',
-  }, () => setPage(1));
+  const {
+    filters,
+    handleFilterChange,
+    getApiParams,
+    resetFilters,
+    hasActiveFilters: filterManagerActive,
+  } = useFilterManager({ status: 'all' }, () => setPage(1));
 
   const apiParams = getApiParams();
-
-  // Button visible when search or any filter is active
   const hasActiveFilters = search !== '' || filterManagerActive;
 
-  const { data, isLoading } = useDonationCampaignsListQuery({
-    page,
-    search: debouncedSearch,
-    status: apiParams.status,
-    sort
+  const queryFilters = useMemo(
+    () => ({ search: debouncedSearch, status: apiParams.status, sort }),
+    [debouncedSearch, apiParams.status, sort]
+  );
+
+  const isCompact = useIsCompact();
+  const { data, isLoading } = useDonationCampaignsListQuery(
+    { ...queryFilters, page },
+    { enabled: isCompact === false }
+  );
+  const mobile = useDonationCampaignsInfiniteQuery(queryFilters, {
+    enabled: isCompact === true,
   });
   const { mutate: deleteCampaign, isPending: isDeleting } = useDeleteDonationCampaignMutation();
 
@@ -54,7 +68,7 @@ export default function DonationCampaignsPage() {
         onSuccess: () => {
           setIsDeleteModalOpen(false);
           setCampaignToDelete(null);
-        }
+        },
       });
     }
   };
@@ -65,24 +79,22 @@ export default function DonationCampaignsPage() {
   };
 
   const totalPages = data?.data?.count ? Math.ceil(data.data.count / 10) : 1;
+  const columns = useDonationCampaignTableColumns({ openDeleteModal });
 
-  const columns = useDonationCampaignTableColumns({
-    openDeleteModal,
-  });
-
-  const statusOptions = campaignStatusOptions;
-
-  const filterConfigs = [
+  const toolbarFilters: ToolbarFilter[] = [
     {
       key: 'status',
+      label: 'Status',
+      value: filters.status,
+      options: campaignStatusOptions,
       placeholder: 'All Statuses',
-      options: statusOptions,
       widthClass: 'w-[140px]',
+      onChange: (val) => handleFilterChange('status', val),
     },
   ];
 
   return (
-    <div className="space-y-6  pb-8">
+    <div className="space-y-5 pb-8 sm:space-y-6">
       <PageHeader
         title="Donation Campaigns"
         actions={
@@ -95,46 +107,46 @@ export default function DonationCampaignsPage() {
       />
 
       <Card>
-        <CardBand className="flex flex-col items-center justify-between gap-4 border-b border-line md:flex-row">
-          <div className="relative max-w-sm flex-1 w-full">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-moon" />
-            <Input
-              placeholder="Search Campaigns..."
-              className="pl-9 bg-surface w-full"
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-            />
-          </div>
+        <ListToolbar
+          search={{
+            value: search,
+            placeholder: 'Search Campaigns...',
+            onChange: (val) => {
+              setSearch(val);
+              setPage(1);
+            },
+          }}
+          filters={toolbarFilters}
+          onClear={() => {
+            resetFilters();
+            setSearch('');
+            setPage(1);
+          }}
+          hasActiveFilters={hasActiveFilters}
+          sortColumns={columns}
+          sort={sort}
+          onSort={handleSort}
+        />
 
-          <FilterManager
-            configs={filterConfigs}
-            values={filters}
-            onFilterChange={handleFilterChange}
-            onClear={() => { resetFilters(); setSearch(''); setPage(1); }}
-            hasActiveFilters={hasActiveFilters}
-          />
-        </CardBand>
-
-        <DataTable
+        <ResponsiveDataView
           columns={columns}
           data={data?.data?.results || []}
           isLoading={isLoading}
           sort={sort}
           onSort={handleSort}
+          mobile={mobile}
           emptyMessage="No donation campaigns found"
+          pagination={
+            data?.data ? (
+              <DataTablePagination
+                currentPage={page}
+                totalPages={totalPages}
+                totalItems={data.data.count}
+                onPageChange={setPage}
+              />
+            ) : null
+          }
         />
-
-        {data?.data && (
-          <DataTablePagination
-            currentPage={page}
-            totalPages={totalPages}
-            totalItems={data.data.count}
-            onPageChange={setPage}
-          />
-        )}
       </Card>
 
       <ConfirmModal
@@ -143,7 +155,7 @@ export default function DonationCampaignsPage() {
         title="Delete Donation Campaign"
         description="Are you sure you want to delete this donation campaign? This action cannot be undone."
         onConfirm={confirmDelete}
-        confirmText={isDeleting ? "Deleting..." : "Delete"}
+        confirmText={isDeleting ? 'Deleting...' : 'Delete'}
         variant="destructive"
       />
     </div>

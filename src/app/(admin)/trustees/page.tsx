@@ -1,22 +1,18 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Search, Plus, Filter, Users, MapPin, Link2 } from 'lucide-react';
-import { ClearFiltersButton } from '@/components/common/ClearFiltersButton';
+import { Plus, Users, MapPin, Link2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { DataTable } from '@/components/common/DataTable/DataTable';
+import { ResponsiveDataView } from '@/components/common/ResponsiveDataView';
+import { ListToolbar, ToolbarFilter } from '@/components/common/ListToolbar';
 import { DataTablePagination } from '@/components/common/DataTablePagination';
 import { useDebounce } from '@/hooks/useDebounce';
-import { useTrusteesListQuery } from '@/hooks/queries/useTrusteesQuery';
+import { useIsCompact } from '@/hooks/useMediaQuery';
+import {
+  useTrusteesListQuery,
+  useTrusteesInfiniteQuery,
+} from '@/hooks/queries/useTrusteesQuery';
 import { useAssignmentsListQuery, useStatesListQuery } from '@/hooks/queries/useTerritoryQuery';
 import { useTrusteeTableColumns } from '@/hooks/tables/useTrusteeTableColumns';
 import { Trustee } from '@/schemas/trustees.schema';
@@ -24,7 +20,7 @@ import { CoverageTerritory } from '@/components/trustees/CoverageTerritory';
 import { RetentionReport } from '@/components/trustees/RetentionReport';
 import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/common/PageHeader';
-import { Card, CardBand } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { StatCard } from '@/components/common/StatCard';
 
 type TrusteesTab = 'trustees' | 'coverage' | 'retention';
@@ -34,6 +30,14 @@ const TABS: { key: TrusteesTab; label: string; hint: string }[] = [
   { key: 'coverage', label: 'Coverage', hint: 'Territory seats' },
   { key: 'retention', label: 'Retention', hint: 'Commission hold' },
 ];
+
+const STATUS_OPTIONS = [
+  { value: 'all', label: 'All Statuses' },
+  { value: 'active', label: 'Active' },
+  { value: 'inactive', label: 'Inactive' },
+];
+
+const PAGE_SIZE = 10;
 
 export default function TrusteesPage() {
   const [page, setPage] = useState(1);
@@ -45,9 +49,7 @@ export default function TrusteesPage() {
   const [tab, setTab] = useState<TrusteesTab>('trustees');
 
   const hasActiveFilters =
-    search !== '' ||
-    status !== 'all' ||
-    stateFilter !== 'all';
+    search !== '' || status !== 'all' || stateFilter !== 'all';
 
   const clearAllFilters = () => {
     setSearch('');
@@ -68,8 +70,7 @@ export default function TrusteesPage() {
   const selectTab = (next: TrusteesTab) => {
     setTab(next);
     if (typeof window !== 'undefined') {
-      const url =
-        next === 'trustees' ? '/trustees' : `/trustees?tab=${next}`;
+      const url = next === 'trustees' ? '/trustees' : `/trustees?tab=${next}`;
       window.history.replaceState(window.history.state, '', url);
     }
   };
@@ -78,16 +79,28 @@ export default function TrusteesPage() {
 
   // The backend filters trustees by assigned state via `?state_id={uuid}`, so the
   // dropdown value is the state UUID and pagination stays fully server-side.
-  const PAGE_SIZE = 10;
   const stateIdParam = stateFilter === 'all' ? undefined : stateFilter;
 
-  const { data, isLoading } = useTrusteesListQuery({
-    page,
-    page_size: PAGE_SIZE,
-    search: debouncedSearch,
-    is_active: isActiveParam,
-    sort,
-    state_id: stateIdParam,
+  const queryFilters = useMemo(
+    () => ({
+      page_size: PAGE_SIZE,
+      search: debouncedSearch,
+      is_active: isActiveParam,
+      sort,
+      state_id: stateIdParam,
+    }),
+    [debouncedSearch, isActiveParam, sort, stateIdParam]
+  );
+
+  // Only the visible tab fetches members.
+  const isCompact = useIsCompact();
+  const onTrusteesTab = tab === 'trustees';
+  const { data, isLoading } = useTrusteesListQuery(
+    { ...queryFilters, page },
+    { enabled: onTrusteesTab && isCompact === false }
+  );
+  const mobile = useTrusteesInfiniteQuery(queryFilters, {
+    enabled: onTrusteesTab && isCompact === true,
   });
 
   // Resolve attributed states per trustee from active assignments (single fetch).
@@ -139,10 +152,13 @@ export default function TrusteesPage() {
   const columns = useTrusteeTableColumns({ getTerritory });
 
   const rows = data?.data?.results ?? [];
-  const totalItems = data?.data?.count ?? rows.length;
+  const totalItems = data?.data?.count ?? mobile.totalCount ?? rows.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
-  const states = statesData?.data?.results ?? [];
-  const activeAssignments = assignmentsData?.data?.results ?? [];
+  const states = useMemo(() => statesData?.data?.results ?? [], [statesData]);
+  const activeAssignments = useMemo(
+    () => assignmentsData?.data?.results ?? [],
+    [assignmentsData]
+  );
   const assignedMemberIds = useMemo(() => {
     const ids = new Set<string>();
     for (const a of activeAssignments) {
@@ -164,8 +180,43 @@ export default function TrusteesPage() {
     setPage(1);
   };
 
+  const stateOptions = useMemo(
+    () => [
+      { value: 'all', label: 'All States' },
+      ...states.map((s) => ({ value: s.id, label: s.name })),
+    ],
+    [states]
+  );
+
+  const toolbarFilters: ToolbarFilter[] = [
+    {
+      key: 'status',
+      label: 'Status',
+      value: status,
+      options: STATUS_OPTIONS,
+      placeholder: 'All Statuses',
+      widthClass: 'w-[140px]',
+      onChange: (val) => {
+        setStatus(val);
+        setPage(1);
+      },
+    },
+    {
+      key: 'state',
+      label: 'State',
+      value: stateFilter,
+      options: stateOptions,
+      placeholder: 'All States',
+      widthClass: 'w-[200px]',
+      onChange: (val) => {
+        setStateFilter(val);
+        setPage(1);
+      },
+    },
+  ];
+
   return (
-    <div className="space-y-6 pb-8">
+    <div className="space-y-5 pb-8 sm:space-y-6">
       <PageHeader
         title="Network Members"
         actions={
@@ -179,26 +230,31 @@ export default function TrusteesPage() {
         }
       />
 
-      {/* Tabs: members vs cross-member coverage (former Territory page) */}
+      {/* Tabs: members vs cross-member coverage (former Territory page).
+          The rail scrolls rather than wraps, so the three tabs stay on one line
+          at 320px. */}
       <div className="flex flex-wrap items-center gap-2">
-        <div className="inline-flex rounded-xl bg-cosmos p-1 ring-1 ring-line/80">
-          {TABS.map((t) => (
-            <button
-              key={t.key}
-              type="button"
-              onClick={() => selectTab(t.key)}
-              className={cn(
-                'rounded-lg px-3.5 py-2 text-sm font-semibold transition-all',
-                tab === t.key
-                  ? 'bg-surface text-gold-press shadow-sm ring-1 ring-line/80'
-                  : 'text-moon hover:text-ink'
-              )}
-            >
-              {t.label}
-            </button>
-          ))}
+        <div className="custom-scrollbar -mx-1 max-w-full overflow-x-auto px-1 pb-0.5">
+          <div className="inline-flex rounded-xl bg-cosmos p-1 ring-1 ring-line/80">
+            {TABS.map((t) => (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => selectTab(t.key)}
+                aria-pressed={tab === t.key}
+                className={cn(
+                  'whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-semibold transition-all',
+                  tab === t.key
+                    ? 'bg-surface text-gold-press shadow-sm ring-1 ring-line/80'
+                    : 'text-moon hover:text-ink'
+                )}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
         </div>
-        <span className="hidden sm:inline text-xs text-moon ml-1">
+        <span className="ml-1 hidden text-xs text-moon sm:inline">
           {TABS.find((t) => t.key === tab)?.hint}
         </span>
       </div>
@@ -209,11 +265,11 @@ export default function TrusteesPage() {
         <RetentionReport />
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
             <StatCard
               label="Members"
               value={totalItems}
-              loading={isLoading}
+              loading={isLoading && mobile.isLoading}
               icon={<Users className="h-4 w-4" />}
               tone="gold"
             />
@@ -225,6 +281,7 @@ export default function TrusteesPage() {
             />
             <StatCard
               label="States covered"
+              className="col-span-2 lg:col-span-1"
               value={
                 <>
                   {coveredStates}
@@ -239,88 +296,42 @@ export default function TrusteesPage() {
           </div>
 
           <Card>
-            <CardBand className="flex flex-col items-stretch justify-between gap-3 border-b border-line md:flex-row md:items-center">
-              <div className="relative max-w-md flex-1 w-full">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-moon" />
-                <Input
-                  placeholder="Search by name, email, or code..."
-                  className="pl-9 bg-surface w-full h-10"
-                  value={search}
-                  onChange={(e) => {
-                    setSearch(e.target.value);
-                    setPage(1);
-                  }}
-                />
-              </div>
-              <div className="flex flex-wrap sm:flex-nowrap gap-2 items-center w-full md:w-auto">
-                <Filter className="h-4 w-4 text-moon shrink-0 hidden sm:block" />
-                <Select
-                  value={status}
-                  onValueChange={(val) => {
-                    setStatus(val || 'all');
-                    setPage(1);
-                  }}
-                >
-                  <SelectTrigger className="bg-surface w-full sm:w-[140px] h-10">
-                    <SelectValue placeholder="All Statuses">
-                      {status === 'active'
-                        ? 'Active'
-                        : status === 'inactive'
-                          ? 'Inactive'
-                          : 'All Statuses'}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                  </SelectContent>
-                </Select>
+            <ListToolbar
+              search={{
+                value: search,
+                placeholder: 'Search by name, email, or code...',
+                onChange: (val) => {
+                  setSearch(val);
+                  setPage(1);
+                },
+              }}
+              filters={toolbarFilters}
+              onClear={clearAllFilters}
+              hasActiveFilters={hasActiveFilters}
+              sortColumns={columns}
+              sort={sort}
+              onSort={handleSort}
+            />
 
-                <Select
-                  value={stateFilter}
-                  onValueChange={(val) => {
-                    setStateFilter(val || 'all');
-                    setPage(1);
-                  }}
-                >
-                  <SelectTrigger className="bg-surface w-full sm:w-[200px] h-10">
-                    <SelectValue placeholder="All States">
-                      {stateFilter === 'all'
-                        ? 'All States'
-                        : states.find((s) => s.id === stateFilter)?.name ?? 'All States'}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All States</SelectItem>
-                    {states.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {hasActiveFilters && <ClearFiltersButton onClear={clearAllFilters} />}
-              </div>
-            </CardBand>
-
-            <DataTable
+            <ResponsiveDataView
               columns={columns}
               data={rows}
               isLoading={isLoading}
               sort={sort}
               onSort={handleSort}
+              mobile={mobile}
               emptyMessage="No trustees found"
+              pagination={
+                data?.data ? (
+                  <DataTablePagination
+                    currentPage={page}
+                    totalPages={totalPages}
+                    totalItems={totalItems}
+                    onPageChange={setPage}
+                  />
+                ) : null
+              }
             />
-
-            {data?.data && (
-              <DataTablePagination
-                currentPage={page}
-                totalPages={totalPages}
-                totalItems={totalItems}
-                onPageChange={setPage}
-              />
-            )}
           </Card>
         </>
       )}

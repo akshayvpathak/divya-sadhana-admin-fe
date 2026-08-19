@@ -136,7 +136,7 @@ export function CategoryForm({ categoryId, initialData: propsInitialData, onSubm
 
 
 
-      <div className="pt-4 flex justify-end gap-2">
+      <div className="flex flex-col-reverse gap-2 pt-4 sm:flex-row sm:justify-end [&>a]:w-full sm:[&>a]:w-auto [&_[data-slot=button]]:w-full sm:[&_[data-slot=button]]:w-auto">
         <Link href="/categories">
           <Button type="button" variant="outline">
             {readOnly ? 'Back' : 'Cancel'}

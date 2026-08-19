@@ -1,6 +1,7 @@
 'use client';
 
-import { DataTable } from '@/components/common/DataTable/DataTable';
+import { ResponsiveDataView } from '@/components/common/ResponsiveDataView';
+import { staticListState } from '@/hooks/queries/useInfiniteListQuery';
 import type { ColumnConfig } from '@/components/common/DataTable/types';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { formatINR } from '@/lib/currency';
@@ -21,6 +22,7 @@ export function ProductVariantsTable({
     {
       id: 'options',
       header: 'Variant',
+      mobile: 'title',
       renderCell: (row) => {
         const label = formatVariantLabel(row, labelById);
         return label ? <span className="font-semibold text-ink">{label}</span> : null;
@@ -31,10 +33,12 @@ export function ProductVariantsTable({
       accessorKey: 'sku',
       header: 'SKU',
       cellClassName: 'font-mono text-xs',
+      mobile: 'subtitle',
     },
     {
       id: 'price',
       header: 'Price',
+      mobile: 'field',
       cellAlign: 'right',
       headerAlign: 'right',
       cellClassName: 'font-semibold tabular-nums',
@@ -43,6 +47,7 @@ export function ProductVariantsTable({
     {
       id: 'stock_quantity',
       header: 'Stock',
+      mobile: 'field',
       cellAlign: 'right',
       headerAlign: 'right',
       cellClassName: 'tabular-nums',
@@ -51,6 +56,7 @@ export function ProductVariantsTable({
     {
       id: 'is_active',
       header: 'Status',
+      mobile: 'status',
       headerAlign: 'center',
       cellAlign: 'center',
       renderCell: (row) => <StatusBadge status={row.is_active} type="active" />,
@@ -58,11 +64,13 @@ export function ProductVariantsTable({
   ];
 
   return (
-    <DataTable
+    <ResponsiveDataView
       columns={columns}
       data={variants}
+      mobile={staticListState(variants)}
       rowKey="id"
       emptyMessage="No variants configured"
+      emptyHint="Add option groups and variants from the product editor."
     />
   );
 }

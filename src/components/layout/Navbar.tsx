@@ -8,6 +8,7 @@ import { useAtomValue } from 'jotai';
 import { pageHeaderAtom } from '@/store/page-header';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { Button } from '../ui/button';
+import { MobileNavTrigger } from './Sidebar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,24 +25,26 @@ export default function Navbar() {
   const pageHeader = useAtomValue(pageHeaderAtom);
 
   return (
-    <header className="sticky top-0 z-10 flex h-16 items-center justify-between gap-4 border-b border-line bg-surface/90 px-6 backdrop-blur-sm">
+    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between gap-2 border-b border-line bg-surface/90 px-3 backdrop-blur-sm sm:gap-4 sm:px-6">
       {/* The page title lives here rather than in the page body — this strip was
           empty otherwise. Published by <PageHeader> via pageHeaderAtom. */}
-      <div className="flex min-w-0 items-center gap-3">
+      <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+        <MobileNavTrigger />
+
         {pageHeader?.backHref && (
           <Link href={pageHeader.backHref} className="shrink-0">
             <Button
               variant="outline"
               size="icon"
               aria-label="Back"
-              className="h-8 w-8 border-line bg-surface text-charcoal hover:border-gold/40 hover:bg-tint hover:text-gold-press"
+              className="border-line bg-surface text-charcoal hover:border-gold/40 hover:bg-tint hover:text-gold-press"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
           </Link>
         )}
         {pageHeader && (
-          <h1 className="truncate text-lg font-bold tracking-tight text-ink sm:text-xl">
+          <h1 className="truncate text-base font-bold tracking-tight text-ink sm:text-lg lg:text-xl">
             {pageHeader.title}
           </h1>
         )}
@@ -53,6 +56,7 @@ export default function Navbar() {
             render={
               <Button
                 variant="ghost"
+                aria-label="Account menu"
                 className="relative h-10 w-10 rounded-full bg-cosmos hover:bg-tint"
               />
             }
@@ -75,7 +79,7 @@ export default function Navbar() {
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => setIsLogoutModalOpen(true)}
-              className="cursor-pointer text-danger focus:bg-danger-tint focus:text-danger-ink"
+              className="cursor-pointer py-2 text-danger focus:bg-danger-tint focus:text-danger-ink"
             >
               Log out
             </DropdownMenuItem>

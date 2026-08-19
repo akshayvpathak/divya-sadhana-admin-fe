@@ -29,17 +29,23 @@ export const usePaymentTableColumns = (): ColumnConfig<PaymentRow>[] => {
       header: 'Reference',
       sortable: true,
       cellClassName: 'font-medium text-moon text-xs',
+      mobile: 'title',
+      renderMobile: (row) => (
+        <span className="font-mono text-sm break-all">{row.internal_payment_ref}</span>
+      ),
     },
     {
       id: 'user',
       accessorKey: 'user',
       header: 'User',
       sortable: true,
+      mobile: 'subtitle',
       renderCell: (row) => typeof row.user === 'string' ? row.user : row.user?.first_name ? `${row.user.first_name} ${row.user.last_name}` : 'Unknown',
     },
     {
       id: 'association',
       header: 'Linked To',
+      mobile: 'field',
       renderCell: (row) => {
         if (row.order) {
           const orderId = typeof row.order === 'object' ? row.order.id : row.order;
@@ -67,6 +73,7 @@ export const usePaymentTableColumns = (): ColumnConfig<PaymentRow>[] => {
       header: 'Provider',
       sortable: true,
       cellClassName: 'capitalize',
+      mobile: 'field',
       // Plain text, no chip. Returning null (not 'N/A') lets the table's shared
       // N/A chip stand in for a missing provider.
       renderCell: (row) => row.provider || null,
@@ -77,6 +84,7 @@ export const usePaymentTableColumns = (): ColumnConfig<PaymentRow>[] => {
       header: 'Amount',
       sortable: true,
       cellClassName: 'font-medium',
+      mobile: 'field',
       renderCell: (row) => (row.amount !== undefined ? formatINR(row.amount) : null),
     },
     {
@@ -86,6 +94,7 @@ export const usePaymentTableColumns = (): ColumnConfig<PaymentRow>[] => {
       sortable: true,
       headerAlign: 'center',
       cellAlign: 'center',
+      mobile: 'status',
       renderCell: (row) => <StatusBadge status={row.status || ''} type="transaction_status" />,
     },
     {
@@ -94,11 +103,13 @@ export const usePaymentTableColumns = (): ColumnConfig<PaymentRow>[] => {
       header: 'Date',
       sortable: true,
       cellClassName: 'whitespace-nowrap',
+      mobile: 'field',
       renderCell: (row) => <DateTimeCell value={row.created_at} />,
     },
     {
       id: 'actions',
       header: 'Actions',
+      mobile: 'actions',
       headerAlign: 'center',
       cellAlign: 'center',
       renderCell: (row) => (

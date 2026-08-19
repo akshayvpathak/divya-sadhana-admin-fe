@@ -3,18 +3,26 @@ import { getOrder, getOrdersList, updateOrderShipping, getOrderTracking, getShip
 import { UpdateOrderShippingPayload } from "@/schemas/orders.schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
+import { useInfiniteListQuery } from "./useInfiniteListQuery";
+
+const ORDERS_PAGE_SIZE = 10;
+const ORDER_SEARCH_FIELDS = "order_number,user,items__product_name_snapshot";
+
+export interface OrdersListFilters {
+  payment_status?: string;
+  status?: string;
+  shipping_status?: string;
+}
 
 export const useOrdersListQuery = (
   page: number = 1,
   search: string = "",
   sort: string = "",
-  filters?: {
-    payment_status?: string;
-    status?: string;
-    shipping_status?: string;
-  }
+  filters?: OrdersListFilters,
+  options: { enabled?: boolean } = {}
 ) => {
   const { accessToken } = useAuth();
+  const { enabled = true } = options;
 
   return useQuery({
     queryKey: ["orders", page, search, sort, filters],
@@ -30,16 +38,47 @@ export const useOrdersListQuery = (
       if (!accessToken) throw new Error("No access token");
       return getOrdersList(accessToken, {
         page,
-        page_size: 10,
+        page_size: ORDERS_PAGE_SIZE,
         search,
-        search_fields: "order_number,user,items__product_name_snapshot",
+        search_fields: ORDER_SEARCH_FIELDS,
         sort,
         payment_status: filters?.payment_status,
         status: filters?.status,
         shipping_status: filters?.shipping_status,
       });
     },
-    enabled: !!accessToken,
+    enabled: !!accessToken && enabled,
+  });
+};
+
+/** Mobile card list: same endpoint, same filters, appended page by page. */
+export const useOrdersInfiniteQuery = (
+  search: string = "",
+  sort: string = "",
+  filters?: OrdersListFilters,
+  options: { enabled?: boolean } = {}
+) => {
+  const { accessToken } = useAuth();
+  const { enabled = true } = options;
+
+  return useInfiniteListQuery({
+    queryKey: ["orders", "infinite", search, sort, filters],
+    pageSize: ORDERS_PAGE_SIZE,
+    enabled: !!accessToken && enabled,
+    fetchPage: async (page) => {
+      if (!accessToken) throw new Error("No access token");
+      const response = await getOrdersList(accessToken, {
+        page,
+        page_size: ORDERS_PAGE_SIZE,
+        search,
+        search_fields: ORDER_SEARCH_FIELDS,
+        sort,
+        payment_status: filters?.payment_status,
+        status: filters?.status,
+        shipping_status: filters?.shipping_status,
+      });
+      return response.data;
+    },
   });
 };
 

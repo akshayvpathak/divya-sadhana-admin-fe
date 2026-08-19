@@ -1,24 +1,19 @@
 'use client';
 
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
-import Link from 'next/link';
-import { ChevronLeft, Lock, Wallet, TrendingUp, ShoppingBag, Heart, Users } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Lock, Wallet, TrendingUp, ShoppingBag, Heart, Users } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { DataTable } from '@/components/common/DataTable/DataTable';
+import { Card } from '@/components/ui/card';
+import { ResponsiveDataView } from '@/components/common/ResponsiveDataView';
+import { ListToolbar, ToolbarFilter } from '@/components/common/ListToolbar';
 import { DataTablePagination } from '@/components/common/DataTablePagination';
+import { useIsCompact } from '@/hooks/useMediaQuery';
 import {
   useTrusteeDashboardQuery,
   useTrusteeCommissionsQuery,
+  useTrusteeCommissionsInfiniteQuery,
 } from '@/hooks/queries/useTrusteesQuery';
 import { useAssignmentsListQuery } from '@/hooks/queries/useTerritoryQuery';
 import { useCommissionLedgerColumns } from '@/hooks/tables/useCommissionLedgerColumns';
@@ -36,10 +31,23 @@ export default function TrusteeDetailPage() {
 
   const { data: dashboard, isLoading: dashboardLoading } = useTrusteeDashboardQuery(id);
   const { data: assignmentsData } = useAssignmentsListQuery({ member: id, page_size: 100 });
-  const { data: commissionsData, isLoading: ledgerLoading } = useTrusteeCommissionsQuery(id, {
-    status: statusFilter === 'all' ? undefined : statusFilter,
-    kind: kindFilter === 'all' ? undefined : kindFilter,
-    page: ledgerPage,
+
+  const ledgerFilters = useMemo(
+    () => ({
+      status: statusFilter === 'all' ? undefined : statusFilter,
+      kind: kindFilter === 'all' ? undefined : kindFilter,
+    }),
+    [statusFilter, kindFilter]
+  );
+
+  const isCompact = useIsCompact();
+  const { data: commissionsData, isLoading: ledgerLoading } = useTrusteeCommissionsQuery(
+    id,
+    { ...ledgerFilters, page: ledgerPage },
+    { enabled: isCompact === false }
+  );
+  const ledgerMobile = useTrusteeCommissionsInfiniteQuery(id, ledgerFilters, {
+    enabled: isCompact === true,
   });
 
   // Defensive accessors — dashboard shape is not fully specced in the guides.
@@ -87,8 +95,45 @@ export default function TrusteeDetailPage() {
     ? Math.ceil(commissionsData.data.count / 10)
     : 1;
 
+  const ledgerToolbarFilters: ToolbarFilter[] = [
+    {
+      key: 'status',
+      label: 'Entry status',
+      value: statusFilter,
+      options: [
+        { value: 'all', label: 'All Statuses' },
+        { value: 'pending', label: 'Pending' },
+        { value: 'available', label: 'Available' },
+        { value: 'paid', label: 'Paid' },
+        { value: 'reversed', label: 'Reversed' },
+      ],
+      placeholder: 'All Statuses',
+      widthClass: 'w-[140px]',
+      onChange: (val) => {
+        setStatusFilter(val);
+        setLedgerPage(1);
+      },
+    },
+    {
+      key: 'kind',
+      label: 'Commission kind',
+      value: kindFilter,
+      options: [
+        { value: 'all', label: 'All Kinds' },
+        { value: 'area', label: 'Area' },
+        { value: 'referral', label: 'Referral' },
+      ],
+      placeholder: 'All Kinds',
+      widthClass: 'w-[120px]',
+      onChange: (val) => {
+        setKindFilter(val);
+        setLedgerPage(1);
+      },
+    },
+  ];
+
   return (
-    <div className="space-y-6 pb-10">
+    <div className="space-y-5 pb-10 sm:space-y-6">
       <PageHeader
         backHref="/trustees"
         title={dashboardLoading ? <Skeleton className="h-8 w-64" /> : name}
@@ -109,13 +154,13 @@ export default function TrusteeDetailPage() {
       <div>
         <h2 className="text-xs font-bold uppercase tracking-widest text-moon mb-2">Wallet</h2>
         {dashboardLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
             <Skeleton className="h-24 rounded-2xl" />
             <Skeleton className="h-24 rounded-2xl" />
             <Skeleton className="h-24 rounded-2xl" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
             <StatCard
               label="Available"
               value={formatINR(wallet.available_balance ?? wallet.balance)}
@@ -146,13 +191,13 @@ export default function TrusteeDetailPage() {
           Commissions (lifetime)
         </h2>
         {dashboardLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
             <Skeleton className="h-24 rounded-2xl" />
             <Skeleton className="h-24 rounded-2xl" />
             <Skeleton className="h-24 rounded-2xl" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             {Object.keys(byKind).length === 0 ? (
               <>
                 <StatCard label="Area" value={formatINR(0)} tone="royal" />
@@ -178,7 +223,7 @@ export default function TrusteeDetailPage() {
       {!dashboardLoading && (
         <div>
           <h2 className="text-xs font-bold uppercase tracking-widest text-moon mb-2">Impact</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
             <StatCard
               label="Orders referred"
               value={String(totals.orders ?? 0)}
@@ -204,8 +249,8 @@ export default function TrusteeDetailPage() {
       )}
 
       {/* Territory */}
-      <div className="bg-surface rounded-xl shadow-sm border border-line p-5">
-        <div className="flex items-center justify-between mb-4 gap-3">
+      <div className="rounded-2xl border border-line bg-surface p-4 shadow-card sm:p-5">
+        <div className="mb-4 flex items-center justify-between gap-3">
           <div>
             <h2 className="text-sm font-bold text-ink">Territory</h2>
             <p className="mt-0.5 text-xs text-moon">
@@ -250,68 +295,37 @@ export default function TrusteeDetailPage() {
       </div>
 
       {/* Commission ledger */}
-      <div className="bg-surface rounded-xl shadow-sm border border-line overflow-hidden flex flex-col">
-        <div className="p-4 border-b border-line bg-cream flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <h2 className="text-sm font-bold text-ink">Commission Ledger</h2>
-          <div className="flex flex-wrap gap-2 items-center">
-            <Select
-              value={statusFilter}
-              onValueChange={(val) => {
-                setStatusFilter(val || 'all');
-                setLedgerPage(1);
-              }}
-            >
-              <SelectTrigger className="bg-surface w-[140px]">
-                <SelectValue placeholder="All Statuses">
-                  {statusFilter === 'all' ? 'All Statuses' : statusFilter}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="available">Available</SelectItem>
-                <SelectItem value="paid">Paid</SelectItem>
-                <SelectItem value="reversed">Reversed</SelectItem>
-              </SelectContent>
-            </Select>
+      <Card>
+        <ListToolbar
+          heading="Commission Ledger"
+          filters={ledgerToolbarFilters}
+          onClear={() => {
+            setStatusFilter('all');
+            setKindFilter('all');
+            setLedgerPage(1);
+          }}
+          hasActiveFilters={statusFilter !== 'all' || kindFilter !== 'all'}
+        />
 
-            <Select
-              value={kindFilter}
-              onValueChange={(val) => {
-                setKindFilter(val || 'all');
-                setLedgerPage(1);
-              }}
-            >
-              <SelectTrigger className="bg-surface w-[120px]">
-                <SelectValue placeholder="All Kinds">
-                  {kindFilter === 'all' ? 'All Kinds' : kindFilter}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Kinds</SelectItem>
-                <SelectItem value="area">Area</SelectItem>
-                <SelectItem value="referral">Referral</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <DataTable
+        <ResponsiveDataView
           columns={ledgerColumns}
           data={ledgerRows}
           isLoading={ledgerLoading}
+          mobile={ledgerMobile}
           emptyMessage="No commission entries"
+          emptyHint="Commission accrues as referred orders and donations settle."
+          pagination={
+            commissionsData?.data ? (
+              <DataTablePagination
+                currentPage={ledgerPage}
+                totalPages={ledgerTotalPages}
+                totalItems={commissionsData.data.count ?? ledgerRows.length}
+                onPageChange={setLedgerPage}
+              />
+            ) : null
+          }
         />
-
-        {commissionsData?.data && (
-          <DataTablePagination
-            currentPage={ledgerPage}
-            totalPages={ledgerTotalPages}
-            totalItems={commissionsData.data.count ?? ledgerRows.length}
-            onPageChange={setLedgerPage}
-          />
-        )}
-      </div>
+      </Card>
 
     </div>
   );

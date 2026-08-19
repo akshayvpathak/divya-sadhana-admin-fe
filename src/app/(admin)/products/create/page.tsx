@@ -26,7 +26,7 @@ export default function CreateProductPage() {
         title="Create New Product"
       />
 
-      <div className="bg-surface rounded-xl shadow-sm border border-line p-6">
+      <div className="bg-surface rounded-2xl shadow-card border border-line p-4 sm:p-6">
         <ProductForm 
           onSubmit={onSubmit}
           isPending={isPending}

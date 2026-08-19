@@ -126,7 +126,7 @@ export default function ProfilePage() {
           content then centres itself in whatever height the form dictates. */}
       <div className="grid gap-6 lg:grid-cols-3">
         <Card>
-          <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-8 text-center">
+          <div className="flex flex-1 flex-col items-center justify-center gap-3 px-4 py-8 text-center sm:px-6">
             <div
               className={cn(
                 'flex h-20 w-20 items-center justify-center rounded-full text-2xl font-bold',

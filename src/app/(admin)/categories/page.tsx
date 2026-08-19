@@ -1,44 +1,47 @@
 'use client';
 
 import { useState } from 'react';
-import { useCategories, useDeleteCategory } from '@/hooks/useCategories';
-import { Plus, Search, Filter } from 'lucide-react';
-import { ClearFiltersButton } from '@/components/common/ClearFiltersButton';
+import { useCategories, useCategoriesInfinite, useDeleteCategory } from '@/hooks/useCategories';
+import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import Link from 'next/link';
-import { DataTable } from '@/components/common/DataTable/DataTable';
+import { ResponsiveDataView } from '@/components/common/ResponsiveDataView';
+import { ListToolbar, ToolbarFilter } from '@/components/common/ListToolbar';
 import { useCategoryTableColumns } from '@/hooks/tables/useCategoryTableColumns';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useIsCompact } from '@/hooks/useMediaQuery';
 import { DataTablePagination } from '@/components/common/DataTablePagination';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { categoryStatusOptions } from '@/components/ui/badges/badge-status';
 import { PageHeader } from '@/components/common/PageHeader';
-import { Card, CardBand } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 
 export default function CategoriesPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
-  
+
   // Deletion state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [sort, setSort] = useState('');
   const [status, setStatus] = useState('all');
 
-  // Function to clear all filters
   const clearAllFilters = () => {
     setSearch('');
     setStatus('all');
     setPage(1);
   };
 
-  // Button visible only when any filter is active
   const hasActiveFilters = search !== '' || status !== 'all';
 
-  const { data, isLoading } = useCategories(page, 10, debouncedSearch, sort, status);
+  const isCompact = useIsCompact();
+  const { data, isLoading } = useCategories(page, 10, debouncedSearch, sort, status, {
+    enabled: isCompact === false,
+  });
+  const mobile = useCategoriesInfinite(10, debouncedSearch, sort, status, {
+    enabled: isCompact === true,
+  });
   const { mutate: deleteCategory, isPending: isDeleting } = useDeleteCategory();
 
   const handleSort = (field: string) => {
@@ -57,17 +60,30 @@ export default function CategoriesPage() {
         onSuccess: () => {
           setIsDeleteModalOpen(false);
           setCategoryToDelete(null);
-        }
+        },
       });
     }
   };
 
-  const columns = useCategoryTableColumns({
-    openDeleteModal,
-  });
+  const columns = useCategoryTableColumns({ openDeleteModal });
+
+  const toolbarFilters: ToolbarFilter[] = [
+    {
+      key: 'status',
+      label: 'Status',
+      value: status,
+      options: categoryStatusOptions,
+      placeholder: 'All Statuses',
+      widthClass: 'w-[140px]',
+      onChange: (val) => {
+        setStatus(val);
+        setPage(1);
+      },
+    },
+  ];
 
   return (
-    <div className="space-y-6  pb-8">
+    <div className="space-y-5 pb-8 sm:space-y-6">
       <PageHeader
         title="Categories"
         actions={
@@ -80,64 +96,42 @@ export default function CategoriesPage() {
       />
 
       <Card>
-        <CardBand className="flex flex-col items-center justify-between gap-4 border-b border-line md:flex-row">
-          <div className="relative max-w-sm flex-1 w-full">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-moon" />
-            <Input
-              placeholder="Search Categories..."
-              className="pl-9 bg-surface w-full"
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-            />
-          </div>
-          <div className="flex flex-wrap sm:flex-nowrap gap-2 items-center w-full md:w-auto">
-            <Filter className="h-4 w-4 text-moon shrink-0" />
-            <Select
-              value={status}
-              onValueChange={(val) => {
-                setStatus(val || 'all');
-                setPage(1);
-              }}
-            >
-              <SelectTrigger className="bg-surface w-[140px]">
-                <SelectValue placeholder="All Statuses">
-                  {categoryStatusOptions.find(o => o.value === status)?.label || 'All Statuses'}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {categoryStatusOptions.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {hasActiveFilters && (
-              <ClearFiltersButton onClear={clearAllFilters} />
-            )}
-          </div>
-        </CardBand>
+        <ListToolbar
+          search={{
+            value: search,
+            placeholder: 'Search Categories...',
+            onChange: (val) => {
+              setSearch(val);
+              setPage(1);
+            },
+          }}
+          filters={toolbarFilters}
+          onClear={clearAllFilters}
+          hasActiveFilters={hasActiveFilters}
+          sortColumns={columns}
+          sort={sort}
+          onSort={handleSort}
+        />
 
-        <DataTable
+        <ResponsiveDataView
           columns={columns}
           data={data?.data || []}
           isLoading={isLoading}
           sort={sort}
           onSort={handleSort}
+          mobile={mobile}
           emptyMessage="No categories found"
+          pagination={
+            data ? (
+              <DataTablePagination
+                currentPage={page}
+                totalPages={data.meta.totalPages}
+                totalItems={data.meta.total}
+                onPageChange={setPage}
+              />
+            ) : null
+          }
         />
-
-        {data && (
-          <DataTablePagination
-            currentPage={page}
-            totalPages={data.meta.totalPages}
-            totalItems={data.meta.total}
-            onPageChange={setPage}
-          />
-        )}
       </Card>
 
       <ConfirmModal
@@ -146,7 +140,7 @@ export default function CategoriesPage() {
         title="Delete Category"
         description="Are you sure you want to delete this category? This action cannot be undone."
         onConfirm={confirmDelete}
-        confirmText={isDeleting ? "Deleting..." : "Delete"}
+        confirmText={isDeleting ? 'Deleting...' : 'Delete'}
         variant="destructive"
       />
     </div>

@@ -21,7 +21,7 @@ export default function CreateSadhanaServicePage() {
         title="Create Sadhana Service"
       />
 
-      <div className="rounded-xl border border-line bg-surface p-6 shadow-sm">
+      <div className="rounded-2xl border border-line bg-surface p-4 shadow-card sm:p-6">
         <SadhanaServiceForm onSubmit={onSubmit} isPending={isPending} />
       </div>
     </div>

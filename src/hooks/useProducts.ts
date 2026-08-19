@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { useInfiniteListQuery } from './queries/useInfiniteListQuery';
 import { toast } from 'react-toastify';
 import {
   getProductsList,
@@ -103,8 +104,44 @@ export const extractImageKey = (urlOrKey: string | null | undefined): string => 
   }
 };
 
-export const useProducts = (page = 1, limit = 10, search = '', categoryId = '', sort = '', status = 'all', published = 'all') => {
+type ApiProduct = Awaited<ReturnType<typeof getProductsList>>['data']['results'][number];
+
+/** The row shape both the desktop table and the mobile cards render. */
+const toProductRow = (p: ApiProduct) => ({
+  id: p.id,
+  name: p.name,
+  price: p.price,
+  description: p.description,
+  categoryId: p.category,
+  stock: p.stock_quantity,
+  is_active: p.is_active,
+  is_published: p.is_published,
+  image: resolveProductImageUrl(p.primary_image_url || p.primary_image_key) || `https://picsum.photos/seed/${p.id}/400/400`,
+});
+
+/**
+ * Server-side `category` is the primary filter (see products.service.ts).
+ * This client-side pass is only a fallback for the page already in hand, in case
+ * the backend ignores the param — it must never be the sole filter, since it
+ * would otherwise miss matches beyond page 1.
+ */
+const applyCategoryFallback = (results: ApiProduct[], categoryId: string) =>
+  categoryId && categoryId !== 'all'
+    ? results.filter(p => p.category === categoryId)
+    : results;
+
+export const useProducts = (
+  page = 1,
+  limit = 10,
+  search = '',
+  categoryId = '',
+  sort = '',
+  status = 'all',
+  published = 'all',
+  options: { enabled?: boolean } = {}
+) => {
   const { accessToken } = useAuth();
+  const { enabled = true } = options;
   const isActiveParam = status === 'all' ? undefined : status === 'active' ? 'true' : 'false';
   const isPublishedParam = published === 'all' ? undefined : published === 'published' ? 'true' : 'false';
 
@@ -122,36 +159,57 @@ export const useProducts = (page = 1, limit = 10, search = '', categoryId = '', 
         is_published: isPublishedParam,
       });
 
-      // Server-side `category` is the primary filter (see products.service.ts).
-      // Keep this client-side filter only as a fallback for the current page in
-      // case the backend ignores the param — it must never be the sole filter,
-      // since it would otherwise miss matches beyond page 1.
-      let results = response.data.results;
-      if (categoryId && categoryId !== 'all') {
-        results = results.filter(p => p.category === categoryId);
-      }
-
       return {
-        data: results.map(p => ({
-          id: p.id,
-          name: p.name,
-          price: p.price,
-          description: p.description,
-          categoryId: p.category,
-          stock: p.stock_quantity,
-          is_active: p.is_active,
-          is_published: p.is_published,
-          image: resolveProductImageUrl(p.primary_image_url || p.primary_image_key) || `https://picsum.photos/seed/${p.id}/400/400`,
-        })),
+        data: applyCategoryFallback(response.data.results, categoryId).map(toProductRow),
         meta: {
           total: response.data.count,
           totalPages: Math.ceil(response.data.count / limit),
         }
       };
     },
-    enabled: !!accessToken,
+    enabled: !!accessToken && enabled,
     staleTime: 5000,
     placeholderData: keepPreviousData,
+  });
+};
+
+/** Mobile card list: same endpoint and filters, appended page by page. */
+export const useProductsInfinite = (
+  limit = 10,
+  search = '',
+  categoryId = '',
+  sort = '',
+  status = 'all',
+  published = 'all',
+  options: { enabled?: boolean } = {}
+) => {
+  const { accessToken } = useAuth();
+  const { enabled = true } = options;
+  const isActiveParam = status === 'all' ? undefined : status === 'active' ? 'true' : 'false';
+  const isPublishedParam = published === 'all' ? undefined : published === 'published' ? 'true' : 'false';
+
+  return useInfiniteListQuery({
+    queryKey: ['products', 'infinite', { limit, search, categoryId, sort, status, published }],
+    pageSize: limit,
+    enabled: !!accessToken && enabled,
+    fetchPage: async (page) => {
+      if (!accessToken) throw new Error('No access token');
+      const response = await getProductsList(accessToken, {
+        page,
+        page_size: limit,
+        search,
+        sort,
+        category: categoryId,
+        is_active: isActiveParam,
+        is_published: isPublishedParam,
+      });
+      return {
+        count: response.data.count,
+        results: applyCategoryFallback(response.data.results, categoryId).map(toProductRow),
+        // The fallback above can shorten a page; paginate on what the API served.
+        rawLength: response.data.results.length,
+      };
+    },
   });
 };
 
