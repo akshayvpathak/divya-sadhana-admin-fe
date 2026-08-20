@@ -1,6 +1,6 @@
 import { atom } from 'jotai';
 
-/** Desktop rail: expanded (w-64) vs icon-only (w-20). */
+/** Desktop rail: expanded (w-64) vs icon-only (w-16). */
 export const sidebarAtom = atom<boolean>(true);
 
 /** Off-canvas navigation drawer, below `lg`. */

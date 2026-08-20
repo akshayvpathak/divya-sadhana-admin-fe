@@ -14,6 +14,7 @@ import { toast } from "react-toastify";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { BrandMark } from "@/components/common/BrandMark";
 import { Lock, Mail, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -91,6 +92,7 @@ export default function LoginPage() {
           {mode === "login" ? (
             <>
               <div className="mb-8 text-center">
+                <BrandMark size={84} priority className="mx-auto mb-4" />
                 <p className="mb-3 text-lg font-bold tracking-tight text-ink">
                   Divya <span className="text-gold-deep">Sadhana</span>
                 </p>
@@ -166,6 +168,7 @@ export default function LoginPage() {
           ) : (
             <>
               <div className="text-center mb-8">
+                <BrandMark size={72} className="mx-auto mb-4" />
                 <h1 className="mb-2 text-2xl font-bold text-ink sm:text-3xl">
                   Reset Password
                 </h1>

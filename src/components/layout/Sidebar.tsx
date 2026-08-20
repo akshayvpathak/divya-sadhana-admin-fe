@@ -16,6 +16,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import { BrandLockup, BRAND_NAME } from '@/components/common/BrandMark';
 
 function isItemActive(pathname: string, href: string): boolean {
   return pathname === href || (href !== '/dashboard' && pathname.startsWith(href));
@@ -49,6 +50,11 @@ function SidebarNav({
                 onClick={onNavigate}
                 aria-current={isActive ? 'page' : undefined}
                 className={cn(
+                  // px-3 is constant on purpose. Collapsed, the row is 43px wide
+                  // and the padding leaves it centred on x=32 — the same centre
+                  // line as the seal above and as the expanded rail. The hidden
+                  // label contributes no gap, so nothing shifts on toggle.
+                  //
                   // min-h-11 on the drawer: a 44px row is the smallest
                   // comfortable touch target.
                   'group relative flex items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors',
@@ -73,14 +79,6 @@ function SidebarNav({
   );
 }
 
-function Wordmark({ className }: { className?: string }) {
-  return (
-    <span className={cn('truncate text-lg font-bold tracking-tight text-white', className)}>
-      Divya <span className="text-saffron">Sadhana</span>
-    </span>
-  );
-}
-
 /** Desktop rail. Hidden below `lg`, where <MobileNavTrigger> takes over. */
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useAtom(sidebarAtom);
@@ -89,21 +87,33 @@ export default function Sidebar() {
     <aside
       className={cn(
         'relative z-20 hidden h-full shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-300 lg:flex',
-        isOpen ? 'w-64' : 'w-20'
+        // 64px collapsed is deliberate: it puts the icon column on the same
+        // centre line (x=32) the expanded rail uses, so nothing slides sideways
+        // while the width animates. See the header padding below.
+        isOpen ? 'w-64' : 'w-16'
       )}
     >
-      <div className="flex h-16 shrink-0 items-center justify-between border-b border-sidebar-border px-4">
-        <Wordmark className={isOpen ? 'block' : 'hidden'} />
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setIsOpen(!isOpen)}
-          aria-label={isOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-          aria-expanded={isOpen}
-          className="text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-white"
-        >
-          <ChevronLeft className={cn('h-5 w-5 transition-transform', !isOpen && 'rotate-180')} />
-        </Button>
+      {/* Pinned to the rail's outer edge and present in both states: at 64px wide
+          there is no room for a chevron beside the seal, and a toggle hidden
+          inside the collapsed rail is the one control users cannot find. */}
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        aria-label={isOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+        aria-expanded={isOpen}
+        title={isOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+        className="absolute -right-3.5 top-8 z-30 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-saffron/50 bg-saffron text-royal-deep shadow-[0_2px_10px_0_rgb(43_27_69_/_0.45)] transition-colors hover:bg-gold-soft hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-saffron focus-visible:ring-offset-2 focus-visible:ring-offset-page"
+      >
+        <ChevronLeft className={cn('h-4 w-4 transition-transform duration-300', !isOpen && 'rotate-180')} />
+      </button>
+
+      {/* Padding is constant, not conditional: 14px + half of the 36px seal puts
+          its centre at x=32 in both states, matching the nav icons below. The
+          seal therefore never moves — only the wordmark comes and goes. */}
+      <div className="flex h-16 shrink-0 items-center border-b border-sidebar-border px-3.5">
+        <Link href="/dashboard" className="min-w-0" aria-label={BRAND_NAME}>
+          <BrandLockup size={36} tone="onDark" showWordmark={isOpen} priority />
+        </Link>
       </div>
 
       <SidebarNav collapsed={!isOpen} />
@@ -146,8 +156,9 @@ export function MobileNavTrigger() {
         className="border-sidebar-border bg-sidebar text-sidebar-foreground"
       >
         <div className="flex h-16 shrink-0 items-center justify-between gap-2 border-b border-sidebar-border px-4">
-          <SheetTitle className="truncate text-lg font-bold tracking-tight text-white">
-            Divya <span className="text-saffron">Sadhana</span>
+          {/* Same lockup as the rail, so the drawer is branded identically. */}
+          <SheetTitle className="min-w-0">
+            <BrandLockup size={32} tone="onDark" />
           </SheetTitle>
           <SheetClose
             render={

@@ -22,9 +22,31 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
+// Only needed so Open Graph image URLs resolve absolutely; without it Next falls
+// back to localhost and warns at build time.
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://divyasadhana.org";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: "Divya Sadhana · Admin",
   description: "Administration console for Divya Sadhana",
+  // The `<link rel="icon">` and `<link rel="apple-touch-icon">` tags come from
+  // `favicon.ico` / `icon.png` / `apple-icon.png` sitting next to this file —
+  // Next's file convention emits them (hashed, so they bust the browser cache).
+  openGraph: {
+    type: "website",
+    siteName: "Divya Sadhana",
+    title: "Divya Sadhana · Admin",
+    description: "Administration console for Divya Sadhana",
+    images: [
+      {
+        url: "/brand/divyasadhana-seal-512.png",
+        width: 512,
+        height: 512,
+        alt: "Divya Sadhana Adhyatmik Trust",
+      },
+    ],
+  },
 };
 
 export default function RootLayout({
