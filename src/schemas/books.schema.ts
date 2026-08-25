@@ -288,6 +288,15 @@ export const emptyBookForm: BookFormValues = {
   printed_stock: "",
 };
 
+/**
+ * A rich-text editor never returns "" — an emptied field comes back as
+ * "<p><br></p>". Left alone that is truthy, so an untouched description would be
+ * stored as markup that renders as a stray blank line on the storefront.
+ */
+function blankRichText(html: string): boolean {
+  return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/gi, " ").trim() === "";
+}
+
 /** Form → wire. Money stays a string end-to-end; blanks are omitted, never sent as "". */
 export function toBookPayload(values: BookFormValues): BookPayload {
   const formats: BookFormatPayload[] = [];
@@ -318,13 +327,15 @@ export function toBookPayload(values: BookFormValues): BookPayload {
     formats,
   };
 
+  const description = blankRichText(values.description ?? "") ? "" : values.description;
+
   const optional: [keyof BookPayload, string | undefined][] = [
     ["author", values.author],
     ["language", values.language],
     ["publisher", values.publisher],
     ["isbn", values.isbn],
     ["edition", values.edition],
-    ["description", values.description],
+    ["description", description],
     ["cover_image_key", values.cover_image_key],
   ];
   for (const [key, raw] of optional) {

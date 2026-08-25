@@ -27,6 +27,7 @@ import Link from "next/link";
 import { useEffect, useMemo } from "react";
 import { useProduct, resolveProductImageUrl } from "@/hooks/useProducts";
 import { useAllCategories } from "@/hooks/useCategories";
+import { isBooksCategory } from "@/lib/product-categories";
 import { cn } from "@/lib/utils";
 
 import { Switch } from "@/components/ui/switch";
@@ -133,6 +134,8 @@ export function ProductForm({
   });
 
   const categoryId = watch("categoryId");
+  const selectedCategoryName =
+    categories?.find((c) => c.id === categoryId)?.name ?? "";
   const nameValue = watch("name");
   const imageKey = watch("image");
   const is_active = watch("is_active");
@@ -548,7 +551,11 @@ export function ProductForm({
               {categories
                 ?.filter((category) => {
                   const active = category.isActive ?? category.is_active;
-                  return active !== false || category.id === categoryId;
+                  if (active === false && category.id !== categoryId) return false;
+                  // Books are authored in Books & eBooks; offering the category
+                  // here would create a book-shaped product with no formats.
+                  // Kept only when it is already this product's saved value.
+                  return !isBooksCategory(category.name) || category.id === categoryId;
                 })
                 ?.map((category) => (
                   <SelectItem key={category.id} value={category.id}>
@@ -557,6 +564,22 @@ export function ProductForm({
                 ))}
             </SelectContent>
           </Select>
+          {/* Books are built in Books & eBooks, which also writes the formats and
+              the digital asset. A book filed from here would have neither. */}
+          {isBooksCategory(selectedCategoryName) ? (
+            <p className="text-sm text-danger">
+              This product is filed under a books category. Move it to another
+              category — titles belong in{" "}
+              <Link href="/books" className="font-medium underline">
+                Books &amp; eBooks
+              </Link>
+              .
+            </p>
+          ) : (
+            <p className="text-xs text-moon">
+              Books are not listed here — add them under Books &amp; eBooks.
+            </p>
+          )}
           {errors.categoryId && (
             <p className="text-sm text-danger">{errors.categoryId.message}</p>
           )}

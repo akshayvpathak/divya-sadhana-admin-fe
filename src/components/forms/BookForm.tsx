@@ -3,8 +3,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { toast } from 'react-toastify';
+import 'react-quill-new/dist/quill.snow.css';
+
+const ReactQuill = dynamic(() => import('react-quill-new'), {
+  ssr: false,
+  loading: () => <p className="py-4 text-sm text-moon">Loading editor…</p>,
+});
+
 import {
   Upload,
   X,
@@ -28,7 +36,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import {
   Select,
@@ -101,7 +108,23 @@ export function BookForm({ book, onSubmit, isPending, submitLabel = 'Save book' 
   const ebookEnabled = watch('ebook_enabled');
   const printedEnabled = watch('printed_enabled');
   const coverKey = watch('cover_image_key');
+  const currentCategoryId = watch('category_id');
   const isEditing = Boolean(book);
+
+  /**
+   * `useAllCategories` fetches a single page of 100. If this book's category is
+   * not in it — page 2, or deactivated since it was filed — append it from the
+   * book's own `category_name`, so saving an unrelated field cannot quietly drop
+   * the category.
+   */
+  const categoryOptions = useMemo<{ id: string; name: string }[]>(() => {
+    const list = (categories ?? []).map((c) => ({ id: c.id, name: c.name }));
+    if (!currentCategoryId || list.some((c) => c.id === currentCategoryId)) return list;
+    return [
+      ...list,
+      { id: currentCategoryId, name: book?.category_name || 'Current category' },
+    ];
+  }, [categories, currentCategoryId, book?.category_name]);
 
   async function handleEbookFile(file: File | undefined) {
     if (!file) return;
@@ -153,10 +176,21 @@ export function BookForm({ book, onSubmit, isPending, submitLabel = 'Save book' 
               render={({ field }) => (
                 <Select value={field.value || ''} onValueChange={field.onChange}>
                   <SelectTrigger id="category_id">
-                    <SelectValue placeholder="Select a category" />
+                    {/* Without explicit children the primitive renders the raw
+                        value — the category UUID. Resolve it to a name: the
+                        loaded list first, then the name the book itself carries,
+                        which still works for a category the list does not
+                        return (page 2, or since deactivated). */}
+                    <SelectValue placeholder="Select a category">
+                      {field.value
+                        ? (categories ?? []).find((c) => c.id === field.value)?.name ||
+                          book?.category_name ||
+                          'Select a category'
+                        : 'Select a category'}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    {(categories ?? []).map((category) => (
+                    {categoryOptions.map((category) => (
                       <SelectItem key={category.id} value={category.id}>
                         {category.name}
                       </SelectItem>
@@ -204,7 +238,23 @@ export function BookForm({ book, onSubmit, isPending, submitLabel = 'Save book' 
 
           <div className="sm:col-span-2">
             <Label htmlFor="description">Description</Label>
-            <Textarea id="description" rows={5} {...register('description')} />
+            {/* The field holds HTML — the storefront renders it as markup. A
+                plain textarea showed the operator raw "<p>…</p>" and invited
+                them to hand-edit tags. Same editor the product form uses. */}
+            <div className="rounded-md bg-surface pb-6">
+              <Controller
+                name="description"
+                control={control}
+                render={({ field }) => (
+                  <ReactQuill
+                    theme="snow"
+                    value={field.value ?? ''}
+                    onChange={field.onChange}
+                    className="mb-12 h-[200px]"
+                  />
+                )}
+              />
+            </div>
           </div>
         </div>
       </section>

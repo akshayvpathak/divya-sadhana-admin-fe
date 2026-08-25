@@ -42,9 +42,38 @@ const ITEM_COLUMNS = [
     mobile: 'title' as const,
     headerClassName: 'px-6 py-3 text-xs font-bold uppercase text-moon',
     cellClassName: 'px-6 py-3',
+    // The SKU is the only thing on the line that says *which* edition shipped —
+    // a title sold as both an eBook and a printed copy reads identically without
+    // it. Snapshots, so they still describe the sale after the catalogue moves on.
     renderCell: (row: OrderItem) => (
-      <p className="text-sm font-bold text-ink">{row.product_name_snapshot}</p>
+      <div className="min-w-0">
+        <p className="text-sm font-bold text-ink">{row.product_name_snapshot}</p>
+        {row.sku_snapshot ? (
+          <p className="mt-0.5 font-mono text-xs text-moon">{row.sku_snapshot}</p>
+        ) : null}
+      </div>
     ),
+    renderMobile: (row: OrderItem) => (
+      <span className="block">
+        <span className="block break-words">{row.product_name_snapshot}</span>
+        {row.sku_snapshot ? (
+          <span className="mt-0.5 block font-mono text-xs font-normal text-moon">
+            {row.sku_snapshot}
+          </span>
+        ) : null}
+      </span>
+    ),
+  },
+  {
+    id: 'unit_price',
+    header: 'Unit Price',
+    mobile: 'field' as const,
+    headerAlign: 'right' as const,
+    cellAlign: 'right' as const,
+    headerClassName: 'px-6 py-3 text-xs font-bold uppercase text-moon text-right',
+    cellClassName: 'px-6 py-3 text-sm text-charcoal text-right',
+    // Without this the line total is unexplained arithmetic: 3 x ? = ₹897.
+    renderCell: (row: OrderItem) => formatINR(row.unit_price_snapshot),
   },
   {
     id: 'quantity',
