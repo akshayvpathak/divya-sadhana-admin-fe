@@ -6,6 +6,29 @@ import { useInfiniteListQuery } from './queries/useInfiniteListQuery';
 
 type ApiUser = Awaited<ReturnType<typeof getUsersList>>['data']['results'][number];
 
+const NETWORK_ROLE_BADGE: Record<string, string> = {
+  trustee: 'bg-tint text-gold-press border-gold/25',
+  state_executive: 'bg-plum-tint text-plum-ink border-plum/25',
+  district_president: 'bg-success-tint text-success-ink border-success/25',
+};
+
+/** Display label for the ROLE column / detail badge. */
+export function userRoleLabel(u: {
+  is_superuser?: boolean;
+  network_role?: string | null;
+  network_role_display?: string | null;
+}): string {
+  if (u.network_role_display) return u.network_role_display;
+  if (u.network_role) return u.network_role.replace(/_/g, ' ');
+  if (u.is_superuser) return 'Admin';
+  return 'User';
+}
+
+export function userRoleBadgeClass(networkRole?: string | null): string | null {
+  if (!networkRole) return null;
+  return NETWORK_ROLE_BADGE[networkRole] ?? null;
+}
+
 /** The row shape both the desktop table and the mobile cards render. */
 const toUserRow = (u: ApiUser) => ({
   id: u.id,
@@ -13,19 +36,49 @@ const toUserRow = (u: ApiUser) => ({
   // which renders as a blank cell rather than as missing data.
   name: `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim(),
   email: u.email,
-  role: u.is_superuser ? 'admin' : 'user',
+  is_superuser: !!u.is_superuser,
+  network_role: u.network_role ?? null,
+  network_role_display: u.network_role_display ?? null,
+  referral_code: u.referral_code ?? null,
+  roleLabel: userRoleLabel(u),
   is_active: u.is_active,
   createdAt: new Date().toISOString(), // Mocking date since it's missing in new API
 });
 
+/**
+ * Map the role dropdown value to API query params.
+ * Access filters use is_superuser; network filters use network_role.
+ */
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-const userListParams = (page: number, limit: number, search: string, role: string, status: string, sort: string): any => {
+const userListParams = (
+  page: number,
+  limit: number,
+  search: string,
+  role: string,
+  status: string,
+  sort: string
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+): any => {
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   const apiParams: any = { page, paginate: limit, search };
 
   if (role === 'admin') {
     apiParams.is_superuser = true;
-  } else if (role === 'user') {
+  } else if (role === 'customer') {
+    apiParams.is_superuser = false;
+  } else if (role === 'network_any') {
+    apiParams.network_role = 'any';
+  } else if (role === 'trustee') {
+    apiParams.network_role = 'trustee';
+  } else if (role === 'state_executive') {
+    apiParams.network_role = 'state_executive';
+  } else if (role === 'district_president') {
+    apiParams.network_role = 'district_president';
+  } else if (role === 'network_none') {
+    apiParams.network_role = 'none';
+  }
+  // legacy 'user' maps to customer for any stale state
+  else if (role === 'user') {
     apiParams.is_superuser = false;
   }
 
@@ -118,7 +171,11 @@ export const useUser = (id: string | null) => {
         first_name: user.first_name,
         last_name: user.last_name,
         email: user.email,
-        role: user.is_superuser ? 'admin' : 'user',
+        is_superuser: !!user.is_superuser,
+        network_role: user.network_role ?? null,
+        network_role_display: user.network_role_display ?? null,
+        referral_code: user.referral_code ?? null,
+        roleLabel: userRoleLabel(user),
         is_active: user.is_active,
       };
     },

@@ -8,7 +8,9 @@ import { CardBand } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -28,6 +30,8 @@ import { cn } from '@/lib/utils';
 export interface ToolbarFilterOption {
   value: string;
   label: string;
+  /** When set, options with the same group render under a SelectLabel. */
+  group?: string;
 }
 
 export interface ToolbarFilter {
@@ -42,6 +46,8 @@ export interface ToolbarFilter {
   placeholder?: string;
   /** Desktop-only width. The sheet always renders the control full width. */
   widthClass?: string;
+  /** Disable the select (e.g. district until a state is chosen). */
+  disabled?: boolean;
 }
 
 interface ListToolbarProps<T> {
@@ -76,6 +82,53 @@ function filterLabel(filter: ToolbarFilter): string {
   );
 }
 
+function FilterOptions({ options }: { options: ToolbarFilterOption[] }) {
+  const hasGroups = options.some((o) => o.group);
+  if (!hasGroups) {
+    return (
+      <>
+        {options.map((opt) => (
+          <SelectItem key={opt.value} value={opt.value}>
+            {opt.label}
+          </SelectItem>
+        ))}
+      </>
+    );
+  }
+
+  const ungrouped: ToolbarFilterOption[] = [];
+  const groups = new Map<string, ToolbarFilterOption[]>();
+  for (const opt of options) {
+    if (!opt.group) {
+      ungrouped.push(opt);
+      continue;
+    }
+    const list = groups.get(opt.group) ?? [];
+    list.push(opt);
+    groups.set(opt.group, list);
+  }
+
+  return (
+    <>
+      {ungrouped.map((opt) => (
+        <SelectItem key={opt.value} value={opt.value}>
+          {opt.label}
+        </SelectItem>
+      ))}
+      {Array.from(groups.entries()).map(([group, items]) => (
+        <SelectGroup key={group}>
+          <SelectLabel>{group}</SelectLabel>
+          {items.map((opt) => (
+            <SelectItem key={opt.value} value={opt.value}>
+              {opt.label}
+            </SelectItem>
+          ))}
+        </SelectGroup>
+      ))}
+    </>
+  );
+}
+
 function FilterSelect({
   filter,
   fullWidth,
@@ -86,10 +139,14 @@ function FilterSelect({
   return (
     <Select
       value={filter.value}
-      onValueChange={(val) => filter.onChange((val as string) || filter.defaultValue || 'all')}
+      disabled={filter.disabled}
+      onValueChange={(val) =>
+        filter.onChange((val as string) || filter.defaultValue || 'all')
+      }
     >
       <SelectTrigger
         aria-label={filter.label}
+        disabled={filter.disabled}
         className={cn(
           'bg-surface',
           fullWidth
@@ -102,11 +159,7 @@ function FilterSelect({
         </SelectValue>
       </SelectTrigger>
       <SelectContent>
-        {filter.options.map((opt) => (
-          <SelectItem key={opt.value} value={opt.value}>
-            {opt.label}
-          </SelectItem>
-        ))}
+        <FilterOptions options={filter.options} />
       </SelectContent>
     </Select>
   );

@@ -23,6 +23,9 @@ const UserResponseSchema = z.object({
     last_name: z.string(),
     is_active: z.boolean(),
     is_superuser: z.boolean().optional(),
+    network_role: z.string().nullable().optional(),
+    network_role_display: z.string().nullable().optional(),
+    referral_code: z.string().nullable().optional(),
   }),
 });
 
@@ -41,6 +44,7 @@ export async function getUsersList(
   if (params.sort) queryParams.append("sort", params.sort);
   if (params.is_active !== undefined) queryParams.append("is_active", String(params.is_active));
   if (params.is_superuser !== undefined) queryParams.append("is_superuser", String(params.is_superuser));
+  if (params.network_role) queryParams.append("network_role", params.network_role);
 
   const url = `${API_BASE_URL}/users/?${queryParams.toString()}`;
 

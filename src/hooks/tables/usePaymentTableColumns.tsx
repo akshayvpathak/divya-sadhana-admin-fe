@@ -5,21 +5,21 @@ import { RowActions } from '@/components/common/RowActions';
 import { ColumnConfig } from '@/components/common/DataTable/types';
 import { formatINR } from '@/lib/currency';
 import { DateTimeCell } from '@/components/common/DateTimeCell';
+import {
+  PAYMENT_SOURCE_BADGE,
+  PAYMENT_SOURCE_LABELS,
+  paymentRelatedHref,
+  paymentRelatedLabel,
+} from '@/lib/payment-links';
+import type { AllPayment } from '@/schemas/payments.schema';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-export interface PaymentRow {
-  id: string;
-  internal_payment_ref?: string;
-  user?: string | { first_name?: string; last_name?: string; [key: string]: any } | null;
-  provider?: string | null;
-  amount?: string | number;
-  status?: string;
-  created_at?: string | null;
-  order?: string | { id?: string; order_number?: string; [key: string]: any } | null;
-  donation?: string | { id?: string; donation_number?: string; [key: string]: any } | null;
-  [key: string]: any;
+export type PaymentRow = AllPayment;
+
+function userDisplayName(user: AllPayment['user']): string {
+  if (!user) return '';
+  if (user.full_name?.trim()) return user.full_name.trim();
+  return `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim();
 }
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
 export const usePaymentTableColumns = (): ColumnConfig<PaymentRow>[] => {
   return [
@@ -27,81 +27,104 @@ export const usePaymentTableColumns = (): ColumnConfig<PaymentRow>[] => {
       id: 'internal_payment_ref',
       accessorKey: 'internal_payment_ref',
       header: 'Reference',
-      sortable: true,
       cellClassName: 'font-medium text-moon text-xs',
       mobile: 'title',
       renderMobile: (row) => (
-        <span className="font-mono text-sm break-all">{row.internal_payment_ref}</span>
+        <span className="font-mono text-sm break-all">
+          {row.internal_payment_ref}
+        </span>
       ),
+    },
+    {
+      id: 'source',
+      accessorKey: 'source',
+      header: 'Source',
+      mobile: 'status',
+      headerAlign: 'center',
+      cellAlign: 'center',
+      renderCell: (row) => {
+        const source = row.source || '';
+        const label = PAYMENT_SOURCE_LABELS[source] ?? source.replace(/_/g, ' ');
+        const badge =
+          PAYMENT_SOURCE_BADGE[source] ??
+          'bg-cream text-charcoal border-line';
+        return (
+          <span
+            className={`inline-flex whitespace-nowrap rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${badge}`}
+          >
+            {label}
+          </span>
+        );
+      },
     },
     {
       id: 'user',
       accessorKey: 'user',
       header: 'User',
-      sortable: true,
       mobile: 'subtitle',
-      renderCell: (row) => typeof row.user === 'string' ? row.user : row.user?.first_name ? `${row.user.first_name} ${row.user.last_name}` : 'Unknown',
+      renderCell: (row) => {
+        if (row.user == null) {
+          return <span className="italic text-moon">Deleted user</span>;
+        }
+        const name = userDisplayName(row.user);
+        return name || row.user.email || 'Unknown';
+      },
     },
     {
       id: 'association',
       header: 'Linked To',
       mobile: 'field',
       renderCell: (row) => {
-        if (row.order) {
-          const orderId = typeof row.order === 'object' ? row.order.id : row.order;
-          const orderNum = typeof row.order === 'object' ? row.order.order_number : null;
+        const href = paymentRelatedHref(row.source, row.reference_id);
+        const label = paymentRelatedLabel(row.source);
+        if (href) {
           return (
-            <Link href={`/orders/${orderId}`} className="text-gold-press hover:text-ink font-medium hover:underline">
-              Order {orderNum ? `#${orderNum}` : ''}
+            <Link
+              href={href}
+              className="font-medium text-gold-press hover:text-ink hover:underline"
+            >
+              {label}
             </Link>
           );
         }
-        if (row.donation) {
-          const donationNum = typeof row.donation === 'object' ? row.donation.donation_number : null;
-          return (
-            <span className="text-charcoal font-medium">
-              Donation {donationNum ? `#${donationNum}` : ''}
-            </span>
-          );
+        if (row.source === 'consultation') {
+          return <span className="font-medium text-charcoal">{label}</span>;
         }
-        return <span className="text-moon italic">None</span>;
-      }
+        return <span className="italic text-moon">None</span>;
+      },
     },
     {
       id: 'provider',
       accessorKey: 'provider',
       header: 'Provider',
-      sortable: true,
       cellClassName: 'capitalize',
       mobile: 'field',
-      // Plain text, no chip. Returning null (not 'N/A') lets the table's shared
-      // N/A chip stand in for a missing provider.
       renderCell: (row) => row.provider || null,
     },
     {
       id: 'amount',
       accessorKey: 'amount',
       header: 'Amount',
-      sortable: true,
       cellClassName: 'font-medium',
       mobile: 'field',
-      renderCell: (row) => (row.amount !== undefined ? formatINR(row.amount) : null),
+      renderCell: (row) =>
+        row.amount !== undefined ? formatINR(row.amount) : null,
     },
     {
       id: 'status',
       accessorKey: 'status',
       header: 'Status',
-      sortable: true,
       headerAlign: 'center',
       cellAlign: 'center',
       mobile: 'status',
-      renderCell: (row) => <StatusBadge status={row.status || ''} type="transaction_status" />,
+      renderCell: (row) => (
+        <StatusBadge status={row.status || ''} type="transaction_status" />
+      ),
     },
     {
       id: 'created_at',
       accessorKey: 'created_at',
       header: 'Date',
-      sortable: true,
       cellClassName: 'whitespace-nowrap',
       mobile: 'field',
       renderCell: (row) => <DateTimeCell value={row.created_at} />,
@@ -112,9 +135,20 @@ export const usePaymentTableColumns = (): ColumnConfig<PaymentRow>[] => {
       mobile: 'actions',
       headerAlign: 'center',
       cellAlign: 'center',
-      renderCell: (row) => (
-        <RowActions actions={[{ kind: 'view', href: `/payments/${row.id}` }]} />
-      ),
+      renderCell: (row) => {
+        const href = paymentRelatedHref(row.source, row.reference_id);
+        return (
+          <RowActions
+            actions={[
+              {
+                kind: 'view',
+                href: href ?? undefined,
+                hidden: !href,
+              },
+            ]}
+          />
+        );
+      },
     },
   ];
 };

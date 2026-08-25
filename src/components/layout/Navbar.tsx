@@ -71,7 +71,7 @@ export default function Navbar() {
                     {user ? `${user.first_name} ${user.last_name}` : 'Admin User'}
                   </p>
                   <p className="text-[10px] leading-relaxed break-all text-moon">
-                    {user?.email || 'admin@divyasadhana.com'}
+                    {user?.email || 'admin@divyasadhana.org'}
                   </p>
                 </div>
               </DropdownMenuLabel>

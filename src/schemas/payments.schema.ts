@@ -10,6 +10,7 @@ export const userSchema = z.object({
   is_active: z.boolean(),
 }).passthrough();
 
+/** Ecommerce-only payment (GET /api/payments/{id}/). */
 export const paymentSchema = z.object({
   id: z.string().uuid(),
   is_deleted: z.boolean().optional(),
@@ -32,15 +33,44 @@ export const paymentSchema = z.object({
   order: z.string().nullable().optional(),
 }).passthrough();
 
+/**
+ * Unified payment row from GET /api/payments/all/ (UNION across verticals).
+ * `reference_id` meaning follows `source`.
+ */
+export const allPaymentSchema = z.object({
+  id: z.string().uuid(),
+  source: z.string(),
+  internal_payment_ref: z.string().nullable().optional(),
+  provider: z.string().nullable().optional(),
+  provider_order_id: z.string().nullable().optional(),
+  provider_payment_id: z.string().nullable().optional(),
+  amount: z.string().optional(),
+  currency: z.string().optional(),
+  status: z.string().optional(),
+  captured_at: z.string().nullable().optional(),
+  created_at: z.string(),
+  reference_id: z.string().nullable().optional(),
+  user: userSchema.nullable().optional(),
+}).passthrough();
+
 export const paymentsListSchema = z.object({
   message: z.string().optional(),
   data: z.object({
     count: z.number(),
     next: z.string().nullable(),
     previous: z.string().nullable(),
-    results: z.array(paymentSchema),
+    results: z.array(allPaymentSchema),
   }).passthrough(),
 }).passthrough();
 
 export type Payment = z.infer<typeof paymentSchema>;
+export type AllPayment = z.infer<typeof allPaymentSchema>;
 export type PaymentsList = z.infer<typeof paymentsListSchema>;
+
+export type PaymentSource =
+  | "ecommerce"
+  | "ai_report"
+  | "donation"
+  | "consultation"
+  | "sadhana"
+  | "wallet_topup";

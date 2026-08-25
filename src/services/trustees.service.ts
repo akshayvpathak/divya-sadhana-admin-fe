@@ -30,10 +30,17 @@ interface TrusteesListOptions {
   page?: number;
   page_size?: number;
   search?: string;
+  search_fields?: string;
   is_active?: string;
   sort?: string;
   /** Server-side filter: trustees assigned to this state (UUID). */
   state_id?: string;
+  /** Single network tier: trustee | state_executive | district_president */
+  role?: string;
+  /** Members holding a live seat in this district (pair with state_id). */
+  district_id?: string;
+  /** false = appointed but with no live seat. */
+  has_territory?: string;
 }
 
 export const getTrusteesList = async (
@@ -44,9 +51,13 @@ export const getTrusteesList = async (
   if (options.page) params.append("page", String(options.page));
   if (options.page_size) params.append("page_size", String(options.page_size));
   if (options.search) params.append("search", options.search);
+  if (options.search_fields) params.append("search_fields", options.search_fields);
   if (options.is_active) params.append("is_active", options.is_active);
   if (options.sort) params.append("sort", options.sort);
   if (options.state_id) params.append("state_id", options.state_id);
+  if (options.role) params.append("role", options.role);
+  if (options.district_id) params.append("district_id", options.district_id);
+  if (options.has_territory) params.append("has_territory", options.has_territory);
 
   const response = await fetch(`${API_BASE_URL}/trustee/?${params.toString()}`, {
     method: "GET",

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, Users, MapPin, Link2 } from 'lucide-react';
+import { Plus, Users, MapPin, Link2, X } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ResponsiveDataView } from '@/components/common/ResponsiveDataView';
@@ -13,7 +13,11 @@ import {
   useTrusteesListQuery,
   useTrusteesInfiniteQuery,
 } from '@/hooks/queries/useTrusteesQuery';
-import { useAssignmentsListQuery, useStatesListQuery } from '@/hooks/queries/useTerritoryQuery';
+import {
+  useAssignmentsListQuery,
+  useDistrictsListQuery,
+  useStatesListQuery,
+} from '@/hooks/queries/useTerritoryQuery';
 import { useTrusteeTableColumns } from '@/hooks/tables/useTrusteeTableColumns';
 import { Trustee } from '@/schemas/trustees.schema';
 import { CoverageTerritory } from '@/components/trustees/CoverageTerritory';
@@ -37,6 +41,21 @@ const STATUS_OPTIONS = [
   { value: 'inactive', label: 'Inactive' },
 ];
 
+const ROLE_OPTIONS = [
+  { value: 'all', label: 'All Roles' },
+  { value: 'trustee', label: 'Trustee' },
+  { value: 'state_executive', label: 'State Executive' },
+  { value: 'district_president', label: 'District President' },
+];
+
+const TERRITORY_OPTIONS = [
+  { value: 'all', label: 'Any territory' },
+  { value: 'none', label: 'No territory assigned' },
+];
+
+const TRUSTEE_SEARCH_FIELDS =
+  'user__first_name,user__last_name,user__email,referral_code';
+
 const PAGE_SIZE = 10;
 
 export default function TrusteesPage() {
@@ -45,16 +64,27 @@ export default function TrusteesPage() {
   const debouncedSearch = useDebounce(search, 300);
   const [status, setStatus] = useState('all');
   const [stateFilter, setStateFilter] = useState('all');
+  const [districtFilter, setDistrictFilter] = useState('all');
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [territoryFilter, setTerritoryFilter] = useState('all');
   const [sort, setSort] = useState('-created_at');
   const [tab, setTab] = useState<TrusteesTab>('trustees');
 
   const hasActiveFilters =
-    search !== '' || status !== 'all' || stateFilter !== 'all';
+    search !== '' ||
+    status !== 'all' ||
+    stateFilter !== 'all' ||
+    districtFilter !== 'all' ||
+    roleFilter !== 'all' ||
+    territoryFilter !== 'all';
 
   const clearAllFilters = () => {
     setSearch('');
     setStatus('all');
     setStateFilter('all');
+    setDistrictFilter('all');
+    setRoleFilter('all');
+    setTerritoryFilter('all');
     setPage(1);
   };
 
@@ -80,16 +110,35 @@ export default function TrusteesPage() {
   // The backend filters trustees by assigned state via `?state_id={uuid}`, so the
   // dropdown value is the state UUID and pagination stays fully server-side.
   const stateIdParam = stateFilter === 'all' ? undefined : stateFilter;
+  const districtIdParam =
+    stateFilter === 'all' || districtFilter === 'all'
+      ? undefined
+      : districtFilter;
+  const roleParam = roleFilter === 'all' ? undefined : roleFilter;
+  const hasTerritoryParam =
+    territoryFilter === 'none' ? 'false' : undefined;
 
   const queryFilters = useMemo(
     () => ({
       page_size: PAGE_SIZE,
-      search: debouncedSearch,
+      search: debouncedSearch || undefined,
+      search_fields: debouncedSearch ? TRUSTEE_SEARCH_FIELDS : undefined,
       is_active: isActiveParam,
       sort,
       state_id: stateIdParam,
+      district_id: districtIdParam,
+      role: roleParam,
+      has_territory: hasTerritoryParam,
     }),
-    [debouncedSearch, isActiveParam, sort, stateIdParam]
+    [
+      debouncedSearch,
+      isActiveParam,
+      sort,
+      stateIdParam,
+      districtIdParam,
+      roleParam,
+      hasTerritoryParam,
+    ]
   );
 
   // Only the visible tab fetches members.
@@ -106,6 +155,9 @@ export default function TrusteesPage() {
   // Resolve attributed states per trustee from active assignments (single fetch).
   const { data: assignmentsData } = useAssignmentsListQuery({ is_active: 'true', page_size: 200 });
   const { data: statesData } = useStatesListQuery({ is_active: 'true' });
+  const { data: districts = [] } = useDistrictsListQuery(
+    stateFilter === 'all' ? null : stateFilter
+  );
 
   const territoryByMember = useMemo(() => {
     const map = new Map<string, string[]>();
@@ -188,7 +240,128 @@ export default function TrusteesPage() {
     [states]
   );
 
+  const districtOptions = useMemo(
+    () => [
+      { value: 'all', label: 'All Districts' },
+      ...districts.map((d) => ({ value: d.id, label: d.name })),
+    ],
+    [districts]
+  );
+
+  const activeFilterChips = useMemo(() => {
+    const chips: { key: string; label: string; onClear: () => void }[] = [];
+    if (roleFilter !== 'all') {
+      chips.push({
+        key: 'role',
+        label: `Role: ${ROLE_OPTIONS.find((o) => o.value === roleFilter)?.label ?? roleFilter}`,
+        onClear: () => {
+          setRoleFilter('all');
+          setPage(1);
+        },
+      });
+    }
+    if (stateFilter !== 'all') {
+      chips.push({
+        key: 'state',
+        label: `State: ${stateOptions.find((o) => o.value === stateFilter)?.label ?? 'State'}`,
+        onClear: () => {
+          setStateFilter('all');
+          setDistrictFilter('all');
+          setPage(1);
+        },
+      });
+    }
+    if (districtFilter !== 'all') {
+      chips.push({
+        key: 'district',
+        label: `District: ${districtOptions.find((o) => o.value === districtFilter)?.label ?? 'District'}`,
+        onClear: () => {
+          setDistrictFilter('all');
+          setPage(1);
+        },
+      });
+    }
+    if (status !== 'all') {
+      chips.push({
+        key: 'status',
+        label: `Status: ${STATUS_OPTIONS.find((o) => o.value === status)?.label ?? status}`,
+        onClear: () => {
+          setStatus('all');
+          setPage(1);
+        },
+      });
+    }
+    if (territoryFilter !== 'all') {
+      chips.push({
+        key: 'territory',
+        label: 'No territory assigned',
+        onClear: () => {
+          setTerritoryFilter('all');
+          setPage(1);
+        },
+      });
+    }
+    if (search.trim()) {
+      chips.push({
+        key: 'search',
+        label: `Search: ${search.trim()}`,
+        onClear: () => {
+          setSearch('');
+          setPage(1);
+        },
+      });
+    }
+    return chips;
+  }, [
+    roleFilter,
+    stateFilter,
+    districtFilter,
+    status,
+    territoryFilter,
+    search,
+    stateOptions,
+    districtOptions,
+  ]);
+
   const toolbarFilters: ToolbarFilter[] = [
+    {
+      key: 'role',
+      label: 'Role',
+      value: roleFilter,
+      options: ROLE_OPTIONS,
+      placeholder: 'All Roles',
+      widthClass: 'w-[180px]',
+      onChange: (val) => {
+        setRoleFilter(val);
+        setPage(1);
+      },
+    },
+    {
+      key: 'state',
+      label: 'State',
+      value: stateFilter,
+      options: stateOptions,
+      placeholder: 'All States',
+      widthClass: 'w-[180px]',
+      onChange: (val) => {
+        setStateFilter(val);
+        setDistrictFilter('all');
+        setPage(1);
+      },
+    },
+    {
+      key: 'district',
+      label: 'District',
+      value: districtFilter,
+      options: districtOptions,
+      placeholder: stateFilter === 'all' ? 'Select a state first' : 'All Districts',
+      widthClass: 'w-[180px]',
+      disabled: stateFilter === 'all',
+      onChange: (val) => {
+        setDistrictFilter(val);
+        setPage(1);
+      },
+    },
     {
       key: 'status',
       label: 'Status',
@@ -202,14 +375,14 @@ export default function TrusteesPage() {
       },
     },
     {
-      key: 'state',
-      label: 'State',
-      value: stateFilter,
-      options: stateOptions,
-      placeholder: 'All States',
-      widthClass: 'w-[200px]',
+      key: 'territory',
+      label: 'Territory',
+      value: territoryFilter,
+      options: TERRITORY_OPTIONS,
+      placeholder: 'Any territory',
+      widthClass: 'w-[180px]',
       onChange: (val) => {
-        setStateFilter(val);
+        setTerritoryFilter(val);
         setPage(1);
       },
     },
@@ -312,6 +485,22 @@ export default function TrusteesPage() {
               sort={sort}
               onSort={handleSort}
             />
+
+            {activeFilterChips.length > 0 && (
+              <div className="flex flex-wrap gap-2 border-b border-line px-4 py-3 sm:px-5">
+                {activeFilterChips.map((chip) => (
+                  <button
+                    key={chip.key}
+                    type="button"
+                    onClick={chip.onClear}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-line bg-cosmos px-2.5 py-1 text-xs font-semibold text-charcoal transition-colors hover:border-gold/40 hover:bg-tint hover:text-gold-press"
+                  >
+                    {chip.label}
+                    <X className="h-3 w-3 shrink-0 opacity-60" />
+                  </button>
+                ))}
+              </div>
+            )}
 
             <ResponsiveDataView
               columns={columns}

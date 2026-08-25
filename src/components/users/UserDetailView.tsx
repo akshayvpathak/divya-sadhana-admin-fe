@@ -6,7 +6,7 @@ import { Field, NAValue, SectionHeading } from '@/components/common/DetailCard';
 import { TableAvatar } from '@/components/common/TableAvatar';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useUser } from '@/hooks/useUsers';
+import { useUser, userRoleBadgeClass } from '@/hooks/useUsers';
 
 /** Read-only user view. */
 export function UserDetailView({ userId }: { userId: string }) {
@@ -18,6 +18,7 @@ export function UserDetailView({ userId }: { userId: string }) {
   if (!user) return null;
 
   const displayName = user.name?.trim();
+  const networkBadge = userRoleBadgeClass(user.network_role);
 
   return (
     <Card divided>
@@ -36,7 +37,18 @@ export function UserDetailView({ userId }: { userId: string }) {
           </p>
         </div>
         <div className="ml-auto flex flex-wrap items-center gap-2">
-          <StatusBadge status={user.role} type="role" />
+          {networkBadge ? (
+            <span
+              className={`inline-flex whitespace-nowrap rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${networkBadge}`}
+            >
+              {user.roleLabel}
+            </span>
+          ) : (
+            <StatusBadge
+              status={user.is_superuser ? 'admin' : 'user'}
+              type="role"
+            />
+          )}
           <StatusBadge status={user.is_active} type="active" />
         </div>
       </div>
@@ -50,7 +62,27 @@ export function UserDetailView({ userId }: { userId: string }) {
           <Field label="Last name">{user.last_name}</Field>
           <Field label="Email">{user.email}</Field>
           <Field label="Role">
-            <StatusBadge status={user.role} type="role" />
+            {networkBadge ? (
+              <span
+                className={`inline-flex whitespace-nowrap rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${networkBadge}`}
+              >
+                {user.roleLabel}
+              </span>
+            ) : (
+              <StatusBadge
+                status={user.is_superuser ? 'admin' : 'user'}
+                type="role"
+              />
+            )}
+          </Field>
+          <Field label="Referral code">
+            {user.referral_code ? (
+              <span className="inline-flex items-center rounded-md bg-cosmos px-2 py-1 font-mono text-xs font-medium text-charcoal ring-1 ring-inset ring-line/80">
+                {user.referral_code}
+              </span>
+            ) : (
+              <NAValue />
+            )}
           </Field>
           <Field label="Status">
             <StatusBadge status={user.is_active} type="active" />

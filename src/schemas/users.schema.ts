@@ -7,6 +7,9 @@ const UserSchema = z.object({
   last_name: z.string(),
   is_active: z.boolean(),
   is_superuser: z.boolean().optional(),
+  network_role: z.string().nullable().optional(),
+  network_role_display: z.string().nullable().optional(),
+  referral_code: z.string().nullable().optional(),
 });
 
 export const usersListResponseSchema = z.object({
@@ -47,4 +50,5 @@ export interface UsersListParams {
   sort?: string;
   is_active?: boolean;
   is_superuser?: boolean;
+  network_role?: string;
 }

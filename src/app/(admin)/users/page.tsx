@@ -17,8 +17,13 @@ import { Card } from '@/components/ui/card';
 
 const ROLE_OPTIONS = [
   { value: 'all', label: 'All Roles' },
-  { value: 'admin', label: 'Admin' },
-  { value: 'user', label: 'User' },
+  { value: 'admin', label: 'Admin', group: 'Access' },
+  { value: 'customer', label: 'Customer', group: 'Access' },
+  { value: 'network_any', label: 'Any network member', group: 'Network' },
+  { value: 'trustee', label: 'Trustee', group: 'Network' },
+  { value: 'state_executive', label: 'State Executive', group: 'Network' },
+  { value: 'district_president', label: 'District President', group: 'Network' },
+  { value: 'network_none', label: 'Not a network member', group: 'Network' },
 ];
 
 const STATUS_OPTIONS = [
@@ -94,7 +99,7 @@ export default function UsersPage() {
       value: selectedRole,
       options: ROLE_OPTIONS,
       placeholder: 'All Roles',
-      widthClass: 'w-[140px]',
+      widthClass: 'w-[200px]',
       onChange: (val) => {
         setSelectedRole(val);
         setPage(1);

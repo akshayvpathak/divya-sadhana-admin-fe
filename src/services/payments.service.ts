@@ -1,4 +1,5 @@
 import {
+  AllPayment,
   Payment,
   PaymentsList,
   paymentSchema,
@@ -8,34 +9,37 @@ import {
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://api.divyasadhana.org/api";
 
-interface FetchOptions {
+interface AllPaymentsFetchOptions {
   page?: number;
   page_size?: number;
   search?: string;
-  search_fields?: string;
-  sort?: string;
   status?: string;
+  /** Comma-separated sources, e.g. "ecommerce,donation". Omit for all. */
+  source?: string;
 }
 
-export const getPaymentsList = async (
+/** Unified payments across verticals — GET /api/payments/all/. */
+export const getAllPaymentsList = async (
   accessToken: string,
-  options: FetchOptions = {}
+  options: AllPaymentsFetchOptions = {}
 ): Promise<PaymentsList> => {
   const params = new URLSearchParams();
   if (options.page) params.append("page", String(options.page));
   if (options.page_size) params.append("page_size", String(options.page_size));
   if (options.search) params.append("search", options.search);
-  if (options.search_fields) params.append("search_fields", options.search_fields);
-  if (options.sort) params.append("sort", options.sort);
   if (options.status) params.append("status", options.status);
+  if (options.source) params.append("source", options.source);
 
-  const response = await fetch(`${API_BASE_URL}/payments/?${params.toString()}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
+  const response = await fetch(
+    `${API_BASE_URL}/payments/all/?${params.toString()}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: "" }));
@@ -43,36 +47,36 @@ export const getPaymentsList = async (
   }
 
   const json = await response.json();
-  
-  // Debug logging
+
   if (process.env.NEXT_PUBLIC_DEBUG_API === "true") {
     // eslint-disable-next-line no-console
-    console.log("[API] Payments raw response:", json);
+    console.log("[API] All payments raw response:", json);
   }
-  
+
   try {
-    const parsed = paymentsListSchema.parse(json);
-    if (process.env.NEXT_PUBLIC_DEBUG_API === "true") {
-      // eslint-disable-next-line no-console
-      console.log("[API] Payments parsed successfully:", parsed);
-    }
-    return parsed;
+    return paymentsListSchema.parse(json);
   } catch (parseError) {
-    // Log the parse error, but only dump the raw response (which may contain
-    // payment PII) when debug logging is explicitly enabled.
     if (process.env.NEXT_PUBLIC_DEBUG_API === "true") {
       // eslint-disable-next-line no-console
-      console.error("[API] Payments schema parsing error:", parseError, "Raw response:", json);
+      console.error(
+        "[API] All payments schema parsing error:",
+        parseError,
+        "Raw response:",
+        json
+      );
     } else {
       // eslint-disable-next-line no-console
-      console.error("[API] Payments schema parsing error:", parseError);
+      console.error("[API] All payments schema parsing error:", parseError);
     }
     throw new Error(
-      `Failed to parse payments response: ${parseError instanceof Error ? parseError.message : String(parseError)}`
+      `Failed to parse payments response: ${
+        parseError instanceof Error ? parseError.message : String(parseError)
+      }`
     );
   }
 };
 
+/** Ecommerce-only payment detail — GET /api/payments/{id}/. */
 export const getPayment = async (
   id: string,
   accessToken: string
@@ -93,3 +97,5 @@ export const getPayment = async (
   const json = await response.json();
   return paymentSchema.parse(json.data || json);
 };
+
+export type { AllPayment };

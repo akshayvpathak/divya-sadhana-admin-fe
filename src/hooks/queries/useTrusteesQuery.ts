@@ -28,9 +28,13 @@ export interface TrusteesListFilters {
   page?: number;
   page_size?: number;
   search?: string;
+  search_fields?: string;
   is_active?: string;
   sort?: string;
   state_id?: string;
+  role?: string;
+  district_id?: string;
+  has_territory?: string;
 }
 
 export const useTrusteesListQuery = (
@@ -48,9 +52,13 @@ export const useTrusteesListQuery = (
         page: filters.page ?? 1,
         page_size: filters.page_size ?? TRUSTEES_PAGE_SIZE,
         search: filters.search,
+        search_fields: filters.search_fields,
         is_active: filters.is_active,
         sort: filters.sort,
         state_id: filters.state_id,
+        role: filters.role,
+        district_id: filters.district_id,
+        has_territory: filters.has_territory,
       });
     },
     enabled: !!accessToken && enabled,
@@ -76,9 +84,13 @@ export const useTrusteesInfiniteQuery = (
         page,
         page_size: pageSize,
         search: filters.search,
+        search_fields: filters.search_fields,
         is_active: filters.is_active,
         sort: filters.sort,
         state_id: filters.state_id,
+        role: filters.role,
+        district_id: filters.district_id,
+        has_territory: filters.has_territory,
       });
       return response.data;
     },

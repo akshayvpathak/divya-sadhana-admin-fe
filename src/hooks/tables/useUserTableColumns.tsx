@@ -3,18 +3,43 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { TableAvatar } from '@/components/common/TableAvatar';
 import { RowActions } from '@/components/common/RowActions';
 import { ColumnConfig } from '@/components/common/DataTable/types';
+import { userRoleBadgeClass } from '@/hooks/useUsers';
 
 export interface UserRow {
   id: string;
   name: string;
   email: string;
-  role: string;
+  is_superuser: boolean;
+  network_role: string | null;
+  network_role_display: string | null;
+  referral_code: string | null;
+  roleLabel: string;
   is_active: boolean;
   createdAt: string;
 }
 
 interface UseUserTableColumnsProps {
   openDeleteModal: (id: string) => void;
+}
+
+function RoleCell({ row }: { row: UserRow }) {
+  const networkBadge = userRoleBadgeClass(row.network_role);
+  if (networkBadge) {
+    return (
+      <span
+        className={`inline-flex whitespace-nowrap rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${networkBadge}`}
+        title={row.roleLabel}
+      >
+        {row.roleLabel}
+      </span>
+    );
+  }
+  return (
+    <StatusBadge
+      status={row.is_superuser ? 'admin' : 'user'}
+      type="role"
+    />
+  );
 }
 
 export const useUserTableColumns = ({
@@ -50,14 +75,27 @@ export const useUserTableColumns = ({
     },
     {
       id: 'role',
-      accessorKey: 'role',
+      accessorKey: 'roleLabel',
       header: 'Role',
-      sortable: true,
-      sortKey: 'is_active',
       headerAlign: 'center',
       cellAlign: 'center',
       mobile: 'status',
-      renderCell: (row) => <StatusBadge status={row.role} type="role" />,
+      renderCell: (row) => <RoleCell row={row} />,
+    },
+    {
+      id: 'referral_code',
+      accessorKey: 'referral_code',
+      header: 'Referral',
+      mobile: 'field',
+      mobileLabel: 'Referral code',
+      renderCell: (row) =>
+        row.referral_code ? (
+          <span className="inline-flex items-center rounded-md bg-cosmos px-2 py-1 font-mono text-xs font-medium text-charcoal ring-1 ring-inset ring-line/80">
+            {row.referral_code}
+          </span>
+        ) : (
+          <span className="text-line">—</span>
+        ),
     },
     {
       id: 'is_active',
@@ -70,14 +108,6 @@ export const useUserTableColumns = ({
       mobile: 'status',
       renderCell: (row) => <StatusBadge status={row.is_active} type="active" />,
     },
-    // {
-    //   id: 'createdAt',
-    //   accessorKey: 'createdAt',
-    //   header: 'Joined',
-    //   sortable: false,
-    //   cellClassName: 'text-moon',
-    //   renderCell: (row) => dayjs(row.createdAt).format('MMM D, YYYY'),
-    // },
     {
       id: 'actions',
       header: 'Actions',

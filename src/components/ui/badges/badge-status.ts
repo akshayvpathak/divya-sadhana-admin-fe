@@ -177,7 +177,21 @@ export const orderPaymentOptions = getOptionsFromMap(paymentStatusMap, ["paid", 
 export const orderShippingOptions = getOptionsFromMap(shippingStatusMap, ["pending", "shipped", "delivered", "rto", "cancelled"], "All Shipping");
 export const donationStatusOptions = getOptionsFromMap(paymentStatusMap, ["paid", "pending"], "All Status");
 export const campaignStatusOptions = getOptionsFromMap(campaignStatusMap, ["draft", "active"], "All Statuses", true); // forceTitleCase=true -> "Draft", "Active"
-export const paymentPageStatusOptions = getOptionsFromMap(paymentStatusMap, ["paid", "pending"], "All Statuses");
+export const paymentPageStatusOptions = getOptionsFromMap(
+  transactionStatusMap,
+  ["captured", "initiated", "failed"],
+  "All Statuses"
+);
+
+export const paymentSourceOptions = [
+  { value: "all", label: "All Sources" },
+  { value: "ecommerce", label: "Shop" },
+  { value: "ai_report", label: "AI Reading" },
+  { value: "donation", label: "Donation" },
+  { value: "consultation", label: "Consultation" },
+  { value: "sadhana", label: "Sadhana" },
+  { value: "wallet_topup", label: "Wallet Top-up" },
+];
 export const aiReadingStatusOptions = getOptionsFromMap(aiReadingsStatusMap, ["succeeded"], "All Status");
 export const serviceBookingStatusOptions = getOptionsFromMap(serviceBookingStatusMap, ["application_review", "pending", "paid", "scheduled", "completed", "cancelled"], "All Statuses");
 export const serviceCategoryOptions = getOptionsFromMap(serviceCategoryMap, ["paramarsh", "anushthan", "diksha", "subscription", "class"], "All Categories");
