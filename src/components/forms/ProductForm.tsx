@@ -1,5 +1,4 @@
 "use client";
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -117,6 +116,7 @@ export function ProductForm({
     watch,
     formState: { errors },
   } = useForm<ProductFormData>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(productSchema) as any,
     defaultValues: {
       name: "",
@@ -627,7 +627,9 @@ export function ProductForm({
         </div>
 
       <DiscountFields
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         control={control as any}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         register={register as any}
         errors={errors}
         basePrice={discountBasePrice}

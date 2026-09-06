@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { discountFields, discountTypeEnum, refineDiscount } from "@/schemas/discount.schema";
 
 /**
  * Books & eBooks.
@@ -101,6 +102,13 @@ export const adminBookSchema = z.object({
   is_published: z.boolean().nullable().optional().transform((v) => v ?? false),
   min_price: nullableMoney,
   max_price: nullableMoney,
+  discount_enabled: z.boolean().nullable().optional().transform((v) => v ?? false),
+  discount_type: discountTypeEnum.nullable().optional().transform((v) => v ?? "percentage"),
+  discount_value: z
+    .union([z.number(), z.string()])
+    .nullable()
+    .optional()
+    .transform(moneyToNumber),
   formats: z.array(variantTypeEnum).nullable().optional().default([]),
   active_variant_count: z.number().nullable().optional().default(0),
   requires_shipping: z.boolean().nullable().optional(),
@@ -162,6 +170,13 @@ export type BookPayload = {
   is_active: boolean;
   is_published: boolean;
   formats: BookFormatPayload[];
+  /**
+   * A Book IS a Product, so the discount is the same product-level config, one per title —
+   * never per format. The admin books endpoint has to forward these onto the Product.
+   */
+  discount_enabled: boolean;
+  discount_type: "percentage" | "fixed";
+  discount_value: string;
 };
 
 const priceField = z
@@ -199,8 +214,12 @@ export const bookFormSchema = z
     printed_price: priceField.default(""),
     printed_sku: z.string().trim().default(""),
     printed_stock: z.string().trim().default(""),
+
+    ...discountFields,
   })
   .superRefine((values, ctx) => {
+    refineDiscount(values, ctx);
+
     // Either format alone is a perfectly normal book — eBook-only and print-only both ship.
     if (!values.ebook_enabled && !values.printed_enabled) {
       ctx.addIssue({
@@ -286,6 +305,9 @@ export const emptyBookForm: BookFormValues = {
   printed_price: "",
   printed_sku: "",
   printed_stock: "",
+  discount_enabled: false,
+  discount_type: "percentage",
+  discount_value: 0,
 };
 
 /**
@@ -325,6 +347,10 @@ export function toBookPayload(values: BookFormValues): BookPayload {
     is_active: values.is_active ?? true,
     is_published: values.is_published ?? false,
     formats,
+    discount_enabled: values.discount_enabled ?? false,
+    discount_type: values.discount_type ?? "percentage",
+    // Money stays a string end-to-end, like every price on this form.
+    discount_value: String(Number(values.discount_value) || 0),
   };
 
   const description = blankRichText(values.description ?? "") ? "" : values.description;
@@ -376,5 +402,8 @@ export function toBookFormValues(book: AdminBook): BookFormValues {
     printed_price: printed ? String(printed.price) : "",
     printed_sku: printed?.sku || "",
     printed_stock: printed?.stock_quantity != null ? String(printed.stock_quantity) : "",
+    discount_enabled: book.discount_enabled,
+    discount_type: book.discount_type,
+    discount_value: book.discount_value,
   };
 }

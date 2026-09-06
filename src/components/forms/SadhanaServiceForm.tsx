@@ -24,6 +24,7 @@ import { useUploadImageMutation } from '@/hooks/queries/useImageUploadQuery';
 import { resolveProductImageUrl, extractImageKey } from '@/hooks/useProducts';
 import InputSchemaEditor from './sadhana-service/InputSchemaEditor';
 import PricingOptionsEditor from './sadhana-service/PricingOptionsEditor';
+import DiscountFields from '@/components/forms/shared/DiscountFields';
 
 const ReactQuill = dynamic(() => import('react-quill-new'), {
   ssr: false,
@@ -61,6 +62,9 @@ export function SadhanaServiceForm({ serviceId, onSubmit, isPending, readOnly = 
       requires_image: fetchedService.requires_image ?? false,
       requires_application: fetchedService.requires_application ?? false,
       display_order: fetchedService.display_order ?? 0,
+      discount_enabled: fetchedService.discount_enabled ?? false,
+      discount_type: fetchedService.discount_type ?? 'percentage',
+      discount_value: fetchedService.discount_value ?? 0,
       input_schema: (fetchedService.input_schema ?? []).map((f: Record<string, unknown>) => ({
         key: (f.key as string) ?? '',
         label: (f.label as string) ?? '',
@@ -118,6 +122,9 @@ export function SadhanaServiceForm({ serviceId, onSubmit, isPending, readOnly = 
       input_schema: [],
       pricing_options: [],
       display_order: 0,
+      discount_enabled: false,
+      discount_type: 'percentage',
+      discount_value: 0,
       ...initialData,
     },
   });
@@ -126,6 +133,18 @@ export function SadhanaServiceForm({ serviceId, onSubmit, isPending, readOnly = 
   const categoryValue = watch('category');
   const isActive = watch('is_active');
   const requiresImage = watch('requires_image');
+  const discountEnabled = watch('discount_enabled') ?? false;
+  const discountType = watch('discount_type') ?? 'percentage';
+  const discountValue = Number(watch('discount_value')) || 0;
+  /**
+   * Configured once on the service and applied to whichever option the devotee picks. Preview
+   * against the cheapest option, since that is where a fixed amount bites first.
+   */
+  const pricingOptions = watch('pricing_options') ?? [];
+  const optionAmounts = pricingOptions
+    .map((o: { amount?: number | string }) => Number(o?.amount) || 0)
+    .filter((n: number) => n > 0);
+  const discountBasePrice = optionAmounts.length ? Math.min(...optionAmounts) : 0;
   const requiresApplication = watch('requires_application');
 
   useEffect(() => {
@@ -320,6 +339,20 @@ export function SadhanaServiceForm({ serviceId, onSubmit, isPending, readOnly = 
       <div className="rounded-xl border border-line p-4">
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         <PricingOptionsEditor control={control as any} register={register as any} errors={errors} readOnly={readOnly} />
+
+        <DiscountFields
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          control={control as any}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          register={register as any}
+          errors={errors}
+          basePrice={discountBasePrice}
+          enabled={discountEnabled}
+          type={discountType}
+          value={discountValue}
+          priceLabel="the lowest-priced option"
+          readOnly={readOnly}
+        />
       </div>
 
       <div className="rounded-xl border border-line p-4">

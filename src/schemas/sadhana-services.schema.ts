@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { discountFields, discountTypeEnum, refineDiscount } from "@/schemas/discount.schema";
 
 export const serviceCategoryEnum = z.enum([
   "paramarsh",
@@ -84,7 +85,12 @@ export const pricingOptionBase = z.object({
   duration_days: nullableDuration,
 });
 
-export const createSadhanaServiceSchema = z.object({
+/**
+ * Kept un-refined so `updateSadhanaServiceSchema` can call `.partial()` on it — zod refuses
+ * `.partial()` on any object carrying refinements, and doing so crashed this module at
+ * evaluation time, taking the whole Sadhana Services screen down with it.
+ */
+const sadhanaServiceFields = z.object({
   name: z.string().min(1, "Name is required"),
   slug: z
     .string()
@@ -99,9 +105,16 @@ export const createSadhanaServiceSchema = z.object({
   input_schema: z.array(inputSchemaItemCreate).default([]),
   pricing_options: z.array(pricingOptionBase).min(1, "Add at least one pricing option"),
   display_order: numberish.default(0),
+  // Service-level, never per pricing option: one discount applied to whichever option is
+  // chosen. The backend canonicalises pricing_options on write and silently drops unknown
+  // keys, so a per-option discount would vanish without an error.
+  ...discountFields,
 });
 
-export const updateSadhanaServiceSchema = createSadhanaServiceSchema.partial();
+export const createSadhanaServiceSchema = sadhanaServiceFields.superRefine(refineDiscount);
+
+// Partial of the plain object; the discount rule is re-applied on top.
+export const updateSadhanaServiceSchema = sadhanaServiceFields.partial().superRefine(refineDiscount);
 
 export const sadhanaServiceSchema = z
   .object({
@@ -118,6 +131,17 @@ export const sadhanaServiceSchema = z
     input_schema: z.array(inputSchemaItemBase.passthrough()).optional().default([]),
     pricing_options: z.array(pricingOptionBase.passthrough()).optional().default([]),
     display_order: z.number().optional().default(0),
+    discount_enabled: z.boolean().nullable().optional().transform((v) => v ?? false),
+    discount_type: discountTypeEnum.nullable().optional().transform((v) => v ?? "percentage"),
+    discount_value: z
+      .union([z.number(), z.string()])
+      .nullable()
+      .optional()
+      .transform((v) => {
+        if (v === null || v === undefined || v === "") return 0;
+        const n = Number(v);
+        return Number.isFinite(n) ? n : 0;
+      }),
     created_at: z.string().optional(),
     updated_at: z.string().optional(),
   })
