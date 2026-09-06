@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -36,6 +37,8 @@ import { Upload, X, Loader2 } from "lucide-react";
 import { useState, useCallback } from "react";
 import { toast } from "react-toastify";
 import ProductVariantsEditor from "@/components/forms/product/ProductVariantsEditor";
+import DiscountFields from "@/components/forms/shared/DiscountFields";
+import { emptyDiscount } from "@/schemas/discount.schema";
 
 interface ProductFormProps {
   productId?: string;
@@ -97,6 +100,9 @@ export function ProductForm({
             meta_keywords: fetchedProduct.meta_keywords || "",
             og_image_key: fetchedProduct.og_image_key || "",
             is_indexable: fetchedProduct.is_indexable ?? true,
+            discount_enabled: fetchedProduct.discount_enabled ?? false,
+            discount_type: fetchedProduct.discount_type ?? "percentage",
+            discount_value: fetchedProduct.discount_value ?? 0,
           }
         : propsInitialData,
     [fetchedProduct, propsInitialData],
@@ -129,6 +135,7 @@ export function ProductForm({
       meta_keywords: "",
       og_image_key: "",
       is_indexable: true,
+      ...emptyDiscount,
       ...initialData,
     },
   });
@@ -153,6 +160,17 @@ export function ProductForm({
         : `From ₹${fetchedProduct.min_price}`
       : null;
   const galleryImageKeys = watch("gallery_image_keys") || [];
+  const discountEnabled = watch("discount_enabled") ?? false;
+  const discountType = watch("discount_type") ?? "percentage";
+  const discountValue = Number(watch("discount_value")) || 0;
+  /**
+   * A variable product's `price` is machine-written (the backend keeps it equal to the
+   * cheapest active variant), so the form's own price input is a no-op there. Preview the
+   * discount against min_price instead, which is the number the shopper actually sees.
+   */
+  const discountBasePrice = hasVariants
+    ? Number(fetchedProduct?.min_price ?? 0)
+    : Number(watch("price")) || 0;
 
   useEffect(() => {
     register("image");
@@ -607,6 +625,18 @@ export function ProductForm({
             </Label>
           </div>
         </div>
+
+      <DiscountFields
+        control={control as any}
+        register={register as any}
+        errors={errors}
+        basePrice={discountBasePrice}
+        enabled={discountEnabled}
+        type={discountType}
+        value={discountValue}
+        priceLabel={hasVariants ? "the lowest-priced variant" : undefined}
+      />
+
       </div>
 
       <div className="space-y-2 pb-4">

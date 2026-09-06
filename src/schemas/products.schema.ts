@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { discountTypeEnum } from "@/schemas/discount.schema";
 
 export const createProductSchema = z.object({
   name: z.string().min(1, "Product name is required"),
@@ -134,6 +135,13 @@ export const productSchema = z.object({
   /** Read-only: signed URL from API; never send on create/PATCH */
   og_image_url: z.string().nullable().optional(),
   is_indexable: z.boolean().nullable().optional().transform((val) => val ?? true),
+  discount_enabled: z.boolean().nullable().optional().transform((v) => v ?? false),
+  discount_type: discountTypeEnum.nullable().optional().transform((v) => v ?? "percentage"),
+  discount_value: z
+    .union([z.number(), z.string()])
+    .nullable()
+    .optional()
+    .transform(moneyToNumber),
   has_variants: z.boolean().nullable().optional().transform((val) => val ?? false),
   min_price: z
     .union([z.number(), z.string()])

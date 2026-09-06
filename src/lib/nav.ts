@@ -16,6 +16,7 @@ import {
   Flame,
   ClipboardList,
   CalendarDays,
+  Settings,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -48,6 +49,7 @@ export const navItems: NavItem[] = [
   { name: 'Network Members', href: '/trustees', icon: BadgeCheck },
   { name: 'Withdrawals', href: '/withdrawals', icon: Wallet },
   { name: 'Profile', href: '/profile', icon: UserCircle },
+  { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
