@@ -251,6 +251,9 @@ export const useProduct = (id: string) => {
           ? (cleanImageUrl(p.og_image_url) || p.og_image_url)
           : '',
         is_indexable: p.is_indexable ?? true,
+        discount_enabled: p.discount_enabled ?? false,
+        discount_type: p.discount_type ?? 'percentage',
+        discount_value: p.discount_value ?? 0,
         has_variants: p.has_variants ?? false,
         min_price: p.min_price ?? null,
         max_price: p.max_price ?? null,
@@ -288,6 +291,10 @@ export const useCreateProduct = () => {
         meta_keywords: data.meta_keywords || '',
         og_image_key: extractImageKey(data.og_image_key),
         is_indexable: data.is_indexable ?? true,
+        discount_enabled: data.discount_enabled ?? false,
+        discount_type: data.discount_type ?? 'percentage',
+        // Money goes over the wire as a decimal string, matching every other price field.
+        discount_value: String(Number(data.discount_value) || 0),
       };
       if (data.categoryId) {
         payload.category = data.categoryId;
@@ -334,6 +341,11 @@ export const useUpdateProduct = () => {
       if (data.meta_keywords !== undefined) updateData.meta_keywords = data.meta_keywords || '';
       if (data.og_image_key !== undefined) updateData.og_image_key = extractImageKey(data.og_image_key);
       if (data.is_indexable !== undefined) updateData.is_indexable = data.is_indexable;
+      if (data.discount_enabled !== undefined) updateData.discount_enabled = data.discount_enabled;
+      if (data.discount_type !== undefined) updateData.discount_type = data.discount_type;
+      if (data.discount_value !== undefined) {
+        updateData.discount_value = String(Number(data.discount_value) || 0);
+      }
 
       return updateProduct(id, updateData, accessToken);
     },

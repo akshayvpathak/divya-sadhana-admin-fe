@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { discountFields, refineDiscount } from '@/schemas/discount.schema';
 
 export const productSchema = z.object({
   name: z.string().min(1, 'Product name is required'),
@@ -21,6 +22,7 @@ export const productSchema = z.object({
   meta_keywords: z.string().max(255, 'Meta keywords must be 255 characters or less').optional().or(z.literal('')),
   og_image_key: z.string().optional().or(z.literal('')),
   is_indexable: z.boolean().default(true).optional(),
-});
+  ...discountFields,
+}).superRefine(refineDiscount);
 
 export type ProductFormData = z.infer<typeof productSchema>;

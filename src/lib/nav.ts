@@ -10,12 +10,14 @@ import {
   CreditCard,
   UserCircle,
   Sparkles,
+  BrainCircuit,
   Moon,
   BadgeCheck,
   Wallet,
   Flame,
   ClipboardList,
   CalendarDays,
+  Settings,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -44,10 +46,12 @@ export const navItems: NavItem[] = [
   { name: 'Service Batches', href: '/service-batches', icon: CalendarDays },
   { name: 'Payments', href: '/payments', icon: CreditCard },
   { name: 'AI Readings', href: '/ai-readings', icon: Sparkles },
+  { name: 'AI Services', href: '/ai-services', icon: BrainCircuit },
   { name: 'Horoscope', href: '/horoscope', icon: Moon },
   { name: 'Network Members', href: '/trustees', icon: BadgeCheck },
   { name: 'Withdrawals', href: '/withdrawals', icon: Wallet },
   { name: 'Profile', href: '/profile', icon: UserCircle },
+  { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

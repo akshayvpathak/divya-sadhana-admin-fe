@@ -37,6 +37,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import DiscountFields from '@/components/forms/shared/DiscountFields';
 import {
   Select,
   SelectContent,
@@ -109,6 +110,27 @@ export function BookForm({ book, onSubmit, isPending, submitLabel = 'Save book' 
   const printedEnabled = watch('printed_enabled');
   const coverKey = watch('cover_image_key');
   const currentCategoryId = watch('category_id');
+  const discountEnabled = watch('discount_enabled') ?? false;
+  const discountType = watch('discount_type') ?? 'percentage';
+  const discountValue = Number(watch('discount_value')) || 0;
+  /**
+   * One discount per title, applied to whichever format the reader buys. The preview shows
+   * the cheapest enabled format, since that is where a fixed amount bites first — a ₹200 off
+   * a ₹199 eBook makes it free while the ₹499 print is merely cheaper.
+   */
+  const ebookPriceNum = Number(watch('ebook_price')) || 0;
+  const printedPriceNum = Number(watch('printed_price')) || 0;
+  const enabledPrices = [
+    ...(ebookEnabled && ebookPriceNum > 0 ? [{ label: 'the eBook', price: ebookPriceNum }] : []),
+    ...(printedEnabled && printedPriceNum > 0
+      ? [{ label: 'the printed edition', price: printedPriceNum }]
+      : []),
+  ];
+  const cheapestFormat = enabledPrices.length
+    ? enabledPrices.reduce((min, f) => (f.price < min.price ? f : min))
+    : null;
+  const discountBasePrice = cheapestFormat?.price ?? 0;
+  const discountPriceLabel = cheapestFormat?.label;
   const isEditing = Boolean(book);
 
   /**
@@ -485,6 +507,23 @@ export function BookForm({ book, onSubmit, isPending, submitLabel = 'Save book' 
             </div>
           ) : null}
         </div>
+      </section>
+
+      {/* ------------------------------------------------------------ Discount */}
+      <section className="space-y-4">
+        <h3 className="text-sm font-semibold text-ink">Discount</h3>
+        <DiscountFields
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          control={control as any}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          register={register as any}
+          errors={errors}
+          basePrice={discountBasePrice}
+          enabled={discountEnabled}
+          type={discountType}
+          value={discountValue}
+          priceLabel={discountPriceLabel}
+        />
       </section>
 
       {/* ------------------------------------------------------------ Visibility */}
