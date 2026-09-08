@@ -8,6 +8,8 @@ import { Loader2 } from 'lucide-react';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import DiscountFields from '@/components/forms/shared/DiscountFields';
 import {
@@ -29,7 +31,12 @@ export default function SettingsPage() {
   const { control, register, handleSubmit, reset, watch, formState: { errors } } =
     useForm<CartDiscountFormValues>({
       resolver: zodResolver(cartDiscountFormSchema) as any,
-      defaultValues: { discount_enabled: false, discount_type: 'percentage', discount_value: 0 },
+      defaultValues: {
+        discount_enabled: false,
+        discount_type: 'percentage',
+        discount_value: 0,
+        discount_min_value: 0,
+      },
     });
 
   useEffect(() => {
@@ -38,16 +45,21 @@ export default function SettingsPage() {
       discount_enabled: config.cart_discount_enabled,
       discount_type: config.cart_discount_type,
       discount_value: config.cart_discount_value,
+      discount_min_value: config.cart_discount_min_value,
     });
   }, [config, reset]);
 
   const enabled = watch('discount_enabled') ?? false;
   const type = watch('discount_type') ?? 'percentage';
   const value = Number(watch('discount_value')) || 0;
+  const minValue = Number(watch('discount_min_value')) || 0;
 
   const preview = { discount_enabled: enabled, discount_type: type, discount_value: value };
-  const exampleOff = discountAmount(EXAMPLE_SUBTOTAL, preview);
-  const exampleFinal = applyDiscount(EXAMPLE_SUBTOTAL, preview);
+  // The example cart must obey the threshold too, or it would promise a saving the shopper
+  // would not get (§11.2: below the minimum the discount is enabled but the amount is ₹0).
+  const qualifies = EXAMPLE_SUBTOTAL >= minValue;
+  const exampleOff = qualifies ? discountAmount(EXAMPLE_SUBTOTAL, preview) : 0;
+  const exampleFinal = qualifies ? applyDiscount(EXAMPLE_SUBTOTAL, preview) : EXAMPLE_SUBTOTAL;
 
   const onSubmit = (values: CartDiscountFormValues) =>
     save(toSiteConfigPayload(values as Parameters<typeof toSiteConfigPayload>[0]));
@@ -85,8 +97,41 @@ export default function SettingsPage() {
                 priceLabel="an example cart"
               />
 
+              {/* Cart-only, so it lives here rather than in the shared DiscountFields block —
+                  a minimum has no meaning on a product, book or seva form. */}
+              <div className="space-y-1.5">
+                <Label htmlFor="discount_min_value">Minimum cart value</Label>
+                <Input
+                  id="discount_min_value"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  inputMode="decimal"
+                  disabled={!enabled}
+                  {...register('discount_min_value')}
+                />
+                <p className="text-xs text-moon">
+                  {minValue > 0
+                    ? `Carts must reach ${formatINR(minValue)} after item discounts before this applies.`
+                    : 'Leave at 0 to apply the discount to every cart, with no minimum.'}
+                </p>
+                {errors.discount_min_value ? (
+                  <p className="text-sm text-danger">
+                    {String(errors.discount_min_value.message)}
+                  </p>
+                ) : null}
+              </div>
+
               {/* The admin thinks in carts, not unit prices, so restate the same maths in
                   the vocabulary of the checkout summary they will see. */}
+              {enabled && !qualifies && value > 0 ? (
+                <div className="rounded-md border border-line bg-cream px-3 py-2.5 text-sm text-charcoal">
+                  A {formatINR(EXAMPLE_SUBTOTAL)} cart would <strong>not</strong> qualify — it is{' '}
+                  {formatINR(minValue - EXAMPLE_SUBTOTAL)} short of the {formatINR(minValue)}{' '}
+                  minimum. Shoppers see a prompt telling them how much more to add.
+                </div>
+              ) : null}
+
               {enabled && exampleOff > 0 ? (
                 <div className="space-y-1 rounded-md border border-line bg-cream px-3 py-2.5 text-sm">
                   <div className="flex justify-between text-charcoal">
