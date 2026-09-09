@@ -1,6 +1,38 @@
 import { z } from "zod";
 import { userSchema } from "./payments.schema";
 
+const moneyLoose = z.union([z.number(), z.string()]).nullish();
+
+export const commissionBreakdownSliceSchema = z
+  .object({
+    role: z.string(),
+    percent: moneyLoose,
+    amount: moneyLoose,
+    beneficiary_name: z.string().nullable().optional(),
+    beneficiary_id: z.string().nullable().optional(),
+    is_fallback_to_admin: z.boolean().optional(),
+    retained_from_role: z.string().nullable().optional(),
+    retention_reason: z.string().nullable().optional(),
+    status: z.string().optional(),
+  })
+  .passthrough();
+
+export const commissionBreakdownSchema = z
+  .object({
+    base_amount: moneyLoose,
+    pool_percent: moneyLoose,
+    commissionable: z.boolean().optional(),
+    slices: z.array(commissionBreakdownSliceSchema).optional().default([]),
+    totals: z
+      .object({
+        paid_to_network: moneyLoose,
+        retained_by_admin: moneyLoose,
+      })
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+
 export const orderItemSchema = z.object({
   id: z.string().uuid(),
   is_deleted: z.boolean(),
@@ -67,6 +99,7 @@ export const orderSchema = z.object({
     .nullable()
     .optional(),
   user: z.union([z.string(), userSchema]).nullable().optional(),
+  commission_breakdown: commissionBreakdownSchema.nullable().optional(),
 });
 
 export const courierPartnerOptions = [
@@ -112,3 +145,5 @@ export const ordersListSchema = z.object({
 
 export type Order = z.infer<typeof orderSchema>;
 export type OrdersList = z.infer<typeof ordersListSchema>;
+export type CommissionBreakdownSlice = z.infer<typeof commissionBreakdownSliceSchema>;
+export type CommissionBreakdown = z.infer<typeof commissionBreakdownSchema>;

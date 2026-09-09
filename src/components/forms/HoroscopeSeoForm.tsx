@@ -6,9 +6,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import {
   HoroscopeEntry,
+  HoroscopeLocale,
   HoroscopeSeoFormData,
   horoscopeSeoFormSchema,
   HoroscopeSeoPatchPayload,
+  LOCALE_LABELS,
   PERIOD_LABELS,
   SIGN_LABELS,
 } from "@/schemas/horoscope.schema";
@@ -25,6 +27,7 @@ import { toast } from "react-toastify";
 
 interface HoroscopeSeoFormProps {
   entry: HoroscopeEntry;
+  locale?: HoroscopeLocale;
   onSubmit: (payload: HoroscopeSeoPatchPayload) => void;
   isPending?: boolean;
 }
@@ -32,6 +35,7 @@ interface HoroscopeSeoFormProps {
 
 export function HoroscopeSeoForm({
   entry,
+  locale = "en-IN",
   onSubmit,
   isPending = false,
 }: HoroscopeSeoFormProps) {
@@ -169,6 +173,12 @@ export function HoroscopeSeoForm({
         <h3 className="text-sm font-bold uppercase tracking-wider text-moon">
           Reading (read-only)
         </h3>
+        <p className="text-sm text-charcoal">
+          Editing <span className="font-semibold text-ink">{LOCALE_LABELS[locale]}</span> SEO
+          {locale === "hi-IN"
+            ? " — Hindi meta and FAQ only. Body text stays backend-generated."
+            : " — English meta and FAQ. Hindi is a separate tab so it cannot overwrite this."}
+        </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1">
             <Label className="text-moon">Sign</Label>
