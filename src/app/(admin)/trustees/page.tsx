@@ -32,7 +32,7 @@ type TrusteesTab = 'trustees' | 'coverage' | 'retention';
 const TABS: { key: TrusteesTab; label: string; hint: string }[] = [
   { key: 'trustees', label: 'Trustees', hint: 'Members' },
   { key: 'coverage', label: 'Coverage', hint: 'Territory seats' },
-  { key: 'retention', label: 'Retention', hint: 'Commission hold' },
+  { key: 'retention', label: 'Admin share', hint: 'Kept by admin' },
 ];
 
 const STATUS_OPTIONS = [
@@ -435,7 +435,7 @@ export default function TrusteesPage() {
       {tab === 'coverage' ? (
         <CoverageTerritory />
       ) : tab === 'retention' ? (
-        <RetentionReport />
+        <RetentionReport onOpenCoverage={() => selectTab('coverage')} />
       ) : (
         <>
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">

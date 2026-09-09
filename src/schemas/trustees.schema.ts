@@ -21,6 +21,7 @@ export const trusteeSchema = z
     role: z.string().nullish(),
     role_display: z.string().nullish(),
     commission_percent: moneyLoose,
+    commission_percent_referral: moneyLoose,
     state: z.string().nullish(),
     district: z.string().nullish(),
     notes: z.string().nullish(),
