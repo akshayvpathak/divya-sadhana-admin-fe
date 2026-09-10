@@ -2,33 +2,27 @@
 
 import Link from 'next/link';
 import { useTrusteeQuery } from '@/hooks/queries/useTrusteesQuery';
-import { formatINR, formatPercent } from '@/lib/currency';
-import { shareAmount } from '@/lib/order-commission';
 import type { Order } from '@/schemas/orders.schema';
 
 /**
- * Who earns on an order, and roughly how much.
+ * Who an order is attributed to — the members stamped on it at checkout.
  *
- * The order stamps attribution (`area_trustee` and friends) at checkout but
- * carries no per-person amount, so each row resolves its member and works the
- * share out from that member's own rate against the order's commission base.
+ * Deliberately carries no money. The confirmed amounts live in
+ * `commission_breakdown`, and the caller shows this block only when there is no
+ * split to display, where it still answers "who would have earned on this".
+ * Deriving amounts here from a member's current rate was wrong twice over: the
+ * rate can change after the order, and the order's pool snapshot is stale.
  *
- * The rate used is the member's rate *now*, which is why the amount is labelled
- * an estimate: if their rate changed after the order was placed, the figure
- * drifts. The confirmed number lives in the commission ledger and arrives on the
- * order as `commission_breakdown`; once that is present the caller shows it
- * instead and none of this is rendered.
+ * The order carries bare member UUIDs, so each row resolves its own name.
  */
 
 type AttributionRole = {
   id: string | null | undefined;
   label: string;
-  /** Read the referral rate for referral rows, the standard rate otherwise. */
-  useReferralRate?: boolean;
   hint: string;
 };
 
-function AttributionRow({ role, base }: { role: AttributionRole; base: number }) {
+function AttributionRow({ role }: { role: AttributionRole }) {
   const { data: member, isLoading, isError } = useTrusteeQuery(role.id);
 
   const name =
@@ -39,10 +33,6 @@ function AttributionRow({ role, base }: { role: AttributionRole; base: number })
     '';
 
   const place = [member?.district, member?.state].filter(Boolean).join(', ');
-  const rate = role.useReferralRate
-    ? member?.commission_percent_referral
-    : member?.commission_percent;
-  const amount = shareAmount(base, rate);
 
   return (
     <div className="rounded-xl border border-line bg-surface px-3.5 py-3">
@@ -70,42 +60,16 @@ function AttributionRow({ role, base }: { role: AttributionRole; base: number })
           </p>
         </div>
 
-        {amount > 0 ? (
-          <div className="shrink-0 text-right">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-moon">
-              Estimated earning
-            </p>
-            <p className="tabular-nums text-base font-bold text-ink">{formatINR(amount)}</p>
-            <p className="text-[11px] text-moon">{formatPercent(rate)} of base</p>
-          </div>
-        ) : (
-          <div className="shrink-0 text-right">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-moon">
-              Estimated earning
-            </p>
-            <p className="text-sm text-moon">{isLoading ? '—' : 'Rate not set'}</p>
-          </div>
-        )}
       </div>
     </div>
   );
 }
 
-export default function OrderAttribution({ order, base }: { order: Order; base: number }) {
+export default function OrderAttribution({ order }: { order: Order }) {
   const roles: AttributionRole[] = [
-    { id: order.area_trustee, label: 'Area', hint: 'Earns on the delivery area' },
-    {
-      id: order.referring_trustee,
-      label: 'Referred by',
-      useReferralRate: true,
-      hint: 'Shared the referral link',
-    },
-    {
-      id: order.referral_trustee,
-      label: 'Referral credit',
-      useReferralRate: true,
-      hint: 'Credited for the referral',
-    },
+    { id: order.area_trustee, label: 'Area', hint: 'Covers the delivery area' },
+    { id: order.referring_trustee, label: 'Referred by', hint: 'Shared the referral link' },
+    { id: order.referral_trustee, label: 'Referral credit', hint: 'Credited for the referral' },
   ];
 
   // `referring_trustee` and `referral_trustee` are the same person on most
@@ -129,7 +93,7 @@ export default function OrderAttribution({ order, base }: { order: Order; base: 
   return (
     <div className="grid gap-2 sm:grid-cols-2">
       {present.map((role) => (
-        <AttributionRow key={`${role.label}-${role.id}`} role={role} base={base} />
+        <AttributionRow key={`${role.label}-${role.id}`} role={role} />
       ))}
     </div>
   );
