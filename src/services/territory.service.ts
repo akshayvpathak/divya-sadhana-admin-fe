@@ -49,7 +49,9 @@ export const getStatesList = async (
 ): Promise<StatesList> => {
   const params = new URLSearchParams();
   if (options.page) params.append("page", String(options.page));
-  if (options.page_size) params.append("page_size", String(options.page_size));
+  // Wire name is `paginate`. `page_size` is DRF's default, which this API does
+  // not use — it was silently ignored until it became a 422 on 2026-09-11.
+  if (options.page_size) params.append("paginate", String(options.page_size));
   if (options.search) params.append("search", options.search);
   if (options.is_active) params.append("is_active", options.is_active);
   if (options.sort) params.append("sort", options.sort);
@@ -72,10 +74,9 @@ export const getStatesList = async (
   const json = await response.json();
   const parsed = statesListSchema.parse(json);
 
-  // The backend caps the page size at 10 and ignores `page_size`, so a single
-  // request never returns every state (e.g. 36 states arrive 10 at a time).
-  // When the caller wants the full list (no explicit page requested) — as the
-  // state dropdowns do — follow `next` and aggregate so all states show.
+  // Callers that want every state (the dropdowns) do not pass a page, and the
+  // default page is 10, so 36 states would arrive 10 at a time. Follow `next`
+  // and aggregate so the whole list shows.
   if (!options.page && parsed.data.next) {
     const all = [...parsed.data.results];
     let nextUrl: string | null | undefined = parsed.data.next;
@@ -115,7 +116,7 @@ export const getAssignmentsList = async (
 ): Promise<AssignmentsList> => {
   const params = new URLSearchParams();
   if (options.page) params.append("page", String(options.page));
-  if (options.page_size) params.append("page_size", String(options.page_size));
+  if (options.page_size) params.append("paginate", String(options.page_size));
   if (options.search) params.append("search", options.search);
   if (options.state) params.append("state", options.state);
   // Prefer `member` — `trustee=` currently returns unfiltered rows on the live API.
@@ -220,7 +221,7 @@ function normalizeDistrictRows(rows: District[]): District[] {
   return rows.filter((d) => d.is_active !== false);
 }
 
-/** One page of districts for a state. Prefer `paginate` — backend honors it (unlike page_size). */
+/** One page of districts for a state. */
 export const getDistrictsPage = async (
   accessToken: string,
   stateId: string,
@@ -414,6 +415,11 @@ export const getCommissionRetentionEntries = async (
   if (filters.district_id) params.set("district_id", filters.district_id);
   if (filters.source_kind) params.set("source_kind", filters.source_kind);
   params.set("page", String(filters.page ?? 1));
+  // `page_size` is correct *here* and nowhere else. The retention report paginates
+  // itself rather than going through `filter_model`, so it genuinely reads
+  // `page_size` (and echoes it back); `paginate` is ignored. Everywhere else the
+  // API uses `paginate`, and `page_size` was silently dropped until it started
+  // returning 422 on 2026-09-11.
   params.set("page_size", String(filters.page_size ?? RETENTION_ENTRIES_PAGE_SIZE));
   if (filters.retention_reason) params.set("retention_reason", filters.retention_reason);
 

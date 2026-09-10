@@ -47,7 +47,9 @@ export const getBooksList = async (
 ): Promise<AdminBooksList> => {
   const params = new URLSearchParams();
   if (options.page) params.append("page", String(options.page));
-  if (options.page_size) params.append("page_size", String(options.page_size));
+  // Wire name is `paginate`. `page_size` is DRF's default, which this API does
+  // not use — it was silently ignored until it became a 422 on 2026-09-11.
+  if (options.page_size) params.append("paginate", String(options.page_size));
   if (options.search) params.append("search", options.search);
   if (options.sort) params.append("sort", options.sort);
   if (options.is_active && options.is_active !== "all") {

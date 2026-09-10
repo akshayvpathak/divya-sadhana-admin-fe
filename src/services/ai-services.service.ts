@@ -34,7 +34,9 @@ export async function getAiServicesList(
 ): Promise<AiServicesList> {
   const params = new URLSearchParams();
   if (options.page) params.set("page", String(options.page));
-  if (options.page_size) params.set("page_size", String(options.page_size));
+  // Wire name is `paginate`. `page_size` is DRF's default, which this API does
+  // not use — it was silently ignored until it became a 422 on 2026-09-11.
+  if (options.page_size) params.set("paginate", String(options.page_size));
   if (options.search?.trim()) params.set("search", options.search.trim());
 
   const url = params.toString() ? `${BASE}?${params.toString()}` : BASE;
