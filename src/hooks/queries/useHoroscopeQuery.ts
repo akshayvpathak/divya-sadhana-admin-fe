@@ -84,7 +84,7 @@ export const usePatchHoroscopeSeoMutation = () => {
       payload: HoroscopeSeoPatchPayload;
     }) => {
       if (!accessToken) throw new Error("No access token");
-      return patchHoroscopeSeo(id, payload, accessToken, locale);
+      return patchHoroscopeSeo(id, payload, accessToken);
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({

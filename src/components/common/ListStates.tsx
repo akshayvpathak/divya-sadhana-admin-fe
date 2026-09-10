@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 /** Shared empty state for both the desktop table and the mobile card list. */
 export function ListEmptyState({
   message = 'No records found',
-  hint = 'Try adjusting your search or filters.',
+  hint = 'Nothing here yet.',
 }: {
   message?: string;
   hint?: string;

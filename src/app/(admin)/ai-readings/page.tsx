@@ -138,6 +138,7 @@ export default function AiReadingsPage() {
           onSort={handleSort}
           mobile={mobile}
           emptyMessage="No AI readings found"
+          emptyHint="Nothing here yet. Empty is expected until customers unlock a reading."
           pagination={
             data?.data ? (
               <DataTablePagination

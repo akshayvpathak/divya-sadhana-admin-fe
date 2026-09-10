@@ -180,6 +180,7 @@ export default function OrdersPage() {
           onSort={handleSort}
           mobile={mobile}
           emptyMessage="No orders found"
+          emptyHint="Nothing here yet. Empty is expected until real customers pay."
           pagination={
             data?.data ? (
               <DataTablePagination

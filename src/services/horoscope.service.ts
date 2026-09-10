@@ -50,14 +50,9 @@ export const patchHoroscopeSeo = async (
   id: string,
   payload: HoroscopeSeoPatchPayload,
   accessToken: string,
-  locale: HoroscopeLocale = "en-IN"
 ): Promise<HoroscopeEntry> => {
-  const params = new URLSearchParams();
-  if (locale !== "en-IN") params.set("locale", locale);
-  const qs = params.toString();
-  const body = locale === "en-IN" ? payload : { ...payload, locale };
   const response = await fetch(
-    `${API_BASE_URL}/horoscope/admin/entries/${id}/${qs ? `?${qs}` : ""}`,
+    `${API_BASE_URL}/horoscope/admin/entries/${id}/`,
     {
       method: "PATCH",
       headers: {
@@ -65,7 +60,7 @@ export const patchHoroscopeSeo = async (
         Authorization: `Bearer ${accessToken}`,
         "X-CSRFTOKEN": getCsrfToken(),
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(payload),
     }
   );
 

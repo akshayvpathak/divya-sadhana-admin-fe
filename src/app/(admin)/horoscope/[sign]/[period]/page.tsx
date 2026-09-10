@@ -62,7 +62,7 @@ export default function HoroscopeSeoEditPage() {
         </p>
         <p className="mt-2 text-sm text-moon">
           {locale === 'hi-IN'
-            ? 'Hindi content may not be generated yet. Switch to English, or retry after backend locale support is live.'
+            ? 'This Hindi row is missing (404). English is a separate entry — switch tabs to edit that instead.'
             : null}
         </p>
         <div className="mt-4 flex flex-wrap justify-center gap-3">

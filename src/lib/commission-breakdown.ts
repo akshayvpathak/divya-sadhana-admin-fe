@@ -46,10 +46,11 @@ export function sortBreakdownSlices(
     const i = (BREAKDOWN_ROLE_ORDER as readonly string[]).indexOf(role);
     return i === -1 ? BREAKDOWN_ROLE_ORDER.length : i;
   };
+  const kindOf = (slice: CommissionBreakdownSlice) => slice.kind ?? slice.role ?? '';
   return [...slices].sort((a, b) => {
-    const diff = rank(a.role) - rank(b.role);
+    const diff = rank(kindOf(a)) - rank(kindOf(b));
     if (diff !== 0) return diff;
-    return a.role.localeCompare(b.role);
+    return kindOf(a).localeCompare(kindOf(b));
   });
 }
 

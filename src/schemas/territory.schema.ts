@@ -102,6 +102,7 @@ export const districtSchema = z
     name: z.string(),
     code: z.string().nullish().default(""),
     is_active: z.boolean().optional().default(true),
+    pincode_linked: z.boolean().optional(),
   })
   .passthrough();
 
@@ -146,6 +147,8 @@ export const coverageStateRowSchema = z
     districts_total: z.number().optional().default(0),
     districts_filled: z.number().optional().default(0),
     districts_open: z.number().optional().default(0),
+    districts_unreachable: z.number().optional().default(0),
+    districts_appointable: z.number().optional().default(0),
     open_seats: z.number().optional().default(0),
   })
   .passthrough();
@@ -183,6 +186,9 @@ export const coverageDetailSchema = z
         districts_total: z.number().optional().default(0),
         districts_filled: z.number().optional().default(0),
         districts_open: z.number().optional().default(0),
+        districts_unreachable: z.number().optional().default(0),
+        districts_appointable: z.number().optional().default(0),
+        open_seats: z.number().optional().default(0),
         districts: z.array(coverageDistrictRowSchema).optional().default([]),
       })
       .passthrough(),

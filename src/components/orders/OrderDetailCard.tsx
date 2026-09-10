@@ -1,7 +1,6 @@
 'use client';
 
 import { User, IndianRupee, ShoppingBag } from 'lucide-react';
-import CommissionBreakdownCard from '@/components/orders/CommissionBreakdownCard';
 import { ResponsiveDataView } from '@/components/common/ResponsiveDataView';
 import { staticListState } from '@/hooks/queries/useInfiniteListQuery';
 import { StatusBadge } from '@/components/ui/status-badge';
@@ -199,10 +198,6 @@ export default function OrderDetailCard({ order }: { order: Order }) {
             </div>
           </dl>
         </div>
-      </div>
-
-      <div className="px-4 py-5 sm:px-6">
-        <CommissionBreakdownCard breakdown={order.commission_breakdown} />
       </div>
 
       {/* Act on the shipment. Both panels carry their own heading and status

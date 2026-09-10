@@ -5,13 +5,14 @@ const moneyLoose = z.union([z.number(), z.string()]).nullish();
 
 export const commissionBreakdownSliceSchema = z
   .object({
-    role: z.string(),
+    kind: z.string().optional(),
+    role: z.string().optional(),
     percent: moneyLoose,
     amount: moneyLoose,
     beneficiary_name: z.string().nullable().optional(),
     beneficiary_id: z.string().nullable().optional(),
+    is_retained: z.boolean().optional(),
     is_fallback_to_admin: z.boolean().optional(),
-    retained_from_role: z.string().nullable().optional(),
     retention_reason: z.string().nullable().optional(),
     status: z.string().optional(),
   })

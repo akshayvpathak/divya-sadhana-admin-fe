@@ -135,6 +135,7 @@ export default function DonationsPage() {
           onSort={handleSort}
           mobile={mobile}
           emptyMessage="No donations found"
+          emptyHint="Nothing here yet. Empty is expected until real donations arrive."
           pagination={
             data?.data ? (
               <DataTablePagination

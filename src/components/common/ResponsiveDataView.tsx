@@ -78,6 +78,7 @@ export function ResponsiveDataView<T>({
               sort={sort}
               onSort={onSort}
               emptyMessage={emptyMessage}
+              emptyHint={emptyHint}
               rowKey={rowKey}
               emptyValue={emptyValue}
             />

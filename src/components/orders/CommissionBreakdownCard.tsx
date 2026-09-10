@@ -77,12 +77,14 @@ export default function CommissionBreakdownCard({
             </thead>
             <tbody>
               {slices.map((slice, i) => {
-                const fallback = slice.is_fallback_to_admin === true;
+                const kind = slice.kind ?? slice.role ?? '';
+                const fallback =
+                  slice.is_retained === true || slice.is_fallback_to_admin === true;
                 const reason = retentionReasonLabel(slice.retention_reason);
                 return (
-                  <tr key={`${slice.role}-${i}`} className="border-t border-line/70">
+                  <tr key={`${kind}-${i}`} className="border-t border-line/70">
                     <td className="px-3 py-2.5 font-semibold text-ink">
-                      {breakdownRoleLabel(slice.role)}
+                      {breakdownRoleLabel(kind)}
                     </td>
                     <td className="px-3 py-2.5 text-charcoal">
                       <span>{slice.beneficiary_name?.trim() || '—'}</span>
