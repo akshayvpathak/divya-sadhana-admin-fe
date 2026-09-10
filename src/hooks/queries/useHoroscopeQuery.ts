@@ -1,6 +1,7 @@
 import { useAuth } from "@/context/AuthContext";
 import {
   HOROSCOPE_PERIODS,
+  HoroscopeLocale,
   HoroscopePeriod,
   HoroscopeSeoPatchPayload,
   ZODIAC_SIGNS,
@@ -13,18 +14,22 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 
-export const horoscopeQueryKey = (sign: ZodiacSign, period: HoroscopePeriod) =>
-  ["horoscope", sign, period] as const;
+export const horoscopeQueryKey = (
+  sign: ZodiacSign,
+  period: HoroscopePeriod,
+  locale: HoroscopeLocale = "en-IN"
+) => ["horoscope", sign, period, locale] as const;
 
 export const useHoroscopeQuery = (
   sign: ZodiacSign | null,
-  period: HoroscopePeriod | null
+  period: HoroscopePeriod | null,
+  locale: HoroscopeLocale = "en-IN"
 ) => {
   return useQuery({
-    queryKey: horoscopeQueryKey(sign!, period!),
+    queryKey: horoscopeQueryKey(sign!, period!, locale),
     queryFn: async () => {
       if (!sign || !period) throw new Error("Missing sign or period");
-      return fetchHoroscope(sign, period);
+      return fetchHoroscope(sign, period, locale);
     },
     enabled: !!sign && !!period,
   });
@@ -69,11 +74,13 @@ export const usePatchHoroscopeSeoMutation = () => {
       id,
       sign,
       period,
+      locale = "en-IN",
       payload,
     }: {
       id: string;
       sign: ZodiacSign;
       period: HoroscopePeriod;
+      locale?: HoroscopeLocale;
       payload: HoroscopeSeoPatchPayload;
     }) => {
       if (!accessToken) throw new Error("No access token");
@@ -81,11 +88,19 @@ export const usePatchHoroscopeSeoMutation = () => {
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({
-        queryKey: horoscopeQueryKey(variables.sign, variables.period),
+        queryKey: horoscopeQueryKey(
+          variables.sign,
+          variables.period,
+          variables.locale ?? "en-IN"
+        ),
       });
       queryClient.invalidateQueries({ queryKey: ["horoscope-grid"] });
       queryClient.setQueryData(
-        horoscopeQueryKey(variables.sign, variables.period),
+        horoscopeQueryKey(
+          variables.sign,
+          variables.period,
+          variables.locale ?? "en-IN"
+        ),
         data
       );
       toast.success("Horoscope SEO updated");

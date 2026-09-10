@@ -17,11 +17,14 @@ export const ZODIAC_SIGNS = [
 
 export const HOROSCOPE_PERIODS = ["daily", "weekly", "monthly"] as const;
 
+export const HOROSCOPE_LOCALES = ["en-IN", "hi-IN"] as const;
+
 export const zodiacSignSchema = z.enum(ZODIAC_SIGNS);
 export const horoscopePeriodSchema = z.enum(HOROSCOPE_PERIODS);
 
 export type ZodiacSign = z.infer<typeof zodiacSignSchema>;
 export type HoroscopePeriod = z.infer<typeof horoscopePeriodSchema>;
+export type HoroscopeLocale = (typeof HOROSCOPE_LOCALES)[number];
 
 export const horoscopeFaqItemSchema = z.object({
   question: z.string().min(1, "Question is required"),
@@ -140,6 +143,15 @@ export const PERIOD_LABELS: Record<HoroscopePeriod, string> = {
   weekly: "Weekly",
   monthly: "Monthly",
 };
+
+export const LOCALE_LABELS: Record<HoroscopeLocale, string> = {
+  "en-IN": "English",
+  "hi-IN": "Hindi",
+};
+
+export function isHoroscopeLocale(value: string): value is HoroscopeLocale {
+  return (HOROSCOPE_LOCALES as readonly string[]).includes(value);
+}
 
 export function isZodiacSign(value: string): value is ZodiacSign {
   return (ZODIAC_SIGNS as readonly string[]).includes(value);

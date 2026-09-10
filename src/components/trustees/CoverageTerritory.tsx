@@ -50,23 +50,30 @@ function CoverageDetailPanel({ stateId }: { stateId: string }) {
     return <p className="px-4 py-3 text-sm text-moon">No districts seeded for this state.</p>;
   }
 
-  const presidentCell = (d: (typeof districts)[number]) =>
-    d.president ? (
-      <>
-        {d.president.name || '—'}
-        {d.president.referral_code ? (
-          <span className="ml-2 text-xs text-moon">{d.president.referral_code}</span>
-        ) : null}
-      </>
-    ) : (
-      <span className="text-warning">Vacant → 8% to Admin</span>
-    );
+  const presidentCell = (d: (typeof districts)[number]) => {
+    if (d.pincode_linked === false && !d.president) {
+      return (
+        <span className="text-danger-ink">Cannot appoint — no pincode routing</span>
+      );
+    }
+    if (d.president) {
+      return (
+        <>
+          {d.president.name || '—'}
+          {d.president.referral_code ? (
+            <span className="ml-2 text-xs text-moon">{d.president.referral_code}</span>
+          ) : null}
+        </>
+      );
+    }
+    return <span className="text-warning">Vacant → 8% to Admin</span>;
+  };
 
   const pincodeCell = (d: (typeof districts)[number]) =>
     d.pincode_linked === false ? (
-      <span className="inline-flex items-center gap-1 text-warning-ink">
+      <span className="inline-flex items-center gap-1 rounded-full bg-danger-tint px-2 py-0.5 text-xs font-semibold text-danger-ink">
         <AlertTriangle className="h-3.5 w-3.5" />
-        Unlinked
+        Unreachable — fix pincode data
       </span>
     ) : (
       <span className="text-moon">Linked</span>
@@ -78,7 +85,10 @@ function CoverageDetailPanel({ stateId }: { stateId: string }) {
           stacked block per district instead. */}
       <ul className="divide-y divide-line/60 sm:hidden">
         {districts.map((d) => (
-          <li key={d.district_id} className="px-4 py-3 text-sm">
+          <li
+            key={d.district_id}
+            className={`px-4 py-3 text-sm ${d.pincode_linked === false ? 'bg-danger-tint/40' : ''}`}
+          >
             <p className="font-medium text-ink">{d.district_name}</p>
             <p className="mt-1 text-charcoal">{presidentCell(d)}</p>
             <p className="mt-1">{pincodeCell(d)}</p>
@@ -96,7 +106,10 @@ function CoverageDetailPanel({ stateId }: { stateId: string }) {
         </thead>
         <tbody>
           {districts.map((d) => (
-            <tr key={d.district_id} className="border-t border-line/60">
+            <tr
+              key={d.district_id}
+              className={`border-t border-line/60 ${d.pincode_linked === false ? 'bg-danger-tint/40' : ''}`}
+            >
               <td className="px-4 py-2 font-medium text-ink">{d.district_name}</td>
               <td className="px-4 py-2">{presidentCell(d)}</td>
               <td className="px-4 py-2">{pincodeCell(d)}</td>
@@ -146,13 +159,16 @@ export function CoverageTerritory() {
     <div className="overflow-hidden rounded-2xl border border-line bg-surface shadow-card">
       <div className="border-b border-line bg-cream px-4 py-3">
         <p className="text-sm text-charcoal">
-          Seat occupancy by state. Expand a row for district presidents. Unlinked pincodes cannot
-          resolve delivery addresses to that district.
+          Seat occupancy by state. Expand a row for district presidents. Hire
+          only from appointable districts — unreachable ones have no pincode
+          routing and can never pay.
         </p>
       </div>
       <ul className="divide-y divide-line/60">
         {rows.map((row) => {
           const open = expanded === row.state_id;
+          const appointable = row.districts_appointable ?? row.open_seats;
+          const unreachable = row.districts_unreachable ?? 0;
           return (
             <li key={row.state_id}>
               <button
@@ -171,8 +187,13 @@ export function CoverageTerritory() {
                         Districts {row.districts_filled}/{row.districts_total}
                       </span>
                       <span className="rounded-full bg-warning-tint px-2.5 py-1 text-warning-ink">
-                        Open seats {row.open_seats}
+                        Hireable {appointable}
                       </span>
+                      {unreachable > 0 ? (
+                        <span className="rounded-full bg-danger-tint px-2.5 py-1 text-danger-ink">
+                          Unreachable {unreachable} — fix pincode data
+                        </span>
+                      ) : null}
                     </div>
                   </div>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">

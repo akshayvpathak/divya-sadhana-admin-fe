@@ -1,3 +1,4 @@
+import { z } from "zod";
 import {
   AdminBook,
   AdminBooksList,
@@ -81,7 +82,7 @@ export const getBook = async (id: string, accessToken: string): Promise<AdminBoo
   }
 
   const json = await response.json();
-  return adminBookSchema.parse(json.data ?? json);
+  return parseBookResponse(json, accessToken);
 };
 
 /**
@@ -105,7 +106,7 @@ export const createBook = async (
   }
 
   const json = await response.json();
-  return adminBookSchema.parse(json.data ?? json);
+  return parseBookResponse(json, accessToken);
 };
 
 export const updateBook = async (
@@ -125,7 +126,7 @@ export const updateBook = async (
   }
 
   const json = await response.json();
-  return adminBookSchema.parse(json.data ?? json);
+  return parseBookResponse(json, accessToken);
 };
 
 /**
@@ -144,6 +145,128 @@ export const deleteBook = async (id: string, accessToken: string): Promise<void>
     throw apiErrorFrom(json, "Failed to delete book", response.status);
   }
 };
+
+const digitalAssetsListSchema = z.object({
+  message: z.string().optional(),
+  data: z
+    .object({
+      count: z.number().optional(),
+      next: z.string().nullable().optional(),
+      previous: z.string().nullable().optional(),
+      results: z.array(digitalAssetSchema).nullable().optional().default([]),
+    })
+    .optional(),
+});
+
+async function searchDigitalAssets(
+  query: string,
+  accessToken: string
+): Promise<DigitalAsset[]> {
+  const params = new URLSearchParams({ search: query, paginate: "50" });
+  const response = await fetch(`${API_BASE_URL}/digital-assets/?${params}`, {
+    method: "GET",
+    headers: headers(accessToken, false),
+  });
+  if (!response.ok) return [];
+  const json = await response.json().catch(() => ({}));
+  const parsed = digitalAssetsListSchema.safeParse(json);
+  return parsed.success ? parsed.data.data?.results ?? [] : [];
+}
+
+async function getDigitalAsset(
+  id: string,
+  accessToken: string
+): Promise<DigitalAsset | null> {
+  const response = await fetch(`${API_BASE_URL}/digital-assets/${id}/`, {
+    method: "GET",
+    headers: headers(accessToken, false),
+  });
+  if (!response.ok) return null;
+  const json = await response.json().catch(() => ({}));
+  const parsed = digitalAssetSchema.safeParse(json.data ?? json);
+  return parsed.success ? parsed.data : null;
+}
+
+function isPlaceholderAsset(asset: DigitalAsset): boolean {
+  const name = (asset.file_name || "").toLowerCase();
+  return name.includes("placeholder") || (asset.page_count === 1 && (asset.size_bytes ?? 0) < 5000);
+}
+
+function assetFileName(asset: DigitalAsset): string {
+  return (asset.file_name || "").toLowerCase();
+}
+
+function matchesBookSlug(asset: DigitalAsset, slug: string): boolean {
+  const name = assetFileName(asset);
+  return name === `${slug}.pdf` || name === `${slug}-placeholder.pdf` || name === slug;
+}
+
+function rankEbookAssets(assets: DigitalAsset[]): DigitalAsset | null {
+  if (!assets.length) return null;
+  return [...assets].sort((a, b) => {
+    const placeholder = Number(isPlaceholderAsset(a)) - Number(isPlaceholderAsset(b));
+    if (placeholder) return placeholder;
+    const pages = (b.page_count ?? 0) - (a.page_count ?? 0);
+    if (pages) return pages;
+    const size = (b.size_bytes ?? 0) - (a.size_bytes ?? 0);
+    if (size) return size;
+    return String(b.created_at ?? "").localeCompare(String(a.created_at ?? ""));
+  })[0];
+}
+
+/** Prefer `{slug}.pdf` over a 1-page placeholder, then the longest / newest copy. */
+function pickEbookAsset(assets: DigitalAsset[], slug: string): DigitalAsset | null {
+  const needle = slug.trim().toLowerCase();
+  if (!needle || !assets.length) return null;
+  const named = assets.filter((asset) => matchesBookSlug(asset, needle));
+  if (named.length) return rankEbookAssets(named);
+  // Search already scoped the list; a single hit is safe to use even if the filename differs.
+  if (assets.length === 1) return assets[0];
+  return null;
+}
+
+function withEbookAsset(book: AdminBook, asset: DigitalAsset): AdminBook {
+  return {
+    ...book,
+    variants: (book.variants ?? []).map((variant) =>
+      variant.variant_type === "EBOOK"
+        ? { ...variant, digital_asset: asset, digital_asset_id: asset.id }
+        : variant
+    ),
+  };
+}
+
+async function attachMissingEbookAsset(
+  book: AdminBook,
+  accessToken: string
+): Promise<AdminBook> {
+  const ebook = (book.variants ?? []).find((v) => v.variant_type === "EBOOK");
+  if (!ebook) return book;
+
+  if (ebook.digital_asset?.id) return book;
+
+  const knownId = ebook.digital_asset_id;
+  if (knownId) {
+    const asset = await getDigitalAsset(knownId, accessToken);
+    return asset ? withEbookAsset(book, asset) : book;
+  }
+
+  const slug = (book.slug || "").trim();
+  if (!slug) return book;
+  const matches = await searchDigitalAssets(slug, accessToken);
+  const asset = pickEbookAsset(matches, slug);
+  return asset ? withEbookAsset(book, asset) : book;
+}
+
+async function parseBookResponse(json: unknown, accessToken: string): Promise<AdminBook> {
+  const payload = json && typeof json === "object" && "data" in json ? (json as { data: unknown }).data : json;
+  const book = adminBookSchema.parse(payload ?? json);
+  // GET /admin/books/{id}/ currently omits digital_asset on the eBook variant, so the
+  // edit form would render an empty "Upload PDF" even when a file is already registered.
+  // Recover it from /digital-assets/ by the title slug until the retrieve serializer
+  // starts echoing the nested asset.
+  return attachMissingEbookAsset(book, accessToken);
+}
 
 /**
  * Register an already-uploaded PDF. `page_count` and `size_bytes` come back measured from

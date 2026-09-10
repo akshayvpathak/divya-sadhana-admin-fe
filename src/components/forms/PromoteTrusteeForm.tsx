@@ -199,9 +199,25 @@ export function PromoteTrusteeForm({
   };
 
   const handleServerError = (err: unknown, fallback: string) => {
-    const applied = applyServerFieldErrors(err, setError, ['email', 'role', 'notes']);
+    const applied = applyServerFieldErrors(
+      err,
+      setError,
+      [
+        'email',
+        'role',
+        'notes',
+        'district',
+        'district_id',
+        'assignments',
+        'assignments.0.district_id',
+      ],
+      { district: 'assignments.0.district_id', district_id: 'assignments.0.district_id' },
+    );
+    const message = err instanceof Error ? err.message : fallback;
+    if (/pincode/i.test(message) || /unreachable/i.test(message)) {
+      setError('assignments.0.district_id', { type: 'server', message });
+    }
     if (!applied) {
-      const message = err instanceof Error ? err.message : fallback;
       setError('root', { type: 'server', message });
     }
   };

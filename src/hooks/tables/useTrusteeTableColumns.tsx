@@ -126,10 +126,27 @@ export const useTrusteeTableColumns = ({
       headerAlign: 'right',
       cellAlign: 'right',
       cellClassName: 'font-semibold tabular-nums text-ink',
-      renderCell: (row) =>
-        row.commission_percent !== null && row.commission_percent !== undefined
-          ? formatPercent(row.commission_percent)
-          : '—',
+      renderCell: (row) => {
+        const seat =
+          row.commission_percent !== null && row.commission_percent !== undefined
+            ? formatPercent(row.commission_percent)
+            : null;
+        const referral =
+          row.commission_percent_referral !== null &&
+          row.commission_percent_referral !== undefined
+            ? formatPercent(row.commission_percent_referral)
+            : null;
+        if (!seat && !referral) return '—';
+        if (seat && referral) {
+          return (
+            <span className="whitespace-nowrap">
+              {seat}
+              <span className="ml-1 font-normal text-moon">+ {referral} ref</span>
+            </span>
+          );
+        }
+        return seat ?? referral ?? '—';
+      },
     },
     {
       id: 'territory',

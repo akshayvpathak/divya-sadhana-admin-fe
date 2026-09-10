@@ -354,6 +354,8 @@ export const getTerritoryCoverageDetail = async (
 
 /* ----------------------------- Retention -------------------------- */
 
+export const RETENTION_ENTRIES_PAGE_SIZE = 25;
+
 export interface RetentionFilters {
   date_from?: string;
   date_to?: string;
@@ -361,6 +363,10 @@ export interface RetentionFilters {
   district_id?: string;
   source_kind?: string;
   view?: "summary" | "entries";
+  /** Entries only. Never sent on the summary request. */
+  page?: number;
+  page_size?: number;
+  retention_reason?: string;
 }
 
 export const getCommissionRetentionSummary = async (
@@ -407,6 +413,9 @@ export const getCommissionRetentionEntries = async (
   if (filters.state_id) params.set("state_id", filters.state_id);
   if (filters.district_id) params.set("district_id", filters.district_id);
   if (filters.source_kind) params.set("source_kind", filters.source_kind);
+  params.set("page", String(filters.page ?? 1));
+  params.set("page_size", String(filters.page_size ?? RETENTION_ENTRIES_PAGE_SIZE));
+  if (filters.retention_reason) params.set("retention_reason", filters.retention_reason);
 
   const response = await fetch(
     `${API_BASE_URL}/admin/commission/retention/?${params.toString()}`,
@@ -428,7 +437,15 @@ export const getCommissionRetentionEntries = async (
   if (json?.data?.results) return retentionEntriesSchema.parse(json);
   if (Array.isArray(json?.results)) {
     return retentionEntriesSchema.parse({
-      data: { results: json.results, count: json.count },
+      data: {
+        results: json.results,
+        count: json.count,
+        page: json.page,
+        page_size: json.page_size,
+        total_pages: json.total_pages,
+        has_next: json.has_next,
+        has_previous: json.has_previous,
+      },
     });
   }
   return retentionEntriesSchema.parse(json);

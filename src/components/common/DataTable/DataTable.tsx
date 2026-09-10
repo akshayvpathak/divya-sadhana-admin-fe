@@ -11,6 +11,7 @@ export function DataTable<T>({
   sort,
   onSort,
   emptyMessage,
+  emptyHint,
   rowKey,
   emptyValue,
 }: DataTableProps<T>) {
@@ -25,6 +26,7 @@ export function DataTable<T>({
           data={data}
           isLoading={isLoading}
           emptyMessage={emptyMessage}
+          emptyHint={emptyHint}
           rowKey={rowKey}
           emptyValue={emptyValue}
         />

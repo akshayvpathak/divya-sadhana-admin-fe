@@ -313,7 +313,7 @@ export default function TrusteeDetailPage() {
           isLoading={ledgerLoading}
           mobile={ledgerMobile}
           emptyMessage="No commission entries"
-          emptyHint="Commission accrues as referred orders and donations settle."
+          emptyHint="Nothing here yet. Commission accrues as referred sales settle."
           pagination={
             commissionsData?.data ? (
               <DataTablePagination

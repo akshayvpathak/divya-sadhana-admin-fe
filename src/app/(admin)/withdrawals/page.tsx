@@ -88,6 +88,7 @@ export default function WithdrawalsPage() {
           onRetry={() => refetch()}
           mobile={mobile}
           emptyMessage="No withdrawal requests found"
+          emptyHint="Nothing here yet. Empty is expected until members request a payout."
           rowKey="id"
           pagination={
             data?.data ? (

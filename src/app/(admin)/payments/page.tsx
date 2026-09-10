@@ -102,6 +102,7 @@ export default function PaymentsPage() {
           isLoading={isLoading}
           mobile={mobile}
           emptyMessage="No payments found"
+          emptyHint="Nothing here yet. Empty is expected until real payments land."
           pagination={
             data?.data ? (
               <DataTablePagination

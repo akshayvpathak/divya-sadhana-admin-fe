@@ -1,5 +1,6 @@
 import {
   HoroscopeEntry,
+  HoroscopeLocale,
   HoroscopePeriod,
   HoroscopeSeoPatchPayload,
   ZodiacSign,
@@ -21,9 +22,15 @@ function getCsrfToken(): string {
 
 export const fetchHoroscope = async (
   sign: ZodiacSign,
-  period: HoroscopePeriod
+  period: HoroscopePeriod,
+  locale: HoroscopeLocale = "en-IN"
 ): Promise<HoroscopeEntry> => {
-  const response = await fetch(`${API_BASE_URL}/horoscope/${sign}/${period}/`, {
+  const params = new URLSearchParams();
+  if (locale !== "en-IN") params.set("locale", locale);
+  const qs = params.toString();
+  const response = await fetch(
+    `${API_BASE_URL}/horoscope/${sign}/${period}/${qs ? `?${qs}` : ""}`,
+    {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -42,7 +49,7 @@ export const fetchHoroscope = async (
 export const patchHoroscopeSeo = async (
   id: string,
   payload: HoroscopeSeoPatchPayload,
-  accessToken: string
+  accessToken: string,
 ): Promise<HoroscopeEntry> => {
   const response = await fetch(
     `${API_BASE_URL}/horoscope/admin/entries/${id}/`,

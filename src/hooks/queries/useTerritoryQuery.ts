@@ -225,12 +225,21 @@ export const useCommissionRetentionSummaryQuery = (
   enabled = true
 ) => {
   const { accessToken } = useAuth();
+  // Summary is whole-period: page / reason must not live in this key or the
+  // cards refetch (and contradict) when the sale list paginates or filters.
+  const summaryFilters = {
+    date_from: filters.date_from,
+    date_to: filters.date_to,
+    state_id: filters.state_id,
+    district_id: filters.district_id,
+    source_kind: filters.source_kind,
+  };
 
   return useQuery({
-    queryKey: ["commission-retention-summary", filters],
+    queryKey: ["commission-retention-summary", summaryFilters],
     queryFn: async () => {
       if (!accessToken) throw new Error("No access token");
-      return getCommissionRetentionSummary(accessToken, filters);
+      return getCommissionRetentionSummary(accessToken, summaryFilters);
     },
     enabled: !!accessToken && enabled,
   });

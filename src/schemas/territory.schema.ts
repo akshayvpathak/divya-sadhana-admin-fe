@@ -102,6 +102,7 @@ export const districtSchema = z
     name: z.string(),
     code: z.string().nullish().default(""),
     is_active: z.boolean().optional().default(true),
+    pincode_linked: z.boolean().optional(),
   })
   .passthrough();
 
@@ -146,6 +147,8 @@ export const coverageStateRowSchema = z
     districts_total: z.number().optional().default(0),
     districts_filled: z.number().optional().default(0),
     districts_open: z.number().optional().default(0),
+    districts_unreachable: z.number().optional().default(0),
+    districts_appointable: z.number().optional().default(0),
     open_seats: z.number().optional().default(0),
   })
   .passthrough();
@@ -183,6 +186,9 @@ export const coverageDetailSchema = z
         districts_total: z.number().optional().default(0),
         districts_filled: z.number().optional().default(0),
         districts_open: z.number().optional().default(0),
+        districts_unreachable: z.number().optional().default(0),
+        districts_appointable: z.number().optional().default(0),
+        open_seats: z.number().optional().default(0),
         districts: z.array(coverageDistrictRowSchema).optional().default([]),
       })
       .passthrough(),
@@ -190,6 +196,35 @@ export const coverageDetailSchema = z
   .passthrough();
 
 /* ----------------------------- Retention -------------------------- */
+
+const retentionReasonRowSchema = z
+  .object({
+    reason: z.string(),
+    reason_label: z.string().nullish(),
+    bucket: z.string().nullish(),
+    amount: moneyLoose,
+    entries: z.number().optional(),
+  })
+  .passthrough();
+
+const retentionBucketSchema = z
+  .object({
+    key: z.string(),
+    label: z.string(),
+    action: z.string().nullish(),
+    amount: moneyLoose,
+    entries: z.number().optional(),
+  })
+  .passthrough();
+
+const vacantSeatSchema = z
+  .object({
+    kind: z.string(),
+    kind_label: z.string().nullish(),
+    retained_amount: moneyLoose,
+    entries: z.number().optional(),
+  })
+  .passthrough();
 
 export const retentionSummarySchema = z
   .object({
@@ -201,18 +236,12 @@ export const retentionSummarySchema = z
         retained_by_admin_amount: moneyLoose,
         retained_percent_of_pool: moneyLoose,
         by_kind: z.record(z.string(), moneyLoose).optional(),
-        retained_by_reason: z
-          .array(
-            z
-              .object({
-                reason: z.string(),
-                amount: moneyLoose,
-                entries: z.number().optional(),
-              })
-              .passthrough()
-          )
-          .optional()
-          .default([]),
+        kept_because_vacant_amount: moneyLoose,
+        kept_because_exempt_amount: moneyLoose,
+        kept_because_place_missing_amount: moneyLoose,
+        kept_other_amount: moneyLoose,
+        retention_buckets: z.array(retentionBucketSchema).optional().default([]),
+        retained_by_reason: z.array(retentionReasonRowSchema).optional().default([]),
         top_gaps: z
           .array(
             z
@@ -221,13 +250,25 @@ export const retentionSummarySchema = z
                 state_name: z.string().nullish(),
                 district_id: z.string().nullish(),
                 district_name: z.string().nullish(),
+                place_label: z.string().nullish(),
                 retained_amount: moneyLoose,
                 entries: z.number().optional(),
+                vacant_seats: z.array(vacantSeatSchema).optional().default([]),
               })
               .passthrough()
           )
           .optional()
           .default([]),
+        unmapped: z
+          .object({
+            retained_amount: moneyLoose,
+            entries: z.number().optional(),
+            sales: z.number().optional(),
+            by_reason: z.array(retentionReasonRowSchema).optional().default([]),
+            by_source_kind: z.record(z.string(), moneyLoose).optional(),
+          })
+          .passthrough()
+          .nullish(),
       })
       .passthrough(),
   })
@@ -240,15 +281,24 @@ export const retentionEntrySchema = z
     sale_id: z.string().nullish(),
     source_kind: z.string().nullish(),
     source_reference: z.string().nullish(),
+    state_id: z.string().nullish(),
     state_name: z.string().nullish(),
+    district_id: z.string().nullish(),
     district_name: z.string().nullish(),
+    place_label: z.string().nullish(),
+    place_source: z.string().nullish(),
+    place_source_label: z.string().nullish(),
     kind: z.string().nullish(),
+    kind_label: z.string().nullish(),
     base_amount: moneyLoose,
     percent: moneyLoose,
     amount: moneyLoose,
     beneficiary: z.string().nullish(),
     beneficiary_name: z.string().nullish(),
+    is_retained: z.boolean().nullish(),
     retention_reason: z.string().nullish(),
+    reason_label: z.string().nullish(),
+    bucket: z.string().nullish(),
     status: z.string().nullish(),
   })
   .passthrough();
@@ -260,6 +310,11 @@ export const retentionEntriesSchema = z
       .object({
         results: z.array(retentionEntrySchema),
         count: z.number().optional(),
+        page: z.number().optional(),
+        page_size: z.number().optional(),
+        total_pages: z.number().optional(),
+        has_next: z.boolean().optional(),
+        has_previous: z.boolean().optional(),
       })
       .passthrough(),
   })

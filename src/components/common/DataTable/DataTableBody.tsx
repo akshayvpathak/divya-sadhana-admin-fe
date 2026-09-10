@@ -11,6 +11,7 @@ interface DataTableBodyProps<T> {
   data: T[];
   isLoading?: boolean;
   emptyMessage?: string;
+  emptyHint?: string;
   rowKey?: keyof T | ((row: T) => string | number);
   emptyValue?: React.ReactNode;
 }
@@ -41,6 +42,7 @@ export function DataTableBody<T>({
   data,
   isLoading,
   emptyMessage = "No records found",
+  emptyHint = "Nothing here yet.",
   rowKey,
   emptyValue = DEFAULT_EMPTY_VALUE,
 }: DataTableBodyProps<T>) {
@@ -112,7 +114,7 @@ export function DataTableBody<T>({
               <div>
                 <p className="text-sm font-semibold text-ink">{emptyMessage}</p>
                 <p className="mt-0.5 text-xs text-moon">
-                  Try adjusting your search or filters.
+                  {emptyHint}
                 </p>
               </div>
             </div>

@@ -35,7 +35,7 @@ interface DonationCampaignFormProps {
 
 export function DonationCampaignForm({ campaignId, initialData: propsInitialData, onSubmit, isPending, readOnly = false }: DonationCampaignFormProps) {
   const { data: fetchedCampaign, isLoading: isFetching } = useDonationCampaignQuery(campaignId || null);
-  const uploadMutation = useUploadImageMutation("campaign_cover");
+  const uploadMutation = useUploadImageMutation("donation_campaign_cover");
   const [isDragging, setIsDragging] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string>('');
 

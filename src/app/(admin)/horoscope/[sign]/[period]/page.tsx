@@ -1,11 +1,15 @@
 'use client';
 
+import { useState } from 'react';
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HoroscopeSeoForm } from "@/components/forms/HoroscopeSeoForm";
 import {
+  HOROSCOPE_LOCALES,
+  HoroscopeLocale,
   HoroscopeSeoPatchPayload,
+  LOCALE_LABELS,
   isHoroscopePeriod,
   isZodiacSign,
   PERIOD_LABELS,
@@ -16,21 +20,23 @@ import {
   usePatchHoroscopeSeoMutation,
 } from "@/hooks/queries/useHoroscopeQuery";
 import { PageHeader } from '@/components/common/PageHeader';
+import { cn } from '@/lib/utils';
 
 export default function HoroscopeSeoEditPage() {
   const params = useParams();
   const signParam = params.sign as string;
   const periodParam = params.period as string;
+  const [locale, setLocale] = useState<HoroscopeLocale>('en-IN');
 
   const sign = isZodiacSign(signParam) ? signParam : null;
   const period = isHoroscopePeriod(periodParam) ? periodParam : null;
 
-  const { data: entry, isLoading, error } = useHoroscopeQuery(sign, period);
+  const { data: entry, isLoading, error } = useHoroscopeQuery(sign, period, locale);
   const { mutate: patchSeo, isPending } = usePatchHoroscopeSeoMutation();
 
   const handleSubmit = (payload: HoroscopeSeoPatchPayload) => {
     if (!entry || !sign || !period) return;
-    patchSeo({ id: entry.id, sign, period, payload });
+    patchSeo({ id: entry.id, sign, period, locale, payload });
   };
 
   if (!sign || !period) {
@@ -54,9 +60,25 @@ export default function HoroscopeSeoEditPage() {
         <p className="text-danger mt-2">
           {error instanceof Error ? error.message : "Unknown error"}
         </p>
-        <Link href="/horoscope" className="mt-4 inline-block text-gold-press font-medium hover:underline">
-          Back to horoscope grid
-        </Link>
+        <p className="mt-2 text-sm text-moon">
+          {locale === 'hi-IN'
+            ? 'This Hindi row is missing (404). English is a separate entry — switch tabs to edit that instead.'
+            : null}
+        </p>
+        <div className="mt-4 flex flex-wrap justify-center gap-3">
+          {locale === 'hi-IN' ? (
+            <button
+              type="button"
+              onClick={() => setLocale('en-IN')}
+              className="text-gold-press font-medium hover:underline"
+            >
+              Edit English SEO
+            </button>
+          ) : null}
+          <Link href="/horoscope" className="text-gold-press font-medium hover:underline">
+            Back to horoscope grid
+          </Link>
+        </div>
       </div>
     );
   }
@@ -72,6 +94,33 @@ export default function HoroscopeSeoEditPage() {
             )}</>}
       />
 
+      <div
+        className="inline-flex rounded-full border border-line bg-surface p-0.5"
+        role="tablist"
+        aria-label="SEO language"
+      >
+        {HOROSCOPE_LOCALES.map((code) => {
+          const active = locale === code;
+          return (
+            <button
+              key={code}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => setLocale(code)}
+              className={cn(
+                'rounded-full px-4 py-1.5 text-sm font-semibold transition-colors',
+                active
+                  ? 'bg-gold-deep text-white'
+                  : 'text-moon hover:text-ink',
+              )}
+            >
+              {LOCALE_LABELS[code]}
+            </button>
+          );
+        })}
+      </div>
+
       <div className="bg-surface rounded-2xl shadow-card border border-line p-4 sm:p-6">
         {isLoading || !entry ? (
           <div className="space-y-6">
@@ -83,6 +132,7 @@ export default function HoroscopeSeoEditPage() {
         ) : (
           <HoroscopeSeoForm
             entry={entry}
+            locale={locale}
             onSubmit={handleSubmit}
             isPending={isPending}
           />
