@@ -177,6 +177,29 @@ export const deleteTrustee = async (id: string, accessToken: string): Promise<vo
   }
 };
 
+/**
+ * One network member by id. The order payload attributes an order with bare
+ * UUIDs (`area_trustee` and friends), so this is what turns those into a name
+ * and a role on the order screen.
+ */
+export const getTrustee = async (id: string, accessToken: string): Promise<Trustee> => {
+  const response = await fetch(`${API_BASE_URL}/trustee/${id}/`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: "" }));
+    throw new Error(error.message || "Failed to fetch member");
+  }
+
+  const json = await response.json();
+  return trusteeSchema.parse(json.data ?? json);
+};
+
 export const getTrusteeDashboard = async (
   id: string,
   accessToken: string

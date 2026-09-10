@@ -7,6 +7,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { formatINR } from '@/lib/currency';
 import OrderFulfillmentPanel from '@/components/orders/OrderFulfillmentPanel';
 import OrderTrackingPreview from '@/components/orders/OrderTrackingPreview';
+import OrderCommissionSection from '@/components/orders/OrderCommissionSection';
 import { SectionHeading } from '@/components/common/DetailCard';
 import { Card } from '@/components/ui/card';
 import type { Order } from '@/schemas/orders.schema';
@@ -200,9 +201,14 @@ export default function OrderDetailCard({ order }: { order: Order }) {
         </div>
       </div>
 
+      {/* Who earns on this order, and how the pool splits between them. */}
+      <div className="border-t border-line px-4 py-5 sm:px-6">
+        <OrderCommissionSection order={order} />
+      </div>
+
       {/* Act on the shipment. Both panels carry their own heading and status
           badge, so this section adds none of its own. */}
-      <div className="px-4 py-5 sm:px-6">
+      <div className="border-t border-line px-4 py-5 sm:px-6">
         <OrderFulfillmentPanel order={order} embedded />
       </div>
 
