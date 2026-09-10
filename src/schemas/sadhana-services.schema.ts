@@ -1,5 +1,9 @@
 import { z } from "zod";
 import { discountFields, discountTypeEnum, refineDiscount } from "@/schemas/discount.schema";
+import { SLUG_PATTERN, SLUG_PATTERN_MESSAGE } from "@/lib/slug";
+
+/** `SadhanaService.slug` is `maxLength: 160` in the API schema. */
+export const SADHANA_SERVICE_SLUG_MAX_LENGTH = 160;
 
 export const serviceCategoryEnum = z.enum([
   "paramarsh",
@@ -92,10 +96,14 @@ export const pricingOptionBase = z.object({
  */
 const sadhanaServiceFields = z.object({
   name: z.string().min(1, "Name is required"),
+  // Matched to the backend rule (`^[-a-zA-Z0-9_]+$`) rather than a stricter local
+  // one, so an existing slug carrying an underscore or a capital cannot be loaded
+  // into this form and then rejected on save.
   slug: z
     .string()
     .min(1, "Slug is required")
-    .regex(/^[a-z0-9-]+$/, "lowercase letters, digits, and hyphens only"),
+    .max(SADHANA_SERVICE_SLUG_MAX_LENGTH, `Slug must be ${SADHANA_SERVICE_SLUG_MAX_LENGTH} characters or fewer`)
+    .regex(SLUG_PATTERN, SLUG_PATTERN_MESSAGE),
   category: serviceCategoryEnum,
   description: z.string().min(1, "Description is required"),
   cover_image_key: z.string().optional().default(""),

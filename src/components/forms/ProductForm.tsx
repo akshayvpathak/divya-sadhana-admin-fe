@@ -12,6 +12,8 @@ const ReactQuill = dynamic(() => import("react-quill-new"), {
   ),
 });
 import { productSchema, ProductFormData } from "@/schemas/product.schema";
+import { PRODUCT_SLUG_MAX_LENGTH } from "@/schemas/products.schema";
+import { slugify } from "@/lib/slug";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,7 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import Link from "next/link";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useProduct, resolveProductImageUrl } from "@/hooks/useProducts";
 import { useAllCategories } from "@/hooks/useCategories";
 import { isBooksCategory } from "@/lib/product-categories";
@@ -143,6 +145,10 @@ export function ProductForm({
   const categoryId = watch("categoryId");
   const selectedCategoryName =
     categories?.find((c) => c.id === categoryId)?.name ?? "";
+  /** Set once the admin types in the slug field, which stops the name-driven auto-fill. */
+  const slugTouchedRef = useRef(false);
+  const slugField = register("slug");
+
   const nameValue = watch("name");
   const imageKey = watch("image");
   const is_active = watch("is_active");
@@ -181,14 +187,14 @@ export function ProductForm({
     register("is_indexable");
   }, [register]);
 
+  /**
+   * Suggest a slug from the name until the admin edits the slug themselves. Product
+   * names are Devanagari, which the old `[^a-z0-9]` strip erased entirely.
+   */
   useEffect(() => {
-    if (!productId && nameValue) {
-      const generatedSlug = nameValue
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)+/g, "");
-      setValue("slug", generatedSlug, { shouldValidate: true });
-    }
+    if (productId || slugTouchedRef.current || !nameValue) return;
+    const generatedSlug = slugify(nameValue, { maxLength: PRODUCT_SLUG_MAX_LENGTH });
+    if (generatedSlug) setValue("slug", generatedSlug, { shouldValidate: true });
   }, [nameValue, setValue, productId]);
 
   useEffect(() => {
@@ -682,8 +688,13 @@ export function ProductForm({
             <Input
               id="slug"
               placeholder="product-url-slug"
-              {...register("slug")}
-                          />
+              maxLength={PRODUCT_SLUG_MAX_LENGTH}
+              {...slugField}
+              onChange={(event) => {
+                slugTouchedRef.current = true;
+                slugField.onChange(event);
+              }}
+            />
             {errors.slug && (
               <p className="text-sm text-danger">{errors.slug.message}</p>
             )}

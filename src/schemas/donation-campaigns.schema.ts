@@ -1,4 +1,8 @@
 import { z } from "zod";
+import { SLUG_PATTERN, SLUG_PATTERN_MESSAGE } from "@/lib/slug";
+
+/** `DonationCampaign.slug` is `maxLength: 140` in the API schema. */
+export const DONATION_CAMPAIGN_SLUG_MAX_LENGTH = 140;
 
 const statusSchema = z.enum(["draft", "active", "paused", "closed"]);
 
@@ -9,7 +13,12 @@ const moneyNumberSchema = z.union([z.number(), z.string()]).transform((value) =>
 
 export const createDonationCampaignSchema = z.object({
   title: z.string().min(1, "Title is required"),
-  slug: z.string().min(1, "Slug is required").regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens"),
+  // Matched to the backend rule (`^[-a-zA-Z0-9_]+$`), not a stricter local one.
+  slug: z
+    .string()
+    .min(1, "Slug is required")
+    .max(DONATION_CAMPAIGN_SLUG_MAX_LENGTH, `Slug must be ${DONATION_CAMPAIGN_SLUG_MAX_LENGTH} characters or fewer`)
+    .regex(SLUG_PATTERN, SLUG_PATTERN_MESSAGE),
   description: z.string().min(1, "Description is required"),
   target_amount: moneyNumberSchema.optional().optional(),
   status: statusSchema.optional(),

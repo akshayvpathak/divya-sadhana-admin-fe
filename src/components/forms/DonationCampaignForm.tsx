@@ -6,14 +6,15 @@ import dynamic from 'next/dynamic';
 import 'react-quill-new/dist/quill.snow.css';
 
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false, loading: () => <p className="text-sm text-moon py-4">Loading editor...</p> });
-import { createDonationCampaignSchema, CreateDonationCampaignPayload } from '@/schemas/donation-campaigns.schema';
+import { slugify } from '@/lib/slug';
+import { createDonationCampaignSchema, CreateDonationCampaignPayload, DONATION_CAMPAIGN_SLUG_MAX_LENGTH } from '@/schemas/donation-campaigns.schema';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Link from 'next/link';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useDonationCampaignQuery } from '@/hooks/queries/useDonationCampaignsQuery';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
@@ -85,19 +86,22 @@ export function DonationCampaignForm({ campaignId, initialData: propsInitialData
   });
 
   const titleValue = watch('title');
+  /** Set once the admin types in the slug field, which stops the title-driven auto-fill. */
+  const slugTouchedRef = useRef(false);
+  const slugField = register('slug');
+
   const statusValue = watch('status');
   const isActive = watch('is_active');
   const coverImageKey = watch('cover_image_key');
 
-  // Auto-generate slug from title if not edit mode and title changes
+  /**
+   * Suggest a slug from the title until the admin edits the slug themselves. Campaign
+   * titles are Devanagari, which the old `[^a-z0-9]` strip erased entirely.
+   */
   useEffect(() => {
-    if (!readOnly && !campaignId && titleValue) {
-      const generatedSlug = titleValue
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)+/g, '');
-      setValue('slug', generatedSlug, { shouldValidate: true });
-    }
+    if (readOnly || campaignId || slugTouchedRef.current || !titleValue) return;
+    const generatedSlug = slugify(titleValue, { maxLength: DONATION_CAMPAIGN_SLUG_MAX_LENGTH });
+    if (generatedSlug) setValue('slug', generatedSlug, { shouldValidate: true });
   }, [titleValue, setValue, readOnly, campaignId]);
 
   // Use previewUrl state for displaying the image preview
@@ -204,10 +208,15 @@ export function DonationCampaignForm({ campaignId, initialData: propsInitialData
 
         <div className="space-y-2">
           <Label htmlFor="slug">Slug <span className="text-danger">*</span></Label>
-          <Input 
-            id="slug" 
-            placeholder="sulg-of-the-campaign" 
-            {...register('slug')} 
+          <Input
+            id="slug"
+            placeholder="slug-of-the-campaign"
+            maxLength={DONATION_CAMPAIGN_SLUG_MAX_LENGTH}
+            {...slugField}
+            onChange={(event) => {
+              slugTouchedRef.current = true;
+              slugField.onChange(event);
+            }}
             disabled={readOnly}
             className={readOnly ? "bg-ivory border-line text-charcoal cursor-default focus-visible:ring-0" : ""}
           />

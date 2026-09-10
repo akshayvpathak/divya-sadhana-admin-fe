@@ -22,6 +22,7 @@ import {
   useDeleteVariant,
 } from '@/hooks/useProducts';
 import type { ProductOptionGroup, ProductVariant } from '@/schemas/products.schema';
+import { slugify } from '@/lib/slug';
 
 interface ProductVariantsEditorProps {
   productId: string;
@@ -35,13 +36,13 @@ type VariantDraft = {
   is_active: boolean;
 };
 
+/**
+ * Option-group and variant codes are underscore-separated and ASCII-only. Group labels
+ * are typed in Hindi ("रंग", "आकार"), so the shared transliterating slugify runs first —
+ * a bare `[^a-z0-9]` strip produced an empty code for every Devanagari label.
+ */
 function slugifyCode(input: string): string {
-  return input
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '')
-    .slice(0, 40);
+  return slugify(input, { separator: '_', maxLength: 40 });
 }
 
 /** "flavor" → "Flavor", "net_weight" → "Net Weight". */

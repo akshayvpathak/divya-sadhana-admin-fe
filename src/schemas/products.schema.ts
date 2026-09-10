@@ -1,5 +1,9 @@
 import { z } from "zod";
+import { SLUG_PATTERN, SLUG_PATTERN_MESSAGE } from "@/lib/slug";
 import { discountTypeEnum } from "@/schemas/discount.schema";
+
+/** `Product.slug` is `maxLength: 160` in the API schema. */
+export const PRODUCT_SLUG_MAX_LENGTH = 160;
 
 export const createProductSchema = z.object({
   name: z.string().min(1, "Product name is required"),
@@ -17,9 +21,11 @@ export const createProductSchema = z.object({
   primary_image_key: z.string().default(""),
   gallery_image_keys: z.array(z.string()).default([]),
   category: z.string().uuid("Valid category ID is required"),
+  // Matched to the backend rule (`^[-a-zA-Z0-9_]+$`), not a stricter local one.
   slug: z
     .string()
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug can only contain lowercase letters, numbers, and single hyphens")
+    .max(PRODUCT_SLUG_MAX_LENGTH, `Slug must be ${PRODUCT_SLUG_MAX_LENGTH} characters or fewer`)
+    .regex(SLUG_PATTERN, SLUG_PATTERN_MESSAGE)
     .optional(),
   meta_title: z.string().max(70).optional().or(z.literal("")),
   meta_description: z.string().max(160).optional().or(z.literal("")),
