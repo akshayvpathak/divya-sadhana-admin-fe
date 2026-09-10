@@ -1,10 +1,8 @@
 'use client';
 
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import dynamic from 'next/dynamic';
-import 'react-quill-new/dist/quill.snow.css';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'react-toastify';
 import { Upload, X, Loader2 } from 'lucide-react';
@@ -12,10 +10,13 @@ import {
   createSadhanaServiceSchema,
   CreateSadhanaServicePayload,
   serviceCategoryEnum,
+  SADHANA_SERVICE_SLUG_MAX_LENGTH,
 } from '@/schemas/sadhana-services.schema';
+import { slugify } from '@/lib/slug';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
@@ -26,12 +27,29 @@ import InputSchemaEditor from './sadhana-service/InputSchemaEditor';
 import PricingOptionsEditor from './sadhana-service/PricingOptionsEditor';
 import DiscountFields from '@/components/forms/shared/DiscountFields';
 
-const ReactQuill = dynamic(() => import('react-quill-new'), {
-  ssr: false,
-  loading: () => <p className="py-4 text-sm text-moon">Loading editor...</p>,
-});
-
 const CATEGORIES = serviceCategoryEnum.options;
+
+/** Object URLs are only created for local previews; server URLs must be left alone. */
+function revokeIfBlob(url: string) {
+  if (url.startsWith('blob:')) URL.revokeObjectURL(url);
+}
+
+/** Mirrors the block conventions `parse-seva-description.ts` recognises on the storefront. */
+const DESCRIPTION_PLACEHOLDER = `जीवन के रहस्यों का पूर्ण प्रकटीकरण
+
+परिचय
+
+इस सेवा का विवरण यहाँ लिखें।
+
+क्या जानकारियां मिलेंगी
+
+- पहला बिंदु
+- दूसरा बिंदु
+
+बुकिंग प्रक्रिया
+
+1. पहला चरण
+2. दूसरा चरण`;
 
 interface SadhanaServiceFormProps {
   serviceId?: string;
@@ -45,6 +63,10 @@ export function SadhanaServiceForm({ serviceId, onSubmit, isPending, readOnly = 
   const uploadMutation = useUploadImageMutation('sadhana_service_cover');
   const [isDragging, setIsDragging] = useState(false);
   const [previewUrl, setPreviewUrl] = useState('');
+  /** Set once the admin types in the slug field, which stops the name-driven auto-fill. */
+  const slugTouchedRef = useRef(false);
+  /** Id of the service already loaded into the form; see the reset effect below. */
+  const loadedServiceIdRef = useRef<string | null>(null);
 
   const initialData = useMemo(() => {
     if (!fetchedService) return undefined;
@@ -92,13 +114,6 @@ export function SadhanaServiceForm({ serviceId, onSubmit, isPending, readOnly = 
     } as any;
   }, [fetchedService]);
 
-  useEffect(() => {
-    const data = initialData as { cover_image_url?: string; cover_image_key?: string } | undefined;
-    if (data?.cover_image_url) setPreviewUrl(data.cover_image_url);
-    else if (data?.cover_image_key) setPreviewUrl(resolveProductImageUrl(data.cover_image_key));
-    else setPreviewUrl('');
-  }, [initialData]);
-
   const {
     register,
     control,
@@ -129,6 +144,9 @@ export function SadhanaServiceForm({ serviceId, onSubmit, isPending, readOnly = 
     },
   });
 
+  // Registered up here so the slug input can wrap `onChange` and still forward to RHF.
+  const slugField = register('slug');
+
   const nameValue = watch('name');
   const categoryValue = watch('category');
   const isActive = watch('is_active');
@@ -147,26 +165,57 @@ export function SadhanaServiceForm({ serviceId, onSubmit, isPending, readOnly = 
   const discountBasePrice = optionAmounts.length ? Math.min(...optionAmounts) : 0;
   const requiresApplication = watch('requires_application');
 
+  /**
+   * Suggest a slug from the name, but only until the admin edits the slug themselves.
+   * Service names are Devanagari, so `slugify` transliterates before stripping — the
+   * plain `[^a-z0-9]` strip this replaced erased the whole name and left the field
+   * empty, and re-erased any slug typed by hand on the next keystroke in `name`.
+   */
   useEffect(() => {
-    if (!readOnly && !serviceId && nameValue) {
-      const slug = nameValue
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)+/g, '');
-      setValue('slug', slug, { shouldValidate: true });
-    }
+    if (readOnly || serviceId || slugTouchedRef.current || !nameValue) return;
+    const generated = slugify(nameValue, { maxLength: SADHANA_SERVICE_SLUG_MAX_LENGTH });
+    if (generated) setValue('slug', generated, { shouldValidate: true });
   }, [nameValue, setValue, readOnly, serviceId]);
 
   useEffect(() => {
     register('cover_image_key');
   }, [register]);
 
+  /**
+   * Load the fetched service into the form exactly once per service.
+   *
+   * `initialData` is a fresh object on every query result, and this query is refetched on
+   * window focus once it goes stale (60s). Resetting on every change meant an admin who
+   * alt-tabbed mid-edit came back to a form silently rewound to the server's values, with
+   * their unsaved description and pricing gone. Keying on the id keeps the initial load and
+   * ignores later refetches of the same record.
+   */
   useEffect(() => {
-    if (initialData) reset(initialData);
-  }, [initialData, reset]);
+    if (!fetchedService || !initialData) return;
+    if (loadedServiceIdRef.current === fetchedService.id) return;
+    loadedServiceIdRef.current = fetchedService.id;
+
+    reset(initialData);
+
+    const data = initialData as { cover_image_url?: string; cover_image_key?: string };
+    if (data.cover_image_url) setPreviewUrl(data.cover_image_url);
+    else if (data.cover_image_key) setPreviewUrl(resolveProductImageUrl(data.cover_image_key));
+    else setPreviewUrl('');
+  }, [fetchedService, initialData, reset]);
 
   const handleFormSubmit = (data: CreateSadhanaServicePayload) => {
     onSubmit?.(data);
+  };
+
+  /**
+   * Without this, a bad pricing key or input-schema row simply made the Save button do
+   * nothing: the offending field can be several screens down, so there was no way to tell
+   * a failed validation from a dead button.
+   */
+  const handleInvalid = () => {
+    toast.error('Some fields need fixing — check the highlighted rows below.');
+    const firstInvalid = document.querySelector('[data-slot="form-error"]');
+    firstInvalid?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
   const handleFileUpload = async (file: File) => {
@@ -174,14 +223,23 @@ export function SadhanaServiceForm({ serviceId, onSubmit, isPending, readOnly = 
       toast.error('Please upload an image file');
       return;
     }
-    setPreviewUrl(URL.createObjectURL(file));
+
+    // Show the local file immediately, but be able to undo it: on a failed upload the
+    // form would otherwise keep displaying a cover that was never stored, and saving
+    // would drop it without a word.
+    const previousPreview = previewUrl;
+    const localPreview = URL.createObjectURL(file);
+    setPreviewUrl(localPreview);
+
     try {
       const keys = await uploadMutation.mutateAsync([file]);
-      if (keys?.length) {
-        setValue('cover_image_key', keys[0], { shouldValidate: true });
-        toast.success('Image uploaded');
-      }
+      if (!keys?.length) throw new Error('Upload returned no image key');
+      setValue('cover_image_key', keys[0], { shouldValidate: true });
+      revokeIfBlob(previousPreview);
+      toast.success('Image uploaded');
     } catch {
+      setPreviewUrl(previousPreview);
+      revokeIfBlob(localPreview);
       toast.error('Failed to upload image');
     }
   };
@@ -199,23 +257,34 @@ export function SadhanaServiceForm({ serviceId, onSubmit, isPending, readOnly = 
   const roClass = readOnly ? 'bg-ivory border-line text-charcoal cursor-default focus-visible:ring-0' : '';
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(handleFormSubmit, handleInvalid)} className="space-y-6">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="name">Name <span className="text-danger">*</span></Label>
           <Input id="name" placeholder="Service name" {...register('name')} disabled={readOnly} className={roClass} />
-          {errors.name && <p className="text-sm text-danger">{errors.name.message}</p>}
+          {errors.name && <p data-slot="form-error" className="text-sm text-danger">{errors.name.message}</p>}
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="slug">Slug <span className="text-danger">*</span></Label>
-          <Input id="slug" placeholder="service-slug" {...register('slug')} disabled={readOnly} className={roClass} />
-          {errors.slug && <p className="text-sm text-danger">{errors.slug.message}</p>}
+          <Input
+            id="slug"
+            placeholder="service-slug"
+            maxLength={SADHANA_SERVICE_SLUG_MAX_LENGTH}
+            {...slugField}
+            onChange={(event) => {
+              slugTouchedRef.current = true;
+              slugField.onChange(event);
+            }}
+            disabled={readOnly}
+            className={roClass}
+          />
+          {errors.slug && <p data-slot="form-error" className="text-sm text-danger">{errors.slug.message}</p>}
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="category">Category <span className="text-danger">*</span></Label>
-          <Select value={categoryValue || ''} onValueChange={(val) => setValue('category', val as CreateSadhanaServicePayload['category'])} disabled={readOnly}>
+          <Select value={categoryValue || ''} onValueChange={(val) => setValue('category', val as CreateSadhanaServicePayload['category'], { shouldValidate: true })} disabled={readOnly}>
             <SelectTrigger id="category" className={readOnly ? 'bg-cream border-line text-charcoal' : 'bg-surface'}>
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
@@ -227,7 +296,7 @@ export function SadhanaServiceForm({ serviceId, onSubmit, isPending, readOnly = 
               ))}
             </SelectContent>
           </Select>
-          {errors.category && <p className="text-sm text-danger">{errors.category.message}</p>}
+          {errors.category && <p data-slot="form-error" className="text-sm text-danger">{errors.category.message}</p>}
         </div>
 
         <div className="space-y-2">
@@ -251,24 +320,36 @@ export function SadhanaServiceForm({ serviceId, onSubmit, isPending, readOnly = 
         </div>
       </div>
 
+      {/*
+        Plain text, not rich text. The storefront runs this field through
+        `parse-seva-description` and renders every block as escaped text, so any HTML
+        saved here shows up as literal `<p>` tags on the live seva page. A rich-text
+        editor was used here by copy-paste from the product form, whose description
+        *is* rendered as HTML — that difference is real and this field is the text side.
+      */}
       <div className="space-y-2 pb-4">
         <Label htmlFor="description">Description <span className="text-danger">*</span></Label>
-        <div className="rounded-md bg-surface pb-6">
-          {readOnly ? (
-            <div className="min-h-[160px] whitespace-pre-line rounded-md border border-line bg-cream p-4 text-charcoal">
-              {watch('description') || ''}
-            </div>
-          ) : (
-            <Controller
-              name="description"
-              control={control}
-              render={({ field }) => (
-                <ReactQuill theme="snow" value={field.value} onChange={field.onChange} className="mb-12 h-[200px]" />
-              )}
+        {readOnly ? (
+          <div className="min-h-[160px] whitespace-pre-line rounded-md border border-line bg-cream p-4 text-charcoal">
+            {watch('description') || ''}
+          </div>
+        ) : (
+          <>
+            <Textarea
+              id="description"
+              rows={16}
+              placeholder={DESCRIPTION_PLACEHOLDER}
+              className="min-h-[320px] whitespace-pre-wrap text-sm leading-relaxed"
+              {...register('description')}
             />
-          )}
-        </div>
-        {errors.description && <p className="text-sm text-danger">{errors.description.message}</p>}
+            <p className="text-xs text-moon">
+              Plain text. Blank line = new paragraph &middot; a short line on its own = heading
+              &middot; lines starting with <code className="font-mono">- </code> = bullet list
+              &middot; lines starting with <code className="font-mono">1. </code> = numbered list.
+            </p>
+          </>
+        )}
+        {errors.description && <p data-slot="form-error" className="text-sm text-danger">{errors.description.message}</p>}
       </div>
 
       <div className="space-y-2">
@@ -307,6 +388,7 @@ export function SadhanaServiceForm({ serviceId, onSubmit, isPending, readOnly = 
                   onClick={(e) => {
                     e.stopPropagation();
                     setValue('cover_image_key', '', { shouldValidate: true });
+                    revokeIfBlob(previewUrl);
                     setPreviewUrl('');
                   }}
                   className="absolute right-2 top-2 rounded-full bg-danger p-1.5 text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100"
@@ -357,7 +439,7 @@ export function SadhanaServiceForm({ serviceId, onSubmit, isPending, readOnly = 
 
       <div className="rounded-xl border border-line p-4">
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        <InputSchemaEditor control={control as any} register={register as any} readOnly={readOnly} />
+        <InputSchemaEditor control={control as any} register={register as any} errors={errors} readOnly={readOnly} />
       </div>
 
       <div className="flex flex-col-reverse gap-2 pt-4 sm:flex-row sm:justify-end [&>a]:w-full sm:[&>a]:w-auto [&_[data-slot=button]]:w-full sm:[&_[data-slot=button]]:w-auto">

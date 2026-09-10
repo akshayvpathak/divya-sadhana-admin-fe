@@ -1,6 +1,13 @@
 'use client';
 
-import { useFieldArray, useWatch, Controller, type Control, type UseFormRegister } from 'react-hook-form';
+import {
+  useFieldArray,
+  useWatch,
+  Controller,
+  type Control,
+  type UseFormRegister,
+  type FieldErrors,
+} from 'react-hook-form';
 import { Plus, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,9 +23,22 @@ const CHOICE_TYPES = ['select', 'radio', 'multiselect'];
 type Ctrl = Control<any>;
 type Reg = UseFormRegister<any>;
 
+/**
+ * Row/option messages. Every field here is validated (key must be `[a-z0-9_]`, label is
+ * required, choice types must carry options) but none of it used to be rendered, so an
+ * invalid row made Save do nothing at all with no visible cause.
+ */
+type ErrLike = { message?: string } | undefined;
+
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return <p data-slot="form-error" className="text-xs text-danger">{message}</p>;
+}
+
 interface EditorProps {
   control: Ctrl;
   register: Reg;
+  errors?: FieldErrors;
   readOnly?: boolean;
 }
 
@@ -26,14 +46,18 @@ function OptionsEditor({
   control,
   register,
   parentName,
+  errors,
   readOnly,
 }: {
   control: Ctrl;
   register: Reg;
   parentName: string;
+  errors?: Record<string, unknown> & { message?: string; root?: { message?: string } };
   readOnly?: boolean;
 }) {
   const { fields, append, remove } = useFieldArray({ control, name: parentName });
+  const optionError = (i: number, field: string) =>
+    ((errors?.[i] as Record<string, ErrLike> | undefined)?.[field])?.message;
   return (
     <div className="space-y-2 rounded-md border border-line bg-surface p-3">
       <div className="flex items-center justify-between">
@@ -45,10 +69,17 @@ function OptionsEditor({
         )}
       </div>
       {fields.length === 0 && <p className="text-xs text-moon">No options yet.</p>}
+      <FieldError message={errors?.root?.message || errors?.message} />
       {fields.map((f, i) => (
-        <div key={f.id} className="flex items-center gap-2">
-          <Input placeholder="value" {...register(`${parentName}.${i}.value`)} disabled={readOnly} />
-          <Input placeholder="label" {...register(`${parentName}.${i}.label`)} disabled={readOnly} />
+        <div key={f.id} className="flex items-start gap-2">
+          <div className="flex-1 space-y-1">
+            <Input placeholder="value" {...register(`${parentName}.${i}.value`)} disabled={readOnly} />
+            <FieldError message={optionError(i, 'value')} />
+          </div>
+          <div className="flex-1 space-y-1">
+            <Input placeholder="label" {...register(`${parentName}.${i}.label`)} disabled={readOnly} />
+            <FieldError message={optionError(i, 'label')} />
+          </div>
           {!readOnly && (
             <Button type="button" variant="ghost" size="icon" onClick={() => remove(i)} className="text-danger shrink-0">
               <Trash2 className="h-4 w-4" />
@@ -67,6 +98,7 @@ function InputSchemaRow({
   total,
   remove,
   move,
+  errors,
   readOnly,
 }: {
   control: Ctrl;
@@ -75,10 +107,12 @@ function InputSchemaRow({
   total: number;
   remove: (i: number) => void;
   move: (from: number, to: number) => void;
+  errors?: Record<string, unknown>;
   readOnly?: boolean;
 }) {
   const type = useWatch({ control, name: `input_schema.${index}.type` });
   const showOptions = CHOICE_TYPES.includes(type);
+  const fieldError = (field: string) => (errors?.[field] as ErrLike)?.message;
 
   return (
     <div className="space-y-3 rounded-lg border border-line bg-cream p-3">
@@ -101,12 +135,14 @@ function InputSchemaRow({
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="space-y-1">
-          <Label>Key</Label>
+          <Label>Key <span className="text-danger">*</span></Label>
           <Input placeholder="full_name" {...register(`input_schema.${index}.key`)} disabled={readOnly} />
+          <FieldError message={fieldError('key')} />
         </div>
         <div className="space-y-1">
-          <Label>Label</Label>
+          <Label>Label <span className="text-danger">*</span></Label>
           <Input placeholder="पूरा नाम" {...register(`input_schema.${index}.label`)} disabled={readOnly} />
+          <FieldError message={fieldError('label')} />
         </div>
         <div className="space-y-1">
           <Label>Type</Label>
@@ -132,6 +168,7 @@ function InputSchemaRow({
         <div className="space-y-1">
           <Label>Placeholder</Label>
           <Input {...register(`input_schema.${index}.placeholder`)} disabled={readOnly} />
+          <FieldError message={fieldError('placeholder')} />
         </div>
       </div>
 
@@ -151,6 +188,7 @@ function InputSchemaRow({
           control={control}
           register={register}
           parentName={`input_schema.${index}.options`}
+          errors={errors?.options as Record<string, unknown> & { message?: string }}
           readOnly={readOnly}
         />
       )}
@@ -158,8 +196,11 @@ function InputSchemaRow({
   );
 }
 
-export default function InputSchemaEditor({ control, register, readOnly }: EditorProps) {
+export default function InputSchemaEditor({ control, register, errors, readOnly }: EditorProps) {
   const { fields, append, remove, move } = useFieldArray({ control, name: 'input_schema' });
+  const arrayError = errors?.input_schema as
+    | (Record<number, Record<string, unknown>> & { root?: { message?: string }; message?: string })
+    | undefined;
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
@@ -178,6 +219,7 @@ export default function InputSchemaEditor({ control, register, readOnly }: Edito
         )}
       </div>
       {fields.length === 0 && <p className="text-sm text-moon">No fields yet.</p>}
+      <FieldError message={arrayError?.root?.message || arrayError?.message} />
       {fields.map((f, index) => (
         <InputSchemaRow
           key={f.id}
@@ -187,6 +229,7 @@ export default function InputSchemaEditor({ control, register, readOnly }: Edito
           total={fields.length}
           remove={remove}
           move={move}
+          errors={arrayError?.[index]}
           readOnly={readOnly}
         />
       ))}
