@@ -1,7 +1,5 @@
 'use client';
 
-import { PieChart } from 'lucide-react';
-import { SectionHeading } from '@/components/common/DetailCard';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { formatINR, formatPercent } from '@/lib/currency';
 import {
@@ -16,28 +14,15 @@ export default function CommissionBreakdownCard({
 }: {
   breakdown: CommissionBreakdown | null | undefined;
 }) {
-  if (!breakdown) {
-    return (
-      <div className="space-y-3">
-        <SectionHeading icon={<PieChart className="h-3.5 w-3.5" />}>
-          Commission split
-        </SectionHeading>
-        <p className="text-sm text-moon">
-          Commission split is not available for this order yet. It appears after payment is
-          captured.
-        </p>
-      </div>
-    );
-  }
+  // The caller renders the heading and the attribution rows, so an absent
+  // breakdown is not this component's story to tell.
+  if (!breakdown) return null;
 
   const slices = sortBreakdownSlices(breakdown.slices ?? []);
   const commissionable = breakdown.commissionable !== false;
 
   return (
     <div className="space-y-3">
-      <SectionHeading icon={<PieChart className="h-3.5 w-3.5" />}>
-        Commission split
-      </SectionHeading>
       <p className="text-sm text-moon">
         Percent and amount for each role on this order. If a seat is empty, that share stays with
         Admin.

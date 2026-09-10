@@ -101,6 +101,20 @@ export const orderSchema = z.object({
     .optional(),
   user: z.union([z.string(), userSchema]).nullable().optional(),
   commission_breakdown: commissionBreakdownSchema.nullable().optional(),
+  /**
+   * Who the order is attributed to, and the rates captured at checkout. These
+   * are bare member UUIDs, not objects — resolve them with `useTrusteeQuery`.
+   *
+   * They are populated today even though `commission_breakdown` is not: the
+   * backend computes the split only once product-order commission is switched
+   * on, but attribution is stamped on every order regardless.
+   */
+  area_trustee: z.string().nullable().optional(),
+  referral_trustee: z.string().nullable().optional(),
+  referring_trustee: z.string().nullable().optional(),
+  commission_percent_snapshot: moneyLoose,
+  area_commission_percent_snapshot: moneyLoose,
+  referral_commission_percent_snapshot: moneyLoose,
 });
 
 export const courierPartnerOptions = [

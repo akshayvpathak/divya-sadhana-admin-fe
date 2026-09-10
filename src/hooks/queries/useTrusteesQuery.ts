@@ -5,6 +5,7 @@ import {
 } from "@/schemas/trustees.schema";
 import {
   getTrusteeCommissions,
+  getTrustee,
   getTrusteeDashboard,
   getTrusteesList,
   promoteTrustee,
@@ -94,6 +95,25 @@ export const useTrusteesInfiniteQuery = (
       });
       return response.data;
     },
+  });
+};
+
+/**
+ * Resolve one member by id. Used to name the people an order is attributed to;
+ * several orders share the same area trustee, so results are cached for a while
+ * and the query stays disabled until there is an id to look up.
+ */
+export const useTrusteeQuery = (trusteeId: string | null | undefined) => {
+  const { accessToken } = useAuth();
+  return useQuery({
+    queryKey: ["trustee", trusteeId],
+    queryFn: async () => {
+      if (!accessToken || !trusteeId) throw new Error("Missing required data");
+      return getTrustee(trusteeId, accessToken);
+    },
+    enabled: !!accessToken && !!trusteeId,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
   });
 };
 
