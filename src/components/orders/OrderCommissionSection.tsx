@@ -4,27 +4,26 @@ import { PieChart } from 'lucide-react';
 import { SectionHeading } from '@/components/common/DetailCard';
 import CommissionBreakdownCard from '@/components/orders/CommissionBreakdownCard';
 import OrderAttribution from '@/components/orders/OrderAttribution';
+import { formatINR, formatPercent } from '@/lib/currency';
+import { commissionBase, poolAmount, poolPercent } from '@/lib/order-commission';
 import type { Order } from '@/schemas/orders.schema';
 
 /**
- * The network side of one order: who it is attributed to, and — once the
- * backend computes it — how the commission pool is split between them.
+ * The network side of one order: who earns on it and how much.
  *
- * Two data sources, deliberately kept apart:
+ * Two sources, and the better one is not available yet:
  *
- * - Attribution (`area_trustee` and friends) is stamped on every order at
- *   checkout and is available now.
- * - `commission_breakdown` is computed only when the purchase type actually
- *   pays the network. Product orders do not yet, so it is usually absent; the
- *   card renders nothing rather than a table of ₹0.00 rows, and the note below
- *   explains why the split is not there.
- *
- * When the backend starts returning `commission_breakdown`, the full split —
- * every role, the person in it, their percent and rupees, and whether the slice
- * was retained by Admin — appears here with no further work.
+ * - `commission_breakdown` is the confirmed split, straight from the commission
+ *   ledger. When present it is the whole story and is shown alone.
+ * - Until then the order still carries attribution and the rates captured at
+ *   checkout, so the pool is worked out from those. Those figures are marked
+ *   estimated, because they are derived here rather than read from the ledger.
  */
 export default function OrderCommissionSection({ order }: { order: Order }) {
   const breakdown = order.commission_breakdown;
+  const base = commissionBase(order);
+  const pct = poolPercent(order);
+  const pool = poolAmount(order);
   const isPaid = order.payment_status === 'paid' || order.status === 'paid';
 
   return (
@@ -33,16 +32,45 @@ export default function OrderCommissionSection({ order }: { order: Order }) {
         Network &amp; commission
       </SectionHeading>
 
-      <OrderAttribution order={order} />
-
       {breakdown ? (
         <CommissionBreakdownCard breakdown={breakdown} />
       ) : (
-        <p className="rounded-lg border border-line bg-cream px-3 py-2 text-xs text-charcoal">
-          {isPaid
-            ? 'No commission split was recorded for this order. Product orders do not pay the network yet, so no shares were calculated.'
-            : 'The commission split is calculated once payment is captured.'}
-        </p>
+        <>
+          {/* Money first — this is the line the client reads. */}
+          <div className="grid gap-2 sm:grid-cols-2">
+            <div className="rounded-xl border border-line bg-surface px-3.5 py-3">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-moon">
+                Commission is charged on
+              </p>
+              <p className="mt-0.5 tabular-nums text-base font-bold text-ink">{formatINR(base)}</p>
+              <p className="text-[11px] text-moon">
+                Order value {formatINR(order.subtotal_amount)} less discount{' '}
+                {formatINR(order.discount_amount)}. Shipping and tax are not included.
+              </p>
+            </div>
+            <div className="rounded-xl border border-gold/30 bg-tint/40 px-3.5 py-3">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-gold-deep">
+                Total commission pool
+              </p>
+              <p className="mt-0.5 tabular-nums text-base font-bold text-ink">
+                {pool > 0 ? formatINR(pool) : '—'}
+              </p>
+              <p className="text-[11px] text-moon">
+                {pct > 0
+                  ? `${formatPercent(pct)} of the amount above, shared between everyone below.`
+                  : 'No commission rate was captured on this order.'}
+              </p>
+            </div>
+          </div>
+
+          <OrderAttribution order={order} base={base} />
+
+          <p className="rounded-lg border border-line bg-cream px-3 py-2 text-xs text-charcoal">
+            {isPaid
+              ? 'These amounts are calculated from each member’s current rate. The confirmed figures are held in the commission ledger and will replace them here once the backend returns the split on the order.'
+              : 'The commission is confirmed once payment is captured. Until then these amounts are indicative.'}
+          </p>
+        </>
       )}
     </div>
   );
