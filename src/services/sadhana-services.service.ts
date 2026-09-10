@@ -39,7 +39,8 @@ export const getSadhanaServicesList = async (
   if (options.search) params.append("search", options.search);
   if (options.category) params.append("category", options.category);
   if (options.is_active) params.append("is_active", options.is_active);
-  if (options.ordering) params.append("ordering", options.ordering);
+  // Wire name is `sort`. `ordering` is DRF's default and this API ignores it.
+  if (options.ordering) params.append("sort", options.ordering);
 
   const response = await fetch(`${API_BASE_URL}/sadhana-services/?${params.toString()}`, {
     method: "GET",

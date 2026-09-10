@@ -37,7 +37,8 @@ export const getServiceBatchesList = async (
   if (options.paginate) params.append("paginate", String(options.paginate));
   if (options.service) params.append("service", options.service);
   if (options.search) params.append("search", options.search);
-  if (options.ordering) params.append("ordering", options.ordering);
+  // Wire name is `sort`. `ordering` is DRF's default and this API ignores it.
+  if (options.ordering) params.append("sort", options.ordering);
 
   const response = await fetch(`${API_BASE_URL}/service-batches/?${params.toString()}`, {
     method: "GET",

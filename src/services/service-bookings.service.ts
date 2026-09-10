@@ -38,7 +38,8 @@ export const getServiceBookingsList = async (
   if (options.status) params.append("status", options.status);
   if (options.service__slug) params.append("service__slug", options.service__slug);
   if (options.search) params.append("search", options.search);
-  if (options.ordering) params.append("ordering", options.ordering);
+  // Wire name is `sort`. `ordering` is DRF's default and this API ignores it.
+  if (options.ordering) params.append("sort", options.ordering);
 
   const response = await fetch(`${API_BASE_URL}/service-bookings/?${params.toString()}`, {
     method: "GET",
