@@ -17,7 +17,12 @@ export default function AdminLayout({
           and the whole shell scrolls sideways instead of the table alone. */}
       <div className="flex h-full min-w-0 flex-1 flex-col">
         <Navbar />
-        <main className="custom-scrollbar flex-1 overflow-y-auto p-4 sm:p-5 lg:p-6">
+        {/* id: this, not the window, is what scrolls — so it is also what list
+            pages save and restore a position on (see useListQueryState). */}
+        <main
+          id="admin-scroll"
+          className="custom-scrollbar flex-1 overflow-y-auto p-4 sm:p-5 lg:p-6"
+        >
           <div className="mx-auto h-full w-full max-w-7xl">{children}</div>
         </main>
       </div>

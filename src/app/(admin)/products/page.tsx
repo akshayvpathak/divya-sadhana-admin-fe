@@ -11,28 +11,25 @@ import { ResponsiveDataView } from '@/components/common/ResponsiveDataView';
 import { ListToolbar, ToolbarFilter } from '@/components/common/ListToolbar';
 import { useProductTableColumns } from '@/hooks/tables/useProductTableColumns';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useListQueryState } from '@/hooks/useListQueryState';
 import { useIsCompact } from '@/hooks/useMediaQuery';
 import { DataTablePagination } from '@/components/common/DataTablePagination';
 import { productStatusOptions, productPublishedOptions } from '@/components/ui/badges/badge-status';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Card } from '@/components/ui/card';
 
-export default function ProductsPage() {
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
-  const debouncedSearch = useDebounce(search, 300);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [sort, setSort] = useState('');
-  const [status, setStatus] = useState('all');
-  const [published, setPublished] = useState('all');
+/** Defaults double as the URL contract: anything at its default stays out of the query. */
+const DEFAULTS = { page: 1, search: "", sort: "", category: "all", status: "all", published: "all" };
 
-  const clearAllFilters = () => {
-    setSearch('');
-    setSelectedCategory('all');
-    setStatus('all');
-    setPublished('all');
-    setPage(1);
-  };
+export default function ProductsPage() {
+  // In the URL, so opening a record and coming back keeps the filters, the
+  // page and the scroll position.
+  const [query, patch] = useListQueryState(DEFAULTS);
+  const { page, search, sort, category: selectedCategory, status, published } = query;
+  const setPage = (next: number) => patch({ page: next });
+  const debouncedSearch = useDebounce(search, 300);
+
+  const clearAllFilters = () => patch({ search: '', category: 'all', status: 'all', published: 'all', page: 1 });
 
   const hasActiveFilters =
     search !== '' ||
@@ -68,10 +65,7 @@ export default function ProductsPage() {
   );
   const { mutate: deleteProduct, isPending: isDeleting } = useDeleteProduct();
 
-  const handleSort = (field: string) => {
-    setSort(field);
-    setPage(1);
-  };
+  const handleSort = (field: string) => patch({ sort: field, page: 1 });
 
   const openDeleteModal = (id: string) => {
     setProductToDelete(id);
@@ -115,10 +109,7 @@ export default function ProductsPage() {
       options: categoryOptions,
       placeholder: 'All Categories',
       widthClass: 'w-[160px]',
-      onChange: (val) => {
-        setSelectedCategory(val);
-        setPage(1);
-      },
+      onChange: (val) => patch({ category: val, page: 1 }),
     },
     {
       key: 'status',
@@ -127,10 +118,7 @@ export default function ProductsPage() {
       options: productStatusOptions,
       placeholder: 'All Statuses',
       widthClass: 'w-[130px]',
-      onChange: (val) => {
-        setStatus(val);
-        setPage(1);
-      },
+      onChange: (val) => patch({ status: val, page: 1 }),
     },
     {
       key: 'published',
@@ -139,10 +127,7 @@ export default function ProductsPage() {
       options: productPublishedOptions,
       placeholder: 'All Published',
       widthClass: 'w-[140px]',
-      onChange: (val) => {
-        setPublished(val);
-        setPage(1);
-      },
+      onChange: (val) => patch({ published: val, page: 1 }),
     },
   ];
 
@@ -164,10 +149,7 @@ export default function ProductsPage() {
           search={{
             value: search,
             placeholder: 'Search Products...',
-            onChange: (val) => {
-              setSearch(val);
-              setPage(1);
-            },
+            onChange: (val) => patch({ search: val, page: 1 }),
           }}
           filters={toolbarFilters}
           onClear={clearAllFilters}

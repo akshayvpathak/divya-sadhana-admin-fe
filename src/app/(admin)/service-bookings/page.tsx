@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import {
   useServiceBookingsListQuery,
   useServiceBookingsInfiniteQuery,
@@ -10,26 +10,31 @@ import { ResponsiveDataView } from '@/components/common/ResponsiveDataView';
 import { ListToolbar, ToolbarFilter } from '@/components/common/ListToolbar';
 import { useServiceBookingTableColumns } from '@/hooks/tables/useServiceBookingTableColumns';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useListQueryState } from '@/hooks/useListQueryState';
 import { useIsCompact } from '@/hooks/useMediaQuery';
 import { DataTablePagination } from '@/components/common/DataTablePagination';
-import { useFilterManager } from '@/components/common/FilterManager';
+import { useUrlFilterManager } from '@/components/common/FilterManager';
 import { serviceBookingStatusOptions } from '@/components/ui/badges/badge-status';
 import { Card } from '@/components/ui/card';
 import { PageHeader } from '@/components/common/PageHeader';
 
+/** Defaults double as the URL contract: anything at its default stays out of the query. */
+const DEFAULTS = { page: 1, search: "", sort: "", status: "all", service: "all" };
+
 export default function ServiceBookingsPage() {
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
+  // In the URL, so opening a record and coming back keeps the filters, the
+  // page and the scroll position.
+  const [query, patch, resetQuery] = useListQueryState(DEFAULTS);
+  const { page, search, sort } = query;
+  const setPage = (next: number) => patch({ page: next });
   const debouncedSearch = useDebounce(search, 300);
-  const [sort, setSort] = useState('');
 
   const {
     filters,
     handleFilterChange,
     getApiParams,
-    resetFilters,
     hasActiveFilters: filterManagerActive,
-  } = useFilterManager({ status: 'all', service: 'all' }, () => setPage(1));
+  } = useUrlFilterManager({ status: 'all', service: 'all' }, query, patch);
 
   const apiParams = getApiParams();
   const hasActiveFilters = search !== '' || filterManagerActive;
@@ -87,10 +92,7 @@ export default function ServiceBookingsPage() {
     },
   ];
 
-  const handleSort = (field: string) => {
-    setSort(field);
-    setPage(1);
-  };
+  const handleSort = (field: string) => patch({ sort: field, page: 1 });
 
   return (
     <div className="space-y-5 pb-8 sm:space-y-6">
@@ -101,17 +103,10 @@ export default function ServiceBookingsPage() {
           search={{
             value: search,
             placeholder: 'Search bookings...',
-            onChange: (val) => {
-              setSearch(val);
-              setPage(1);
-            },
+            onChange: (val) => patch({ search: val, page: 1 }),
           }}
           filters={toolbarFilters}
-          onClear={() => {
-            resetFilters();
-            setSearch('');
-            setPage(1);
-          }}
+          onClear={resetQuery}
           hasActiveFilters={hasActiveFilters}
           sortColumns={columns}
           sort={sort}

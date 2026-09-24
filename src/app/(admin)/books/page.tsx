@@ -13,19 +13,23 @@ import { DataTablePagination } from '@/components/common/DataTablePagination';
 import { PageHeader } from '@/components/common/PageHeader';
 import { useBookTableColumns } from '@/hooks/tables/useBookTableColumns';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useListQueryState } from '@/hooks/useListQueryState';
 import { useIsCompact } from '@/hooks/useMediaQuery';
 import { productStatusOptions, productPublishedOptions } from '@/components/ui/badges/badge-status';
 import { bookId } from '@/schemas/books.schema';
 
 const PAGE_SIZE = 10;
 
+/** Defaults double as the URL contract: anything at its default stays out of the query. */
+const DEFAULTS = { page: 1, search: "", sort: "", status: "all", published: "all" };
+
 export default function BooksPage() {
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
+  // In the URL, so opening a record and coming back keeps the filters, the
+  // page and the scroll position.
+  const [query, patch] = useListQueryState(DEFAULTS);
+  const { page, search, sort, status, published } = query;
+  const setPage = (next: number) => patch({ page: next });
   const debouncedSearch = useDebounce(search, 300);
-  const [sort, setSort] = useState('');
-  const [status, setStatus] = useState('all');
-  const [published, setPublished] = useState('all');
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [bookToDelete, setBookToDelete] = useState<string | null>(null);
@@ -57,8 +61,7 @@ export default function BooksPage() {
   });
 
   function handleSort(field: string) {
-    setSort(field);
-    setPage(1);
+    patch({ sort: field, page: 1 });
   }
 
   function confirmDelete() {
@@ -83,10 +86,7 @@ export default function BooksPage() {
       options: productStatusOptions,
       placeholder: 'All',
       widthClass: 'w-[140px]',
-      onChange: (val) => {
-        setStatus(val);
-        setPage(1);
-      },
+      onChange: (val) => patch({ status: val, page: 1 }),
     },
     {
       key: 'published',
@@ -95,10 +95,7 @@ export default function BooksPage() {
       options: productPublishedOptions,
       placeholder: 'All',
       widthClass: 'w-[150px]',
-      onChange: (val) => {
-        setPublished(val);
-        setPage(1);
-      },
+      onChange: (val) => patch({ published: val, page: 1 }),
     },
   ];
 
@@ -120,18 +117,10 @@ export default function BooksPage() {
           search={{
             value: search,
             placeholder: 'Search books...',
-            onChange: (val) => {
-              setSearch(val);
-              setPage(1);
-            },
+            onChange: (val) => patch({ search: val, page: 1 }),
           }}
           filters={toolbarFilters}
-          onClear={() => {
-            setSearch('');
-            setStatus('all');
-            setPublished('all');
-            setPage(1);
-          }}
+          onClear={() => patch({ search: '', status: 'all', published: 'all', page: 1 })}
           hasActiveFilters={hasActiveFilters}
           sortColumns={columns}
           sort={sort}

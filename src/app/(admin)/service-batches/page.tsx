@@ -14,23 +14,26 @@ import { ResponsiveDataView } from '@/components/common/ResponsiveDataView';
 import { ListToolbar } from '@/components/common/ListToolbar';
 import { useServiceBatchTableColumns } from '@/hooks/tables/useServiceBatchTableColumns';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useListQueryState } from '@/hooks/useListQueryState';
 import { useIsCompact } from '@/hooks/useMediaQuery';
 import { DataTablePagination } from '@/components/common/DataTablePagination';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Card } from '@/components/ui/card';
 
+/** Defaults double as the URL contract: anything at its default stays out of the query. */
+const DEFAULTS = { page: 1, search: "", sort: "" };
+
 export default function ServiceBatchesPage() {
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
+  // In the URL, so opening a record and coming back keeps the filters, the
+  // page and the scroll position.
+  const [query, patch] = useListQueryState(DEFAULTS);
+  const { page, search, sort } = query;
+  const setPage = (next: number) => patch({ page: next });
   const debouncedSearch = useDebounce(search, 300);
-  const [sort, setSort] = useState('');
 
   const hasActiveFilters = search !== '';
 
-  const clearAllFilters = () => {
-    setSearch('');
-    setPage(1);
-  };
+  const clearAllFilters = () => patch({ search: '', page: 1 });
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [batchToDelete, setBatchToDelete] = useState<string | null>(null);
@@ -64,10 +67,7 @@ export default function ServiceBatchesPage() {
     }
   };
 
-  const handleSort = (field: string) => {
-    setSort(field);
-    setPage(1);
-  };
+  const handleSort = (field: string) => patch({ sort: field, page: 1 });
 
   const totalPages = data?.data?.count ? Math.ceil(data.data.count / 10) : 1;
   const columns = useServiceBatchTableColumns({ openDeleteModal });
@@ -90,10 +90,7 @@ export default function ServiceBatchesPage() {
           search={{
             value: search,
             placeholder: 'Search batches...',
-            onChange: (val) => {
-              setSearch(val);
-              setPage(1);
-            },
+            onChange: (val) => patch({ search: val, page: 1 }),
           }}
           onClear={clearAllFilters}
           hasActiveFilters={hasActiveFilters}

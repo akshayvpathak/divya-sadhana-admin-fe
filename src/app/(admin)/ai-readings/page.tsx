@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import {
   useAiReadingsListQuery,
   useAiReadingsInfiniteQuery,
@@ -9,9 +8,10 @@ import { ResponsiveDataView } from '@/components/common/ResponsiveDataView';
 import { ListToolbar, ToolbarFilter } from '@/components/common/ListToolbar';
 import { useAiReadingsTableColumns } from '@/hooks/tables/useAiReadingsTableColumns';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useListQueryState } from '@/hooks/useListQueryState';
 import { useIsCompact } from '@/hooks/useMediaQuery';
 import { DataTablePagination } from '@/components/common/DataTablePagination';
-import { useFilterManager } from '@/components/common/FilterManager';
+import { useUrlFilterManager } from '@/components/common/FilterManager';
 import { aiReadingStatusOptions } from '@/components/ui/badges/badge-status';
 import { failureCodeOptions } from '@/lib/reading-failures';
 import { PageHeader } from '@/components/common/PageHeader';
@@ -23,25 +23,26 @@ const SERVICE_KIND_OPTIONS = [
   { value: 'palm_reading', label: 'Palm Reading' },
 ];
 
+/** Defaults double as the URL contract: anything at its default stays out of the query. */
+const DEFAULTS = { page: 1, search: "", sort: "-created_at", status: "all", serviceKind: "all", failureCode: "all" };
+
 export default function AiReadingsPage() {
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
+  // In the URL, so opening a record and coming back keeps the filters, the
+  // page and the scroll position.
+  const [query, patch, resetQuery] = useListQueryState(DEFAULTS);
+  const { page, search, sort } = query;
+  const setPage = (next: number) => patch({ page: next });
   const debouncedSearch = useDebounce(search, 300);
-  const [sort, setSort] = useState('-created_at');
 
   const {
     filters,
     handleFilterChange,
-    resetFilters,
     hasActiveFilters: filterManagerActive,
-  } = useFilterManager(
-    {
+  } = useUrlFilterManager({
       status: 'all',
       serviceKind: 'all',
       failureCode: 'all',
-    },
-    () => setPage(1)
-  );
+    }, query, patch);
 
   const hasActiveFilters = search !== '' || filterManagerActive;
 
@@ -64,10 +65,7 @@ export default function AiReadingsPage() {
     { enabled: isCompact === true }
   );
 
-  const handleSort = (field: string) => {
-    setSort(field);
-    setPage(1);
-  };
+  const handleSort = (field: string) => patch({ sort: field, page: 1 });
 
   const totalPages = data?.data?.count ? Math.ceil(data.data.count / 10) : 1;
   const columns = useAiReadingsTableColumns();
@@ -113,17 +111,10 @@ export default function AiReadingsPage() {
           search={{
             value: search,
             placeholder: 'Search AI Reports...',
-            onChange: (val) => {
-              setSearch(val);
-              setPage(1);
-            },
+            onChange: (val) => patch({ search: val, page: 1 }),
           }}
           filters={toolbarFilters}
-          onClear={() => {
-            resetFilters();
-            setSearch('');
-            setPage(1);
-          }}
+          onClear={resetQuery}
           hasActiveFilters={hasActiveFilters}
           sortColumns={columns}
           sort={sort}

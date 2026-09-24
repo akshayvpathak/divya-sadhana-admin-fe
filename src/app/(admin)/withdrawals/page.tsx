@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { ResponsiveDataView } from '@/components/common/ResponsiveDataView';
+import { useListQueryState } from '@/hooks/useListQueryState';
 import { ListToolbar, ToolbarFilter } from '@/components/common/ListToolbar';
 import { DataTablePagination } from '@/components/common/DataTablePagination';
 import {
@@ -24,16 +25,17 @@ const STATUS_OPTIONS = [
   })),
 ];
 
+/** Defaults double as the URL contract: anything at its default stays out of the query. */
+const DEFAULTS = { page: 1, status: 'all' };
+
 export default function WithdrawalsPage() {
-  const [page, setPage] = useState(1);
-  const [status, setStatus] = useState('all');
+  // In the URL, so opening a withdrawal and coming back keeps the filter, the
+  // page and the scroll position.
+  const [query, patch, clearAllFilters] = useListQueryState(DEFAULTS);
+  const { page, status } = query;
+  const setPage = (next: number) => patch({ page: next });
 
   const hasActiveFilters = status !== 'all';
-
-  const clearAllFilters = () => {
-    setStatus('all');
-    setPage(1);
-  };
 
   const queryFilters = useMemo(
     () => ({ page_size: PAGE_SIZE, status: status === 'all' ? undefined : status }),
@@ -61,10 +63,7 @@ export default function WithdrawalsPage() {
       options: STATUS_OPTIONS,
       placeholder: 'All Statuses',
       widthClass: 'w-[160px]',
-      onChange: (val) => {
-        setStatus(val);
-        setPage(1);
-      },
+      onChange: (val) => patch({ status: val, page: 1 }),
     },
   ];
 

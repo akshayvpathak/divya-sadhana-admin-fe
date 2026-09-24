@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import {
   useDonationsListQuery,
   useDonationsInfiniteQuery,
@@ -10,18 +10,24 @@ import { ResponsiveDataView } from '@/components/common/ResponsiveDataView';
 import { ListToolbar, ToolbarFilter } from '@/components/common/ListToolbar';
 import { useDonationTableColumns } from '@/hooks/tables/useDonationTableColumns';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useListQueryState } from '@/hooks/useListQueryState';
 import { useIsCompact } from '@/hooks/useMediaQuery';
 import { DataTablePagination } from '@/components/common/DataTablePagination';
-import { useFilterManager } from '@/components/common/FilterManager';
+import { useUrlFilterManager } from '@/components/common/FilterManager';
 import { donationStatusOptions } from '@/components/ui/badges/badge-status';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Card } from '@/components/ui/card';
 
+/** Defaults double as the URL contract: anything at its default stays out of the query. */
+const DEFAULTS = { page: 1, search: "", sort: "-paid_at", status: "paid", campaign: "all" };
+
 export default function DonationsPage() {
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
+  // In the URL, so opening a record and coming back keeps the filters, the
+  // page and the scroll position.
+  const [query, patch, resetQuery] = useListQueryState(DEFAULTS);
+  const { page, search, sort } = query;
+  const setPage = (next: number) => patch({ page: next });
   const debouncedSearch = useDebounce(search, 300);
-  const [sort, setSort] = useState('-paid_at');
 
   const { data: campaignsData } = useAllDonationCampaignsQuery();
 
@@ -30,15 +36,11 @@ export default function DonationsPage() {
     filters,
     handleFilterChange,
     getApiParams,
-    resetFilters,
     hasActiveFilters: filterManagerActive,
-  } = useFilterManager(
-    {
+  } = useUrlFilterManager({
       status: 'paid',
       campaign: 'all',
-    },
-    () => setPage(1)
-  );
+    }, query, patch);
 
   const apiParams = getApiParams();
   const hasActiveFilters = search !== '' || filterManagerActive;
@@ -60,10 +62,7 @@ export default function DonationsPage() {
   );
   const mobile = useDonationsInfiniteQuery(queryFilters, { enabled: isCompact === true });
 
-  const handleSort = (field: string) => {
-    setSort(field);
-    setPage(1);
-  };
+  const handleSort = (field: string) => patch({ sort: field, page: 1 });
 
   const totalPages = data?.data?.count ? Math.ceil(data.data.count / 10) : 1;
   const columns = useDonationTableColumns();
@@ -110,17 +109,10 @@ export default function DonationsPage() {
           search={{
             value: search,
             placeholder: 'Search Donations...',
-            onChange: (val) => {
-              setSearch(val);
-              setPage(1);
-            },
+            onChange: (val) => patch({ search: val, page: 1 }),
           }}
           filters={toolbarFilters}
-          onClear={() => {
-            resetFilters();
-            setSearch('');
-            setPage(1);
-          }}
+          onClear={resetQuery}
           hasActiveFilters={hasActiveFilters}
           sortColumns={columns}
           sort={sort}

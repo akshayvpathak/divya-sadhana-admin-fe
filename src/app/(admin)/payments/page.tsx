@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import {
   usePaymentsListQuery,
   usePaymentsInfiniteQuery,
@@ -9,6 +8,7 @@ import { ResponsiveDataView } from '@/components/common/ResponsiveDataView';
 import { ListToolbar, ToolbarFilter } from '@/components/common/ListToolbar';
 import { usePaymentTableColumns } from '@/hooks/tables/usePaymentTableColumns';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useListQueryState } from '@/hooks/useListQueryState';
 import { useIsCompact } from '@/hooks/useMediaQuery';
 import { DataTablePagination } from '@/components/common/DataTablePagination';
 import {
@@ -18,19 +18,18 @@ import {
 import { PageHeader } from '@/components/common/PageHeader';
 import { Card } from '@/components/ui/card';
 
-export default function PaymentsPage() {
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
-  const debouncedSearch = useDebounce(search, 300);
-  const [status, setStatus] = useState('all');
-  const [source, setSource] = useState('all');
+/** Defaults double as the URL contract: anything at its default stays out of the query. */
+const DEFAULTS = { page: 1, search: "", status: "all", source: "all" };
 
-  const clearAllFilters = () => {
-    setSearch('');
-    setStatus('all');
-    setSource('all');
-    setPage(1);
-  };
+export default function PaymentsPage() {
+  // In the URL, so opening a record and coming back keeps the filters, the
+  // page and the scroll position.
+  const [query, patch] = useListQueryState(DEFAULTS);
+  const { page, search, status, source } = query;
+  const setPage = (next: number) => patch({ page: next });
+  const debouncedSearch = useDebounce(search, 300);
+
+  const clearAllFilters = () => patch({ search: '', status: 'all', source: 'all', page: 1 });
 
   const hasActiveFilters =
     search !== '' || status !== 'all' || source !== 'all';
@@ -58,10 +57,7 @@ export default function PaymentsPage() {
       options: paymentSourceOptions,
       placeholder: 'All Sources',
       widthClass: 'w-[160px]',
-      onChange: (val) => {
-        setSource(val);
-        setPage(1);
-      },
+      onChange: (val) => patch({ source: val, page: 1 }),
     },
     {
       key: 'status',
@@ -70,10 +66,7 @@ export default function PaymentsPage() {
       options: paymentPageStatusOptions,
       placeholder: 'All Statuses',
       widthClass: 'w-[140px]',
-      onChange: (val) => {
-        setStatus(val);
-        setPage(1);
-      },
+      onChange: (val) => patch({ status: val, page: 1 }),
     },
   ];
 
@@ -86,10 +79,7 @@ export default function PaymentsPage() {
           search={{
             value: search,
             placeholder: 'Search Payments...',
-            onChange: (val) => {
-              setSearch(val);
-              setPage(1);
-            },
+            onChange: (val) => patch({ search: val, page: 1 }),
           }}
           filters={toolbarFilters}
           onClear={clearAllFilters}
