@@ -12,6 +12,9 @@ export interface OrdersListFilters {
   payment_status?: string;
   status?: string;
   shipping_status?: string;
+  /** Inclusive `YYYY-MM-DD` bounds on the order date. */
+  start_date?: string;
+  end_date?: string;
 }
 
 export const useOrdersListQuery = (
@@ -45,6 +48,8 @@ export const useOrdersListQuery = (
         payment_status: filters?.payment_status,
         status: filters?.status,
         shipping_status: filters?.shipping_status,
+        start_date: filters?.start_date,
+        end_date: filters?.end_date,
       });
     },
     enabled: !!accessToken && enabled,
@@ -76,6 +81,8 @@ export const useOrdersInfiniteQuery = (
         payment_status: filters?.payment_status,
         status: filters?.status,
         shipping_status: filters?.shipping_status,
+        start_date: filters?.start_date,
+        end_date: filters?.end_date,
       });
       return response.data;
     },
@@ -151,13 +158,27 @@ export const useShippingInfoQuery = () => {
   });
 };
 
+/**
+ * Exports what the list is currently showing, not the whole table — the filters
+ * are passed at call time so the CSV matches the rows on screen.
+ */
 export const useExportOrdersCsvMutation = () => {
   const { accessToken } = useAuth();
 
   return useMutation({
-    mutationFn: async () => {
+    mutationFn: async (
+      params: { search?: string; filters?: OrdersListFilters } = {}
+    ) => {
       if (!accessToken) throw new Error("No access token");
-      const blob = await exportOrdersCsv(accessToken);
+      const blob = await exportOrdersCsv(accessToken, {
+        search: params.search,
+        search_fields: params.search ? ORDER_SEARCH_FIELDS : undefined,
+        payment_status: params.filters?.payment_status,
+        status: params.filters?.status,
+        shipping_status: params.filters?.shipping_status,
+        start_date: params.filters?.start_date,
+        end_date: params.filters?.end_date,
+      });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;

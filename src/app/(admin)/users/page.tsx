@@ -10,6 +10,7 @@ import { ResponsiveDataView } from '@/components/common/ResponsiveDataView';
 import { ListToolbar, ToolbarFilter } from '@/components/common/ListToolbar';
 import { useUserTableColumns } from '@/hooks/tables/useUserTableColumns';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useListQueryState } from '@/hooks/useListQueryState';
 import { useIsCompact } from '@/hooks/useMediaQuery';
 import { DataTablePagination } from '@/components/common/DataTablePagination';
 import { PageHeader } from '@/components/common/PageHeader';
@@ -32,20 +33,16 @@ const STATUS_OPTIONS = [
   { value: 'inactive', label: 'Inactive' },
 ];
 
-export default function UsersPage() {
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
-  const debouncedSearch = useDebounce(search, 300);
-  const [selectedRole, setSelectedRole] = useState('all');
-  const [selectedStatus, setSelectedStatus] = useState('all');
-  const [sort, setSort] = useState('');
+/** Defaults double as the URL contract: anything at its default stays out of the query. */
+const DEFAULTS = { page: 1, search: '', role: 'all', status: 'all', sort: '' };
 
-  const clearAllFilters = () => {
-    setSearch('');
-    setSelectedRole('all');
-    setSelectedStatus('all');
-    setPage(1);
-  };
+export default function UsersPage() {
+  // In the URL, so opening a user and coming back keeps the filters, the page
+  // and the scroll position.
+  const [query, patch, clearAllFilters] = useListQueryState(DEFAULTS);
+  const { page, search, sort, role: selectedRole, status: selectedStatus } = query;
+  const setPage = (next: number) => patch({ page: next });
+  const debouncedSearch = useDebounce(search, 300);
 
   const hasActiveFilters =
     search !== '' || selectedRole !== 'all' || selectedStatus !== 'all';
@@ -69,10 +66,7 @@ export default function UsersPage() {
   });
   const { mutate: deleteUser, isPending: isDeleting } = useDeleteUser();
 
-  const handleSort = (field: string) => {
-    setSort(field);
-    setPage(1);
-  };
+  const handleSort = (field: string) => patch({ sort: field, page: 1 });
 
   const openDeleteModal = (id: string) => {
     setUserToDelete(id);
@@ -100,10 +94,7 @@ export default function UsersPage() {
       options: ROLE_OPTIONS,
       placeholder: 'All Roles',
       widthClass: 'w-[200px]',
-      onChange: (val) => {
-        setSelectedRole(val);
-        setPage(1);
-      },
+      onChange: (val) => patch({ role: val, page: 1 }),
     },
     {
       key: 'status',
@@ -112,10 +103,7 @@ export default function UsersPage() {
       options: STATUS_OPTIONS,
       placeholder: 'All Statuses',
       widthClass: 'w-[140px]',
-      onChange: (val) => {
-        setSelectedStatus(val);
-        setPage(1);
-      },
+      onChange: (val) => patch({ status: val, page: 1 }),
     },
   ];
 
@@ -137,10 +125,7 @@ export default function UsersPage() {
           search={{
             value: search,
             placeholder: 'Search Users...',
-            onChange: (val) => {
-              setSearch(val);
-              setPage(1);
-            },
+            onChange: (val) => patch({ search: val, page: 1 }),
           }}
           filters={toolbarFilters}
           onClear={clearAllFilters}

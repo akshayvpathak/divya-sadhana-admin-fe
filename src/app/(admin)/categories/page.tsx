@@ -10,28 +10,29 @@ import { ResponsiveDataView } from '@/components/common/ResponsiveDataView';
 import { ListToolbar, ToolbarFilter } from '@/components/common/ListToolbar';
 import { useCategoryTableColumns } from '@/hooks/tables/useCategoryTableColumns';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useListQueryState } from '@/hooks/useListQueryState';
 import { useIsCompact } from '@/hooks/useMediaQuery';
 import { DataTablePagination } from '@/components/common/DataTablePagination';
 import { categoryStatusOptions } from '@/components/ui/badges/badge-status';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Card } from '@/components/ui/card';
 
+/** Defaults double as the URL contract: anything at its default stays out of the query. */
+const DEFAULTS = { page: 1, search: "", sort: "", status: "all" };
+
 export default function CategoriesPage() {
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
+  // In the URL, so opening a record and coming back keeps the filters, the
+  // page and the scroll position.
+  const [query, patch] = useListQueryState(DEFAULTS);
+  const { page, search, sort, status } = query;
+  const setPage = (next: number) => patch({ page: next });
   const debouncedSearch = useDebounce(search, 300);
 
   // Deletion state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
-  const [sort, setSort] = useState('');
-  const [status, setStatus] = useState('all');
 
-  const clearAllFilters = () => {
-    setSearch('');
-    setStatus('all');
-    setPage(1);
-  };
+  const clearAllFilters = () => patch({ search: '', status: 'all', page: 1 });
 
   const hasActiveFilters = search !== '' || status !== 'all';
 
@@ -44,10 +45,7 @@ export default function CategoriesPage() {
   });
   const { mutate: deleteCategory, isPending: isDeleting } = useDeleteCategory();
 
-  const handleSort = (field: string) => {
-    setSort(field);
-    setPage(1);
-  };
+  const handleSort = (field: string) => patch({ sort: field, page: 1 });
 
   const openDeleteModal = (id: string) => {
     setCategoryToDelete(id);
@@ -75,10 +73,7 @@ export default function CategoriesPage() {
       options: categoryStatusOptions,
       placeholder: 'All Statuses',
       widthClass: 'w-[140px]',
-      onChange: (val) => {
-        setStatus(val);
-        setPage(1);
-      },
+      onChange: (val) => patch({ status: val, page: 1 }),
     },
   ];
 
@@ -100,10 +95,7 @@ export default function CategoriesPage() {
           search={{
             value: search,
             placeholder: 'Search Categories...',
-            onChange: (val) => {
-              setSearch(val);
-              setPage(1);
-            },
+            onChange: (val) => patch({ search: val, page: 1 }),
           }}
           filters={toolbarFilters}
           onClear={clearAllFilters}

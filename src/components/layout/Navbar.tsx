@@ -6,6 +6,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useAtomValue } from 'jotai';
 import { pageHeaderAtom } from '@/store/page-header';
+import { listUrlFor } from '@/lib/list-view-memory';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { Button } from '../ui/button';
 import { MobileNavTrigger } from './Sidebar';
@@ -24,6 +25,12 @@ export default function Navbar() {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const pageHeader = useAtomValue(pageHeaderAtom);
 
+  // Pages declare a plain `backHref="/orders"`. Send the user back to the list
+  // as they left it — same filters, same page — rather than to a reset one.
+  // Falls back to the bare path when they deep-linked straight to a record.
+  const backHref = pageHeader?.backHref;
+  const backTo = backHref ? (listUrlFor(backHref) ?? backHref) : null;
+
   return (
     <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between gap-2 border-b border-line bg-surface/90 px-3 backdrop-blur-sm sm:gap-4 sm:px-6">
       {/* The page title lives here rather than in the page body — this strip was
@@ -31,8 +38,8 @@ export default function Navbar() {
       <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
         <MobileNavTrigger />
 
-        {pageHeader?.backHref && (
-          <Link href={pageHeader.backHref} className="shrink-0">
+        {backTo && (
+          <Link href={backTo} className="shrink-0">
             <Button
               variant="outline"
               size="icon"

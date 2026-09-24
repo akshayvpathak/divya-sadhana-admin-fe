@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Plus, Users, MapPin, Link2, X } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { ResponsiveDataView } from '@/components/common/ResponsiveDataView';
 import { ListToolbar, ToolbarFilter } from '@/components/common/ListToolbar';
 import { DataTablePagination } from '@/components/common/DataTablePagination';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useListQueryState } from '@/hooks/useListQueryState';
 import { useIsCompact } from '@/hooks/useMediaQuery';
 import {
   useTrusteesListQuery,
@@ -58,17 +59,40 @@ const TRUSTEE_SEARCH_FIELDS =
 
 const PAGE_SIZE = 10;
 
+/**
+ * Defaults double as the URL contract: anything at its default stays out of the
+ * query. `tab` is in here too — it used to be deep-linked by hand with
+ * `history.replaceState`, which remounts the route segment under Next 16.
+ */
+const DEFAULTS = {
+  page: 1,
+  search: '',
+  sort: '-created_at',
+  status: 'all',
+  state: 'all',
+  district: 'all',
+  role: 'all',
+  territory: 'all',
+  tab: 'trustees',
+};
+
 export default function TrusteesPage() {
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
+  // In the URL, so opening a trustee and coming back keeps the filters, the
+  // page and the scroll position.
+  const [query, patch, clearAllFilters] = useListQueryState(DEFAULTS);
+  const {
+    page,
+    search,
+    sort,
+    status,
+    state: stateFilter,
+    district: districtFilter,
+    role: roleFilter,
+    territory: territoryFilter,
+  } = query;
+  const tab = query.tab as TrusteesTab;
+  const setPage = (next: number) => patch({ page: next });
   const debouncedSearch = useDebounce(search, 300);
-  const [status, setStatus] = useState('all');
-  const [stateFilter, setStateFilter] = useState('all');
-  const [districtFilter, setDistrictFilter] = useState('all');
-  const [roleFilter, setRoleFilter] = useState('all');
-  const [territoryFilter, setTerritoryFilter] = useState('all');
-  const [sort, setSort] = useState('-created_at');
-  const [tab, setTab] = useState<TrusteesTab>('trustees');
 
   const hasActiveFilters =
     search !== '' ||
@@ -78,32 +102,9 @@ export default function TrusteesPage() {
     roleFilter !== 'all' ||
     territoryFilter !== 'all';
 
-  const clearAllFilters = () => {
-    setSearch('');
-    setStatus('all');
-    setStateFilter('all');
-    setDistrictFilter('all');
-    setRoleFilter('all');
-    setTerritoryFilter('all');
-    setPage(1);
-  };
 
-  // Deep-link support: /trustees?tab=coverage (used by the old /territory route).
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const tabParam = new URLSearchParams(window.location.search).get('tab');
-    if (tabParam === 'coverage' || tabParam === 'retention') {
-      setTab(tabParam);
-    }
-  }, []);
 
-  const selectTab = (next: TrusteesTab) => {
-    setTab(next);
-    if (typeof window !== 'undefined') {
-      const url = next === 'trustees' ? '/trustees' : `/trustees?tab=${next}`;
-      window.history.replaceState(window.history.state, '', url);
-    }
-  };
+  const selectTab = (next: TrusteesTab) => patch({ tab: next });
 
   const isActiveParam = status === 'all' ? undefined : status === 'active' ? 'true' : 'false';
 
@@ -227,10 +228,7 @@ export default function TrusteesPage() {
     return names.size;
   }, [activeAssignments]);
 
-  const handleSort = (field: string) => {
-    setSort(field);
-    setPage(1);
-  };
+  const handleSort = (field: string) => patch({ sort: field, page: 1 });
 
   const stateOptions = useMemo(
     () => [
@@ -254,61 +252,42 @@ export default function TrusteesPage() {
       chips.push({
         key: 'role',
         label: `Role: ${ROLE_OPTIONS.find((o) => o.value === roleFilter)?.label ?? roleFilter}`,
-        onClear: () => {
-          setRoleFilter('all');
-          setPage(1);
-        },
+        onClear: () => patch({ role: 'all', page: 1 }),
       });
     }
     if (stateFilter !== 'all') {
       chips.push({
         key: 'state',
         label: `State: ${stateOptions.find((o) => o.value === stateFilter)?.label ?? 'State'}`,
-        onClear: () => {
-          setStateFilter('all');
-          setDistrictFilter('all');
-          setPage(1);
-        },
+        onClear: () => patch({ state: 'all', district: 'all', page: 1 }),
       });
     }
     if (districtFilter !== 'all') {
       chips.push({
         key: 'district',
         label: `District: ${districtOptions.find((o) => o.value === districtFilter)?.label ?? 'District'}`,
-        onClear: () => {
-          setDistrictFilter('all');
-          setPage(1);
-        },
+        onClear: () => patch({ district: 'all', page: 1 }),
       });
     }
     if (status !== 'all') {
       chips.push({
         key: 'status',
         label: `Status: ${STATUS_OPTIONS.find((o) => o.value === status)?.label ?? status}`,
-        onClear: () => {
-          setStatus('all');
-          setPage(1);
-        },
+        onClear: () => patch({ status: 'all', page: 1 }),
       });
     }
     if (territoryFilter !== 'all') {
       chips.push({
         key: 'territory',
         label: 'No territory assigned',
-        onClear: () => {
-          setTerritoryFilter('all');
-          setPage(1);
-        },
+        onClear: () => patch({ territory: 'all', page: 1 }),
       });
     }
     if (search.trim()) {
       chips.push({
         key: 'search',
         label: `Search: ${search.trim()}`,
-        onClear: () => {
-          setSearch('');
-          setPage(1);
-        },
+        onClear: () => patch({ search: '', page: 1 }),
       });
     }
     return chips;
@@ -321,6 +300,7 @@ export default function TrusteesPage() {
     search,
     stateOptions,
     districtOptions,
+    patch,
   ]);
 
   const toolbarFilters: ToolbarFilter[] = [
@@ -331,10 +311,7 @@ export default function TrusteesPage() {
       options: ROLE_OPTIONS,
       placeholder: 'All Roles',
       widthClass: 'w-[180px]',
-      onChange: (val) => {
-        setRoleFilter(val);
-        setPage(1);
-      },
+      onChange: (val) => patch({ role: val, page: 1 }),
     },
     {
       key: 'state',
@@ -343,11 +320,7 @@ export default function TrusteesPage() {
       options: stateOptions,
       placeholder: 'All States',
       widthClass: 'w-[180px]',
-      onChange: (val) => {
-        setStateFilter(val);
-        setDistrictFilter('all');
-        setPage(1);
-      },
+      onChange: (val) => patch({ state: val, district: 'all', page: 1 }),
     },
     {
       key: 'district',
@@ -357,10 +330,7 @@ export default function TrusteesPage() {
       placeholder: stateFilter === 'all' ? 'Select a state first' : 'All Districts',
       widthClass: 'w-[180px]',
       disabled: stateFilter === 'all',
-      onChange: (val) => {
-        setDistrictFilter(val);
-        setPage(1);
-      },
+      onChange: (val) => patch({ district: val, page: 1 }),
     },
     {
       key: 'status',
@@ -369,10 +339,7 @@ export default function TrusteesPage() {
       options: STATUS_OPTIONS,
       placeholder: 'All Statuses',
       widthClass: 'w-[140px]',
-      onChange: (val) => {
-        setStatus(val);
-        setPage(1);
-      },
+      onChange: (val) => patch({ status: val, page: 1 }),
     },
     {
       key: 'territory',
@@ -381,10 +348,7 @@ export default function TrusteesPage() {
       options: TERRITORY_OPTIONS,
       placeholder: 'Any territory',
       widthClass: 'w-[180px]',
-      onChange: (val) => {
-        setTerritoryFilter(val);
-        setPage(1);
-      },
+      onChange: (val) => patch({ territory: val, page: 1 }),
     },
   ];
 
@@ -473,10 +437,7 @@ export default function TrusteesPage() {
               search={{
                 value: search,
                 placeholder: 'Search by name, email, or code...',
-                onChange: (val) => {
-                  setSearch(val);
-                  setPage(1);
-                },
+                onChange: (val) => patch({ search: val, page: 1 }),
               }}
               filters={toolbarFilters}
               onClear={clearAllFilters}

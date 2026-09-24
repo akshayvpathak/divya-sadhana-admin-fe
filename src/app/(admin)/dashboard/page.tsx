@@ -4,8 +4,8 @@ import { useUsers } from '@/hooks/useUsers';
 import { useAllCategories } from '@/hooks/useCategories';
 import { useProducts } from '@/hooks/useProducts';
 import { useDonationCampaignsListQuery } from '@/hooks/queries/useDonationCampaignsQuery';
-import { Users, Tags, Package, Heart } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useOrdersListQuery } from '@/hooks/queries/useOrdersQuery';
+import { Users, Tags, Package, Heart, ShoppingCart } from 'lucide-react';
 import { formatINR } from '@/lib/currency';
 import { PageHeader } from '@/components/common/PageHeader';
 import { StatCard } from '@/components/common/StatCard';
@@ -15,11 +15,15 @@ export default function DashboardPage() {
   const { data: categoriesData, isLoading: loadingCategories } = useAllCategories();
   const { data: productsData, isLoading: loadingProducts } = useProducts(1, 1);
   const { data: campaignsData, isLoading: loadingCampaigns } = useDonationCampaignsListQuery({});
+  // Only `count` is read; the rows come along for the ride.
+  const { data: ordersData, isLoading: loadingOrders } = useOrdersListQuery(1, '', '-created_at');
 
   const totalRaised = campaignsData?.data?.results?.reduce((acc, campaign) => {
     return acc + (Number(campaign.raised_amount) || 0);
   }, 0) || 0;
 
+  // Every card links to the list its number came from, so the dashboard is a
+  // way in rather than a read-only summary.
   const stats = [
     {
       name: 'Total Users',
@@ -27,6 +31,15 @@ export default function DashboardPage() {
       icon: Users,
       loading: loadingUsers,
       tone: 'info' as const,
+      href: '/users',
+    },
+    {
+      name: 'Total Orders',
+      value: ordersData?.data?.count || 0,
+      icon: ShoppingCart,
+      loading: loadingOrders,
+      tone: 'royal' as const,
+      href: '/orders',
     },
     {
       name: 'Total Categories',
@@ -34,6 +47,7 @@ export default function DashboardPage() {
       icon: Tags,
       loading: loadingCategories,
       tone: 'plum' as const,
+      href: '/categories',
     },
     {
       name: 'Total Products',
@@ -41,6 +55,7 @@ export default function DashboardPage() {
       icon: Package,
       loading: loadingProducts,
       tone: 'success' as const,
+      href: '/products',
     },
     {
       name: 'Total Raised',
@@ -48,6 +63,7 @@ export default function DashboardPage() {
       icon: Heart,
       loading: loadingCampaigns,
       tone: 'gold' as const,
+      href: '/donation-campaigns',
     },
   ];
 
@@ -58,7 +74,9 @@ export default function DashboardPage() {
         showBreadcrumbs={false}
       />
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-6">
+      {/* Three across, not five: at five columns the longer labels wrap and the
+          values stop lining up across the row. */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 lg:gap-6">
         {stats.map((stat) => (
           <StatCard
             key={stat.name}
@@ -66,6 +84,7 @@ export default function DashboardPage() {
             value={stat.value}
             loading={stat.loading}
             tone={stat.tone}
+            href={stat.href}
             icon={<stat.icon className="h-5 w-5" />}
           />
         ))}

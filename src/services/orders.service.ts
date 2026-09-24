@@ -13,6 +13,22 @@ interface FetchOptions {
   payment_status?: string;
   status?: string;
   shipping_status?: string;
+  /**
+   * Inclusive calendar-day bounds, `YYYY-MM-DD`. Both endpoints below mean the
+   * same thing by them but spell them differently on the wire — see the notes
+   * in `getOrdersList` and `exportOrdersCsv`.
+   */
+  start_date?: string;
+  end_date?: string;
+}
+
+/** Filters the list and the CSV export both understand, spelled identically. */
+function appendSharedFilters(params: URLSearchParams, options: FetchOptions) {
+  if (options.search) params.append("search", options.search);
+  if (options.search_fields) params.append("search_fields", options.search_fields);
+  if (options.payment_status) params.append("payment_status", options.payment_status);
+  if (options.status) params.append("status", options.status);
+  if (options.shipping_status) params.append("shipping_status", options.shipping_status);
 }
 
 function getCsrfToken(): string {
@@ -33,12 +49,15 @@ export const getOrdersList = async (
   // Wire name is `paginate`. `page_size` is DRF's default, which this API does
   // not use — it was silently ignored until it became a 422 on 2026-09-11.
   if (options.page_size) params.append("paginate", String(options.page_size));
-  if (options.search) params.append("search", options.search);
-  if (options.search_fields) params.append("search_fields", options.search_fields);
+  appendSharedFilters(params, options);
   if (options.sort) params.append("sort", options.sort);
-  if (options.payment_status) params.append("payment_status", options.payment_status);
-  if (options.status) params.append("status", options.status);
-  if (options.shipping_status) params.append("shipping_status", options.shipping_status);
+  // This endpoint takes Django lookups for the date range, and rejects anything
+  // it does not recognise with a 422 — `start_date`/`end_date` (what the export
+  // wants) are a hard error here. `__date__` compares calendar days, so both
+  // bounds stay inclusive; a bare `created_at__lte` would read as midnight and
+  // silently drop the end day's orders.
+  if (options.start_date) params.append("created_at__date__gte", options.start_date);
+  if (options.end_date) params.append("created_at__date__lte", options.end_date);
 
   const response = await fetch(`${API_BASE_URL}/orders/?${params.toString()}`, {
     method: "GET",
@@ -182,15 +201,42 @@ export const getShippingInfo = async (accessToken?: string): Promise<ShippingInf
   return (json.data || json) as ShippingInfo;
 };
 
-/** Download orders CSV from GET /api/admin/exports/orders.csv */
-export const exportOrdersCsv = async (accessToken: string): Promise<Blob> => {
-  const response = await fetch(`${API_BASE_URL}/admin/exports/orders.csv`, {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      accept: "text/csv",
-    },
-  });
+/**
+ * Download orders CSV from GET /api/admin/exports/orders.csv, narrowed to the
+ * filters the user is looking at.
+ *
+ * Two things about this endpoint differ from the list endpoint above:
+ *   - The date range is `start_date`/`end_date` here. The `created_at__date__*`
+ *     lookups the list takes are accepted and then silently ignored, so getting
+ *     this wrong exports every order instead of erroring.
+ *   - `sort` is ignored; rows always come back newest first. Not sent, rather
+ *     than sent and quietly dropped.
+ * Unknown params are ignored here rather than rejected, so a wrong name shows up
+ * as a too-large export, never as an error.
+ */
+export const exportOrdersCsv = async (
+  accessToken: string,
+  options: FetchOptions = {}
+): Promise<Blob> => {
+  const params = new URLSearchParams();
+  appendSharedFilters(params, options);
+  if (options.start_date) params.append("start_date", options.start_date);
+  if (options.end_date) params.append("end_date", options.end_date);
+
+  const query = params.toString();
+  const response = await fetch(
+    `${API_BASE_URL}/admin/exports/orders.csv${query ? `?${query}` : ""}`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        // No `Accept: text/csv`. The format comes from the `.csv` suffix, and
+        // the endpoint's renderers only negotiate JSON — asking for text/csv
+        // explicitly gets a 406 and no export at all.
+        accept: "*/*",
+      },
+    }
+  );
 
   if (!response.ok) {
     const json = await response.json().catch(() => ({}));

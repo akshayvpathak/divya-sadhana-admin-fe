@@ -1,12 +1,13 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Card } from '@/components/ui/card';
 import { ListToolbar } from '@/components/common/ListToolbar';
 import { ResponsiveDataView } from '@/components/common/ResponsiveDataView';
 import { DataTablePagination } from '@/components/common/DataTablePagination';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useListQueryState } from '@/hooks/useListQueryState';
 import {
   useAiServicesListQuery,
   useAiServicesInfiniteQuery,
@@ -24,9 +25,15 @@ const PAGE_SIZE = 10;
  * outside this panel, so there is deliberately no create or delete action here — this screen
  * exists so the client can set the unlock price and its discount.
  */
+/** Defaults double as the URL contract: anything at its default stays out of the query. */
+const DEFAULTS = { page: 1, search: "" };
+
 export default function AiServicesPage() {
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
+  // In the URL, so opening a record and coming back keeps the filters, the
+  // page and the scroll position.
+  const [query, patch] = useListQueryState(DEFAULTS);
+  const { page, search } = query;
+  const setPage = (next: number) => patch({ page: next });
   const debouncedSearch = useDebounce(search, 300);
 
   const filters = { search: debouncedSearch };
@@ -50,15 +57,9 @@ export default function AiServicesPage() {
           search={{
             value: search,
             placeholder: 'Search AI services...',
-            onChange: (val) => {
-              setSearch(val);
-              setPage(1);
-            },
+            onChange: (val) => patch({ search: val, page: 1 }),
           }}
-          onClear={() => {
-            setSearch('');
-            setPage(1);
-          }}
+          onClear={() => patch({ search: '', page: 1 })}
           hasActiveFilters={search !== ''}
         />
 

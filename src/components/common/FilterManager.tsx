@@ -56,3 +56,42 @@ export function useFilterManager<T extends Record<string, string>>(
     hasActiveFilters,
   };
 }
+
+/**
+ * The same shape, backed by the page's `useListQueryState` instead of local
+ * state, so the filters live in the URL and survive opening a record.
+ *
+ * One URL writer per page, deliberately: two hooks each serialising their own
+ * keys would overwrite each other's half of the query string. The page owns the
+ * single `useListQueryState`; this just presents the filter slice of it in the
+ * shape the toolbars already expect.
+ */
+export function useUrlFilterManager<T extends Record<string, string>>(
+  initialFilters: T,
+  values: Record<string, string | number>,
+  patch: (next: Record<string, string | number>) => void
+) {
+  const keys = Object.keys(initialFilters) as (keyof T)[];
+
+  const filters = Object.fromEntries(
+    keys.map((key) => [key, String(values[key as string] ?? initialFilters[key])])
+  ) as T;
+
+  /** Any filter change returns to page 1 — page 7 of the old result set is meaningless. */
+  const handleFilterChange = (key: string, value: string) => patch({ [key]: value, page: 1 });
+
+  const getApiParams = () => {
+    const params: Record<string, string | undefined> = {};
+    for (const key of keys) {
+      const val = filters[key];
+      params[key as string] = val === 'all' ? undefined : val;
+    }
+    return params as Record<keyof T, string | undefined>;
+  };
+
+  const resetFilters = () => patch({ ...initialFilters, page: 1 });
+
+  const hasActiveFilters = keys.some((key) => filters[key] !== initialFilters[key]);
+
+  return { filters, handleFilterChange, getApiParams, resetFilters, hasActiveFilters };
+}
