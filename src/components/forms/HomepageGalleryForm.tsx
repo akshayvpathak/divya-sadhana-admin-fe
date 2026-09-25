@@ -44,12 +44,12 @@ export function HomepageGalleryForm({ item, onSubmit, isPending = false }: Props
     resolver: zodResolver(homepageGalleryFormSchema) as any,
     defaultValues: {
       image_key: '',
-      title: '',
-      caption: '',
-      link_url: '',
-      link_type: 'none',
-      display_order: 0,
-      is_active: true,
+      title: item?.title || '',
+      caption: item?.caption || '',
+      link_url: item?.link_url || '',
+      link_type: item?.link_type || 'none',
+      display_order: item?.display_order ?? 0,
+      is_active: item?.is_active ?? true,
     },
   });
 
@@ -70,12 +70,6 @@ export function HomepageGalleryForm({ item, onSubmit, isPending = false }: Props
   const linkType = watch('link_type');
   const isActive = watch('is_active');
   const uploadedImageKey = watch('image_key');
-
-  useEffect(() => {
-    if (linkType === 'none') {
-      setValue('link_url', '', { shouldValidate: true });
-    }
-  }, [linkType, setValue]);
 
   const uploadFile = useCallback(
     async (file: File) => {
@@ -209,7 +203,18 @@ export function HomepageGalleryForm({ item, onSubmit, isPending = false }: Props
             name="link_type"
             control={control}
             render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange}>
+              <Select
+                value={field.value}
+                onValueChange={(value) => {
+                  field.onChange(value);
+                  if (value === 'none') {
+                    setValue('link_url', '', {
+                      shouldValidate: true,
+                      shouldDirty: true,
+                    });
+                  }
+                }}
+              >
                 <SelectTrigger id="link_type" className="bg-surface">
                   <SelectValue />
                 </SelectTrigger>
