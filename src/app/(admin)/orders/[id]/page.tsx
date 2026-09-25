@@ -2,9 +2,11 @@
 
 import { useOrderQuery } from '@/hooks/queries/useOrdersQuery';
 import { useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import OrderDetailCard from '@/components/orders/OrderDetailCard';
 import { PageHeader } from '@/components/common/PageHeader';
+import { listUrlFor } from '@/lib/list-view-memory';
 
 export default function ViewOrderPage() {
   const params = useParams();
@@ -15,7 +17,7 @@ export default function ViewOrderPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        backHref="/orders"
+        backHref={backHref}
         title={<>{isLoading ? <Skeleton className="h-9 w-48" /> : `Order #${order?.order_number}`}</>}
       />
 
