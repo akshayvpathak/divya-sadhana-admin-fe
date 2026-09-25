@@ -41,7 +41,7 @@ export function HomepageGalleryForm({ item, onSubmit, isPending = false }: Props
     watch,
     formState: { errors },
   } = useForm<HomepageGalleryFormValues>({
-    resolver: zodResolver(homepageGalleryFormSchema),
+    resolver: zodResolver(homepageGalleryFormSchema) as any,
     defaultValues: {
       image_key: '',
       title: '',
@@ -69,6 +69,7 @@ export function HomepageGalleryForm({ item, onSubmit, isPending = false }: Props
 
   const linkType = watch('link_type');
   const isActive = watch('is_active');
+  const uploadedImageKey = watch('image_key');
 
   useEffect(() => {
     if (linkType === 'none') {
@@ -135,18 +136,20 @@ export function HomepageGalleryForm({ item, onSubmit, isPending = false }: Props
           {previewUrl ? (
             <div className="group relative aspect-[16/9] w-full max-w-xl overflow-hidden rounded-xl border border-line bg-cosmos">
               <img src={previewUrl} alt="Gallery preview" className="h-full w-full object-cover" />
-              <button
-                type="button"
-                aria-label="Remove selected image"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  setPreviewUrl('');
-                  setValue('image_key', '', { shouldDirty: true });
-                }}
-                className="absolute right-2 top-2 rounded-full bg-danger p-1.5 text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100"
-              >
-                <X className="h-4 w-4" />
-              </button>
+              {uploadedImageKey && (
+                <button
+                  type="button"
+                  aria-label={item ? 'Revert replacement image' : 'Remove selected image'}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setValue('image_key', '', { shouldDirty: true });
+                    setPreviewUrl(item?.image_url || '');
+                  }}
+                  className="absolute right-2 top-2 rounded-full bg-danger p-1.5 text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
           ) : (
             <div className="flex flex-col items-center gap-2 text-moon">
@@ -176,7 +179,7 @@ export function HomepageGalleryForm({ item, onSubmit, isPending = false }: Props
             }}
           />
         </div>
-        {!item && !watch('image_key') && (
+        {!item && !uploadedImageKey && (
           <p className="text-xs text-moon">An image is required before creating the item.</p>
         )}
       </div>
@@ -251,7 +254,7 @@ export function HomepageGalleryForm({ item, onSubmit, isPending = false }: Props
         </Link>
         <Button
           type="submit"
-          disabled={isPending || uploadMutation.isPending || (!item && !watch('image_key'))}
+          disabled={isPending || uploadMutation.isPending || (!item && !uploadedImageKey)}
           className="w-full sm:w-auto"
         >
           {isPending ? 'Saving…' : item ? 'Save Changes' : 'Create Gallery Item'}
