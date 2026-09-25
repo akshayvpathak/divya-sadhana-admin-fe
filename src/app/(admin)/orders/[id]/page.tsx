@@ -11,6 +11,11 @@ import { listUrlFor } from '@/lib/list-view-memory';
 export default function ViewOrderPage() {
   const params = useParams();
   const id = params.id as string;
+  const [backHref, setBackHref] = useState('/orders');
+
+  useEffect(() => {
+    setBackHref(listUrlFor('/orders') || '/orders');
+  }, []);
 
   const { data: order, isLoading } = useOrderQuery(id);
 
