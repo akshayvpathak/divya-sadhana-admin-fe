@@ -18,6 +18,7 @@ import {
   ClipboardList,
   CalendarDays,
   Settings,
+  Images,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -41,6 +42,7 @@ export const navItems: NavItem[] = [
   { name: 'Orders', href: '/orders', icon: ShoppingCart },
   { name: 'Donations', href: '/donations', icon: HeartHandshake },
   { name: 'Campaigns', href: '/donation-campaigns', icon: Megaphone },
+  { name: 'Homepage Gallery', href: '/homepage-gallery', icon: Images },
   { name: 'Sadhana Services', href: '/sadhana-services', icon: Flame },
   { name: 'Service Bookings', href: '/service-bookings', icon: ClipboardList },
   { name: 'Service Batches', href: '/service-batches', icon: CalendarDays },
